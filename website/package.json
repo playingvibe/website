@@ -1,0 +1,12 @@
+{
+  "name": "vibe-website",
+  "private": true,
+  "type": "module",
+  "description": "Vibe's landing page, legal pages, and the signed-in dashboard. Deployed to Vercel with this directory as the project root, which is why nothing here imports from ../src — see scripts/sync-web-shared.js.",
+  "engines": {
+    "node": "22.x"
+  },
+  "dependencies": {
+    "mongodb": "^6.10.0"
+  }
+}

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Now playing | Vibe</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <!--
+      A streamer's overlay, loaded by an OBS browser source at /np/<token> (a rewrite to this file,
+      like the passport). Absolute asset paths for that reason: the URL is nested, this file is not.
+      The page is transparent and shows nothing while nothing plays. Its CSP is its own, in
+      vercel.json: it alone may talk to the Vibe API hosts and load their artwork.
+    -->
+    <link rel="stylesheet" href="/np.css" />
+  </head>
+  <body>
+    <main id="np" class="np" aria-live="polite">
+      <img id="np-art" class="np-art" alt="" width="96" height="96" hidden />
+      <div class="np-text">
+        <p id="np-title" class="np-title"></p>
+        <p id="np-artist" class="np-artist"></p>
+        <div id="np-bar" class="np-bar" hidden><span id="np-fill"></span></div>
+      </div>
+    </main>
+    <script type="module" src="/np.js"></script>
+  </body>
+</html>

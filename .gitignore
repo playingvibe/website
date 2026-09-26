@@ -1,0 +1,6 @@
+node_modules/
+.env*
+!.env.example
+.vercel
+.deploy-url.txt
+*.log

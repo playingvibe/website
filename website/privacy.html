@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Privacy Policy | Vibe</title>
+    <meta
+      name="description"
+      content="Exactly what the Vibe Discord music bot stores, why, and how to have it removed."
+    />
+    <meta name="theme-color" content="#0b0b0d" />
+    <link rel="canonical" href="https://playvibe.gg/privacy" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Privacy Policy | Vibe" />
+    <meta property="og:description" content="Exactly what the Vibe Discord music bot stores, why, and how to have it removed." />
+    <meta property="og:site_name" content="Vibe" />
+    <meta property="og:url" content="https://playvibe.gg/privacy" />
+    <meta property="og:image" content="https://playvibe.gg/press/og-card.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Vibe: listen together, in Discord" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" href="V_logo_vectorized.svg" />
+    <link rel="preload" href="fonts/outfit-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <div class="wrap">
+      <nav class="nav">
+        <svg class="mark" viewBox="0 0 1254 1254" aria-hidden="true">
+          <path
+            d="M 877 349 L 858 344 L 835 344 L 817 348 L 792 361 L 773 379 L 765 390 L 754 410 L 666 623 L 653 646 L 646 653 L 641 655 L 632 653 L 624 643 L 620 634 L 550 415 L 538 390 L 527 377 L 518 370 L 506 364 L 490 360 L 464 360 L 449 363 L 424 373 L 406 385 L 392 399 L 380 419 L 376 434 L 376 452 L 379 465 L 409 537 L 436 608 L 536 884 L 548 909 L 563 930 L 575 940 L 589 947 L 608 950 L 626 948 L 650 938 L 669 925 L 690 904 L 705 885 L 731 843 L 753 799 L 910 457 L 917 439 L 920 424 L 920 404 L 916 388 L 905 369 L 892 357 Z"
+          />
+        </svg>
+        <span class="wordmark">Vibe</span>
+        <div class="nav-links"><a href="/commands">Commands</a><a href="/">Home</a><a href="/terms">Terms</a></div>
+      </nav>
+
+      <main id="main" tabindex="-1" class="legal">
+        <h1>Privacy Policy</h1>
+        <p class="updated">Last updated: 21 September 2026</p>
+
+        <p class="callout">
+          Written by reading Vibe's own database, not by adapting a template. The list below is
+          everything it stores. There is nothing else.
+        </p>
+
+        <h2>1. What we store</h2>
+        <p><strong>For each server Vibe is in:</strong></p>
+        <ul>
+          <li>the server's Discord ID;</li>
+          <li>the IDs of any DJ roles an administrator configured;</li>
+          <li>the IDs of voice channels Vibe is allowed to join;</li>
+          <li>the ID of a commands channel, if one was set;</li>
+          <li>the ID of an audit-log channel, if one was set;</li>
+          <li>whether "now playing" announcements are enabled.</li>
+        </ul>
+        <p><strong>While music is actually playing, and only then:</strong></p>
+        <ul>
+          <li>
+            the queue itself. The tracks lined up, the voice channel Vibe is in, and the volume
+            and repeat setting, so that a restart doesn't wipe out a queue you built. It is
+            deleted the moment playback stops, and in any case automatically after 30 minutes. It
+            holds no user IDs, so it says nothing about who queued what.
+          </li>
+        </ul>
+        <p><strong>For each user who uses a saving or statistics feature:</strong></p>
+        <ul>
+          <li>your Discord user ID;</li>
+          <li>the date Vibe first saw you, which is what a future long-time-listener badge reads;</li>
+          <li>
+            tracks you save (title, artist, link, which source it came from, and when you saved it);
+          </li>
+          <li>playlists you save (name, link, track count, source, and when you saved it);</li>
+          <li>
+            playlists you build yourself: each one's name, whether you chose to show it on your
+            listening passport, and its tracks (title, artist, link, which source it came from,
+            when you added it, and whether it could not be found the last time it was played);
+          </li>
+          <li>your total listening time;</li>
+          <li>your current and longest daily streak, and the last date you were active;</li>
+          <li>how many tracks have counted toward your listening time;</li>
+          <li>
+            the IDs of servers you have listened in, which is what makes per-server leaderboards
+            possible without Vibe needing to see member lists.
+          </li>
+          <li>
+            <strong>which tracks you listen to</strong> &mdash; title, artist, link, source, the
+            server you heard it in, how long you listened, and when. A track counts once you have
+            listened to it for 30 seconds; anything you skip through is not recorded. It is used
+            for two things. It builds your listening passport, which only you can publish. And, if
+            you have a subscription that includes it, it leans autoplay toward what you have been
+            playing while you are sitting in a voice channel &mdash; so some of what the channel
+            hears next follows your listening. <strong>Nothing ever says whose listening it
+            followed</strong>, in chat or anywhere else, and nobody else can read your record.
+            <strong>It is kept for 90 days and then deleted automatically.</strong> You can switch
+            it off at any time with <code>/privacy</code> in Discord &mdash; switching it off also
+            deletes everything already recorded.
+          </li>
+          <li>
+            <strong>if you vote for Vibe on top.gg:</strong> when you voted, and whether it fell on a
+            double-vote weekend &mdash; plus a running count of your weekly voting streak, which is
+            what the Supporter badge on your rank card is earned from. top.gg also sends your
+            username and avatar with each vote; <strong>Vibe does not keep them</strong>, only your
+            Discord ID. Individual votes are deleted after 90 days.
+          </li>
+          <li>
+            your appearance settings, where you have chosen any: the accent colour, background
+            style, background colour and fade setting for your rank card, and the accent and
+            backdrop for the in-Discord player.
+          </li>
+          <li>
+            whether you have a Vibe subscription, and the details of it Discord gives us: the tier,
+            the entitlement and SKU IDs, when it started, when it expires, and when we last checked
+            it with Discord. Payment itself happens entirely inside Discord &mdash; we never see a
+            card, a billing address or an invoice.
+          </li>
+          <li>whether you have switched the track history above off;</li>
+          <li>
+            <strong>if, and only if, you turn on a listening passport:</strong> the share link's
+            token, when it was issued, and the Discord display name and avatar you had at that
+            moment, so the page has a name on it. Turning the passport off deletes all four. The
+            page itself is reachable only by the link, is never listed in search engines, and does
+            not reveal your Discord user ID to anyone who opens it.
+          </li>
+        </ul>
+
+        <h2>2. What we do not store</h2>
+        <ul>
+          <li>
+            <strong>Your messages.</strong> Vibe does not request Discord's Message Content intent
+            and is technically incapable of reading message content.
+          </li>
+          <li><strong>Voice audio.</strong> Nothing spoken in a voice channel is recorded or retained.</li>
+          <li>Your email address, real name, or IP address.</li>
+          <li>Payment information of any kind.</li>
+          <li>Analytics, tracking pixels, or advertising identifiers.</li>
+        </ul>
+        <p>We do not build profiles for advertising, and we do not sell or rent your data to anyone.</p>
+
+        <h2>3. Why we store it</h2>
+        <p>
+          Server settings, so the bot behaves the way you set it up. Saved tracks, so you can play
+          them again. Listening statistics, so <strong>/rank</strong> and
+          <strong>/leaderboard</strong> have something to show. The playing queue, so a restart
+          doesn't cost you the queue you just built. That's the whole reason any of it exists.
+        </p>
+
+        <h2>4. The Vibe Activity</h2>
+        <p>
+          When you open the Activity with <strong>/watch</strong>, Discord gives it a temporary
+          authorisation code. Our server exchanges that with Discord for a short-lived access token,
+          used only to confirm who you are for that session.
+          <strong>That token is never written to our database</strong> and is discarded when you
+          close the Activity.
+        </p>
+        <p>
+          Album artwork is fetched by our server from the music source and passed on to you, so the
+          artwork host never sees your IP address.
+        </p>
+
+        <h2>5. Signing in on the website</h2>
+        <p>
+          Signing in at <strong>playvibe.gg</strong> is optional. The bot works fully
+          without it. If you do, Vibe asks Discord only for your username and your list of servers.
+          It cannot read your messages, and it never sees your password or your email.
+        </p>
+        <p>
+          Your browser is then given a <strong>single cookie</strong>. It holds your Discord user
+          ID, display name, avatar reference and the access token from that sign-in, encrypted,
+          and marked so that no script on the page can read it. It is strictly necessary to keep
+          you signed in, so no consent banner is required for it, and there are no other cookies:
+          no analytics, no advertising, no third-party trackers.
+        </p>
+        <p>
+          The cookie expires after seven days. There is no copy of it on our side, so
+          <strong>signing out deletes it entirely</strong>. That is the whole of it. Clearing your
+          browser's cookies has the same effect.
+        </p>
+
+        <h2>6. Sharing</h2>
+        <p>
+          Your data is not shared with third parties. It is stored in a MongoDB Atlas database
+          operated by MongoDB, Inc., which processes it solely on our behalf as a data processor.
+        </p>
+        <p>
+          Vibe runs several bot accounts (Vibe, Vibe 2, Vibe 3, Vibe Beta) off one database, so your
+          saved tracks and listening time follow you across all of them. That's on purpose, and it's
+          the only "sharing" that happens.
+        </p>
+
+        <h2>7. Retention</h2>
+        <p>
+          Data is kept while you use Vibe. Server settings are kept while Vibe is in that server.
+          A playing queue is kept only until playback stops, and never longer than 30 minutes.
+          Operational logs are kept briefly for debugging and contain no message content.
+        </p>
+
+        <h2>8. Your rights</h2>
+        <p>
+          You can get a copy of everything stored about you, or delete all of it, at any time and
+          without giving a reason. No request needed. Run <strong>/privacy</strong> in any server
+          Vibe is in, or in a DM with it, and use the <strong>Export my data</strong> or
+          <strong>Delete my data</strong> button. Only you can see the reply, and deletion asks you
+          to confirm first.
+        </p>
+        <p>
+          If you'd rather not use the commands, ask in the
+          <a href="https://discord.gg/nMJJ8PAcD9" target="_blank" rel="noopener">support server</a>
+          and it will be handled for you.
+        </p>
+        <p>
+          Deletion removes your entire record, including saved tracks and all listening statistics,
+          and cannot be undone.
+        </p>
+        <p>
+          Under the GDPR you also have the right to access, rectify, erase, restrict and port your
+          data, and to object to its processing. If you believe your data has been handled
+          improperly you may complain to your local supervisory authority, in Spain, the
+          <a href="https://www.aepd.es" target="_blank" rel="noopener">Agencia Española de Protección de Datos (AEPD)</a>.
+        </p>
+
+        <h2>9. Legal basis for processing</h2>
+        <p>
+          We process this data on the basis of <strong>legitimate interest</strong>, providing the
+          features you asked for by running the command. You can withdraw from that processing at
+          any time by requesting deletion and no longer using the saving and statistics features.
+        </p>
+
+        <h2>10. Children</h2>
+        <p>
+          Vibe is not directed at anyone below Discord's minimum age for their country. If we learn
+          that such a user's data has been stored, we delete it.
+        </p>
+
+        <h2>11. Security</h2>
+        <p>
+          Access to the database is restricted and credentials are never stored in the codebase. No
+          system is perfectly secure, and we make no absolute guarantee.
+        </p>
+
+        <h2>12. Changes</h2>
+        <p>
+          Material changes to this policy will be announced in the support server before they take
+          effect.
+        </p>
+
+        <h2>13. Contact</h2>
+        <p>
+          The
+          <a href="https://discord.gg/nMJJ8PAcD9" target="_blank" rel="noopener">Vibe support server</a>
+          is the fastest way to reach us about anything on this page.
+        </p>
+
+        <a class="back" href="/">← Back to Vibe</a>
+      </main>
+
+      <footer>
+        <span>© <span id="year">2026</span> Vibe</span>
+        <nav>
+          <a href="/terms">Terms</a>
+          <a href="/privacy">Privacy</a>
+          <a href="https://discord.gg/nMJJ8PAcD9" target="_blank" rel="noopener">Support server</a>
+        </nav>
+      </footer>
+    </div>
+    <script>
+      document.getElementById("year").textContent = new Date().getFullYear();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,9 @@
+# GENERATED FILE - written by scripts/sync-web-shared.js.
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /servers
+Disallow: /np/
+Disallow: /api/
+
+Sitemap: https://playvibe.gg/sitemap.xml

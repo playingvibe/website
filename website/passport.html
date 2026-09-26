@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Listening passport | Vibe</title>
+    <meta name="description" content="A Vibe listening passport." />
+    <meta name="theme-color" content="#0b0b0d" />
+    <!--
+      Not indexed, and that is not the same decision as the dashboard's.
+
+      A passport is public to whoever holds the link — but "public" here means *shared by its
+      owner*, not *findable*. Letting a search engine crawl these would turn an unguessable link
+      into a listed page, which is the one property the token exists to provide. The `noindex` is
+      what keeps "I shared this with my server" from becoming "this is on the open web".
+    -->
+    <meta name="robots" content="noindex, nofollow" />
+    <!--
+      Root-absolute, where every other page on this site uses relative paths — because this is the
+      only page served from a nested path. `/u/<token>` is a rewrite to this file, so `styles.css`
+      resolves against `/u/` and 404s, and the page renders unstyled with a full-width logo. It
+      looks exactly like a broken deploy, and only on the one page nobody signs in to check.
+    -->
+    <link rel="icon" href="/V_logo_vectorized.svg" />
+    <link rel="preload" href="/fonts/outfit-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <a class="skip" href="#passport">Skip to content</a>
+    <div class="wrap">
+      <nav class="nav">
+        <a class="nav-brand" href="/">
+          <svg class="mark" viewBox="0 0 1254 1254" aria-hidden="true">
+            <path
+              d="M 877 349 L 858 344 L 835 344 L 817 348 L 792 361 L 773 379 L 765 390 L 754 410 L 666 623 L 653 646 L 646 653 L 641 655 L 632 653 L 624 643 L 620 634 L 550 415 L 538 390 L 527 377 L 518 370 L 506 364 L 490 360 L 464 360 L 449 363 L 424 373 L 406 385 L 392 399 L 380 419 L 376 434 L 376 452 L 379 465 L 409 537 L 436 608 L 536 884 L 548 909 L 563 930 L 575 940 L 589 947 L 608 950 L 626 948 L 650 938 L 669 925 L 690 904 L 705 885 L 731 843 L 753 799 L 910 457 L 917 439 L 920 424 L 920 404 L 916 388 L 905 369 L 892 357 Z"
+            />
+          </svg>
+          <span class="wordmark">Vibe</span>
+        </a>
+        <div class="nav-links">
+          <a href="/">Home</a>
+          <a href="https://discord.gg/nMJJ8PAcD9" target="_blank" rel="noopener">Support</a>
+        </div>
+      </nav>
+
+      <main tabindex="-1" class="dash" id="passport" aria-busy="true">
+        <p class="dash-status" id="status">Loading…</p>
+      </main>
+
+      <footer class="foot">
+        <a href="/">Home</a> · <a href="/terms">Terms</a> · <a href="/privacy">Privacy</a>
+      </footer>
+    </div>
+
+    <script type="module">
+      /**
+       * Renders one listening passport.
+       *
+       * **The token comes from the path, not a query string.** `/u/<token>` is rewritten to this
+       * page by `vercel.json`, so the address somebody shares reads as a page rather than as an
+       * API call with a secret stapled to it — and a link pasted into a chat client does not get
+       * its query mangled by a URL shortener or a tracking stripper.
+       */
+      const token = location.pathname.split("/").filter(Boolean).pop() ?? "";
+      const root = document.getElementById("passport");
+      const status = document.getElementById("status");
+
+      const escapeHtml = (value) =>
+        String(value).replace(/[&<>"']/g, (ch) => ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#39;",
+        })[ch]);
+
+      const fail = (message) => {
+        root.setAttribute("aria-busy", "false");
+        root.innerHTML = `<p class="dash-error">${escapeHtml(message)}</p>`;
+      };
+
+      const round = (value, digits = 1) =>
+        Number(value).toLocaleString(undefined, { maximumFractionDigits: digits });
+
+      /** "3 days ago", down to "just now" — an exact timestamp on a public page is a log, not a
+       *  profile, and nobody needs to know what somebody played at 3:42am. */
+      const when = (iso) => {
+        const minutes = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+        if (minutes < 2) return "just now";
+        if (minutes < 60) return `${minutes} min ago`;
+        const hours = Math.round(minutes / 60);
+        if (hours < 24) return `${hours}h ago`;
+        const days = Math.round(hours / 24);
+        return days === 1 ? "yesterday" : `${days} days ago`;
+      };
+
+      const trackRow = (track, trailing) => `
+        <li>
+          <span class="passport-title">${escapeHtml(track.title)}</span>
+          ${track.author ? `<span class="passport-sub">${escapeHtml(track.author)}</span>` : ""}
+          <span class="passport-meta">${trailing}</span>
+        </li>`;
+
+      function render(data) {
+        const { owner, stats, level, badges, listening, favorites, historyOff } = data;
+        const playlists = data.playlists ?? [];
+
+        const recent = listening.recent.map((track) => trackRow(track, escapeHtml(when(track.playedAt)))).join("");
+        // No trailing note: a favourite has no "when", and the source it came from is never shown.
+        const saved = favorites.items.map((track) => trackRow(track, "")).join("");
+
+        root.setAttribute("aria-busy", "false");
+        root.innerHTML = `
+          <section class="passport-head">
+            ${owner.avatarUrl ? `<img class="passport-avatar" src="${escapeHtml(owner.avatarUrl)}" alt="" width="96" height="96" />` : ""}
+            <div>
+              <h1>${escapeHtml(owner.displayName)}</h1>
+              <p class="lede">Level ${level.level} · listening on <strong>Vibe</strong></p>
+            </div>
+          </section>
+
+          <section>
+            <div class="stat-grid">
+              <div class="stat">
+                <div class="stat-value">${round(stats.listeningHours)}</div>
+                <div class="stat-label">hours listened</div>
+              </div>
+              <div class="stat">
+                <div class="stat-value">${stats.tracksPlayed.toLocaleString()}</div>
+                <div class="stat-label">tracks played</div>
+              </div>
+              <div class="stat">
+                <div class="stat-value">${stats.currentStreak}</div>
+                <div class="stat-label">day streak</div>
+                <div class="stat-note">best ${stats.longestStreak}</div>
+              </div>
+              <div class="stat">
+                <div class="stat-value">${stats.servers}</div>
+                <div class="stat-label">servers</div>
+              </div>
+            </div>
+          </section>
+
+          ${
+            badges.length
+              ? `<section class="badge-section">
+                   <h2>Badges</h2>
+                   <div class="badge-row">
+                     ${badges
+                       .map(
+                         (badge) =>
+                           `<span class="badge" style="--badge: ${escapeHtml(badge.color)}">${escapeHtml(badge.name)}</span>`
+                       )
+                       .join("")}
+                   </div>
+                 </section>`
+              : ""
+          }
+
+          <section class="badge-section">
+            <h2>Recently played</h2>
+            ${
+              historyOff
+                ? '<p class="badge-empty">Listening history is switched off for this account.</p>'
+                : recent
+                  ? `<ol class="passport-list">${recent}</ol>`
+                  : '<p class="badge-empty">Nothing played in the last 90 days.</p>'
+            }
+          </section>
+
+          ${
+            // **Liked Songs is a playlist here too**, folded into the same section and opening the
+            // same way — it is one on `/liked` and one in `/playlist list`, and printing it in full
+            // above a row of collapsed names made the page contradict both. Liked first, then the
+            // shared ones, which is the order every other surface uses.
+            // Each is a <details> so a page with several long playlists stays a profile rather than
+            // a wall; readable, not playable — there is nothing here to press.
+            saved || playlists.length
+              ? `<section class="badge-section">
+                   <h2>Playlists</h2>
+                   ${
+                     saved
+                       ? `<details class="passport-playlist">
+                            <summary>
+                              <span class="passport-title">Liked Songs</span>
+                              <span class="passport-meta">${favorites.total} song${favorites.total === 1 ? "" : "s"}</span>
+                            </summary>
+                            <ol class="passport-list">${saved}</ol>
+                            ${
+                              favorites.total > favorites.items.length
+                                ? `<p class="stat-note">Showing the first ${favorites.items.length} of ${favorites.total}.</p>`
+                                : ""
+                            }
+                          </details>`
+                       : ""
+                   }
+                   ${playlists
+                     .map(
+                       (playlist) => `
+                     <details class="passport-playlist">
+                       <summary>
+                         <span class="passport-title">${escapeHtml(playlist.name)}</span>
+                         <span class="passport-meta">${playlist.trackCount} song${playlist.trackCount === 1 ? "" : "s"}</span>
+                       </summary>
+                       <ol class="passport-list">
+                         ${playlist.tracks
+                           .map((track) => trackRow(track, track.unavailable ? "unavailable" : ""))
+                           .join("")}
+                       </ol>
+                       ${
+                         playlist.trackCount > playlist.tracks.length
+                           ? `<p class="stat-note">Showing the first ${playlist.tracks.length} of ${playlist.trackCount}.</p>`
+                           : ""
+                       }
+                     </details>`
+                     )
+                     .join("")}
+                 </section>`
+              : ""
+          }
+
+          <p class="stat-note">
+            Recently played covers the last 90 days. Want a page like this?
+            <a href="/">Add Vibe to your server.</a>
+          </p>`;
+      }
+
+      (async () => {
+        if (!/^[0-9a-f]{32}$/.test(token)) return fail("No passport here.");
+
+        try {
+          const response = await fetch(`/api/passport?token=${encodeURIComponent(token)}`);
+          if (response.status === 404) return fail("No passport here. The link may have been turned off.");
+          if (!response.ok) return fail("Passports are unavailable right now. Try again in a moment.");
+          render(await response.json());
+        } catch {
+          fail("Passports are unavailable right now. Try again in a moment.");
+        } finally {
+          status.remove?.();
+        }
+      })();
+    </script>
+  </body>
+</html>

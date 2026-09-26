@@ -1,0 +1,34 @@
+name: Bug report
+description: Something on the website is broken or looks wrong
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. **Security problems don't go here**: see SECURITY.md.
+        Never paste a token, a cookie or anyone's private data.
+  - type: input
+    id: page
+    attributes:
+      label: Page
+      description: The address of the page, or "local dev server"
+      placeholder: https://playvibe.gg/...
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you saw, and what you expected instead. A screenshot helps.
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and device
+      placeholder: Firefox 130 on Windows, Safari on iPhone 15
+  - type: dropdown
+    id: state
+    attributes:
+      label: Signed in?
+      options: [Not signed in, Signed in, Not sure]

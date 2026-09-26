@@ -1,0 +1,22 @@
+name: Suggestion
+description: An idea for the website
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What is hard, missing or confusing today? Start here rather than with the solution.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+      description: What would you change? A sketch or a screenshot is welcome.
+  - type: checkboxes
+    id: help
+    attributes:
+      label: Can you build it?
+      options:
+        - label: I'd like to send a pull request for this

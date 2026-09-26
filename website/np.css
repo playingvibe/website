@@ -1,0 +1,111 @@
+/* The now-playing overlay. Transparent, so OBS composites it over the stream; hidden until a track
+   plays. The accent is the answering Vibe's own colour, set by np.js. */
+
+@font-face {
+  font-family: "Outfit";
+  src: url("/fonts/outfit-latin.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+:root {
+  --accent: #e05570;
+}
+
+html,
+body {
+  margin: 0;
+  background: transparent;
+  font-family: "Outfit", system-ui, sans-serif;
+  color: #fff;
+}
+
+.np {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: max-content;
+  max-width: min(560px, calc(100vw - 48px));
+  box-sizing: border-box;
+  margin: 24px;
+  padding: 12px 22px 12px 12px;
+  border-radius: 16px;
+  background: rgba(14, 12, 14, 0.78);
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.np.on {
+  opacity: 1;
+  transform: none;
+}
+.np.no-art .np-art {
+  display: none;
+}
+
+.np-art {
+  width: 96px;
+  height: 96px;
+  border-radius: 10px;
+  object-fit: cover;
+  flex: none;
+  background: color-mix(in srgb, var(--accent) 22%, #1a1a20);
+}
+.np-art[hidden] {
+  display: none;
+}
+
+.np-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.np-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
+}
+.np-artist {
+  margin: 2px 0 0;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.72);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.np-artist:empty {
+  display: none;
+}
+
+.np-bar {
+  margin-top: 12px;
+  height: 4px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.16);
+  overflow: hidden;
+}
+.np-bar[hidden] {
+  display: none;
+}
+.np-bar span {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 99px;
+}
+.np.paused .np-bar span {
+  opacity: 0.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .np {
+    transition: none;
+  }
+}
