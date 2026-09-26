@@ -19,7 +19,7 @@
     "url": "git+https://github.com/playingvibe/website.git"
   },
   "dependencies": {
-    "mongodb": "^6.10.0"
+    "mongodb": "^7.6.0"
   },
   "devDependencies": {
     "eslint": "^10.10.0",
