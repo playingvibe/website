@@ -34,6 +34,12 @@ get wrong. Switch between them on any page with a query string, for example
 The stub proves how a page renders, not how it authenticates. Auth and the endpoints are covered
 by the tests.
 
+**Premium is open here.** Every premium setting and page works for every account in this
+repository: `website/lib/entitlements.js` is an open version of the module that decides who has
+premium, so you can develop and test the whole interface, with the real API and a real database,
+without a subscription. The production site runs a different implementation of the same three
+functions. Changes to that file are not accepted, since it is not what runs in production.
+
 ## Tests and lint
 
 ```bash

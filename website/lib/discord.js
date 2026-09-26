@@ -141,11 +141,11 @@ export function fetchGuilds(accessToken) {
  * Whether the user may configure the bot for this server.
  *
  * **The counterpart of `canManageGuild()` in `src/domain/permissions.js`, and the only rule this
- * side is allowed to restate.** It exists separately because the website cannot import from
- * `src/` and because OAuth hands over a permission bitfield as a *string* plus an `owner` flag,
- * not a discord.js `GuildMember`. Any further authorization the dashboard needs belongs behind an
- * endpoint that asks the bot, not in a growing copy of the bot's rules here — the Activity
- * already demonstrated what a second permission model costs.
+ * side is allowed to restate.** It exists separately because the website cannot import the bot's
+ * code (it is not part of this repository) and because OAuth hands over a permission bitfield as a
+ * *string* plus an `owner` flag, not a discord.js `GuildMember`. Any further authorization the
+ * dashboard needs belongs behind an endpoint that asks the bot, not in a growing copy of the
+ * bot's rules here: a second permission model drifts from the first.
  * @param {{permissions?: string, owner?: boolean}} guild - As returned by `/users/@me/guilds`.
  * @returns {boolean}
  */

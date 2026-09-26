@@ -3,8 +3,8 @@ import {
   findPassportFavorites,
   findPassportListening,
   findPassportPlaylists,
-  findPremiumActive,
 } from "../lib/mongo.js";
+import { hasPremium } from "../lib/entitlements.js";
 import { getLevel } from "../lib/generated/level.js";
 import { getEarnedBadgeTiers } from "../lib/generated/badges.js";
 import { cleanTrackTitle } from "../lib/generated/track.js";
@@ -73,7 +73,7 @@ export default async function handler(req, res) {
 
   // A lapse must close the page. Failing closed on an error too: a passport that stays up because
   // the entitlement lookup blipped is the paywall leaking in public, where it is least noticeable.
-  const entitled = await findPremiumActive(user._id).catch(() => false);
+  const entitled = await hasPremium(user._id);
   if (!entitled) {
     res.status(404).json({ error: "No passport here." });
     return;
@@ -96,9 +96,9 @@ export default async function handler(req, res) {
     ...(playedAt ? { playedAt } : {}),
   });
 
-  // All three in one pass, but each on its own: one failing must not blank the others. The first version
-  // used Promise.all, so when the database user lacked read access to `listeningHistory` (2026-09-25) the
-  // favourites and the shared playlist, which read `users` and were fine, vanished with it.
+  // All three in one pass, but each on its own: one failing must not blank the others. With
+  // Promise.all, a database user without read access to `listeningHistory` would take the
+  // favourites and the shared playlists, which read `users` and are fine, down with it.
   const [listeningRead, favoritesRead, playlistsRead] = await Promise.allSettled([
     findPassportListening(user._id),
     findPassportFavorites(user._id),

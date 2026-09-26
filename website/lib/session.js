@@ -17,8 +17,8 @@ const STATE_TTL_SECONDS = 10 * 60;
  * Thrown when `SESSION_SECRET` is missing or too short.
  *
  * Typed, because the callback has to tell "this deployment is misconfigured" apart from "Discord
- * refused us": both arrive at the same `catch`, and until 2026-09-12 both reached the user as the
- * same sentence. Carries the fact, never the value.
+ * refused us": both arrive at the same `catch`, and must not reach the user as the same sentence.
+ * Carries the fact, never the value.
  */
 export class SessionConfigError extends Error {
   constructor(message) {

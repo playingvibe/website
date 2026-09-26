@@ -4,10 +4,10 @@ import { SessionConfigError, setSession, verifyState } from "../../lib/session.j
 /**
  * Which `/dashboard?error=` reason a failure deserves.
  *
- * **Three unrelated failures used to share one message.** A wrong `DISCORD_CLIENT_SECRET`, a
- * `SESSION_SECRET` too short to build a key, and Discord being down all read as *"Discord wouldn't
- * complete the sign-in"* — to the user and, because nothing was logged, to whoever had to fix it.
- * That cost three deploys on 2026-09-12 before someone remembered which value had been pasted where.
+ * **Three unrelated failures must not share one message.** A wrong `DISCORD_CLIENT_SECRET`, a
+ * `SESSION_SECRET` too short to build a key, and Discord being down would all read as *"Discord
+ * wouldn't complete the sign-in"* — to the user and, if nothing were logged, to whoever had to fix
+ * it. So each is told apart and logged.
  *
  * The distinction that matters is **ours or theirs**: a 401 from the token exchange is Discord
  * saying our own credentials are wrong, which no amount of retrying fixes, while a 400 is usually a

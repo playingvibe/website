@@ -256,9 +256,9 @@ const server = http.createServer(async (req, res) => {
 
       const patch = await body(req);
 
-      // **Validated, with the real endpoint's messages and status codes.** The stub used to accept
-      // any body at all, so the four 400s could only ever be seen against a live database — and a
-      // page that sends something the API refuses looks perfectly fine here and fails in
+      // **Validated, with the real endpoint's messages and status codes.** A stub that accepted
+      // any body would show the four 400s only against a live database, and a page that sends
+      // something the API refuses would look fine here and fail in
       // production. These are the same four checks `website/api/appearance.js` makes, driven by
       // the same imported palette and the same generated background list.
       const bad = (message) => json(res, 400, { error: message });

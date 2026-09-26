@@ -8,10 +8,9 @@ import { dash } from "./shared.js";
 /**
  * The pending-change registry behind the save bar.
  *
- * **Why the page stopped saving on click.** Every control here used to write immediately and
- * roll back if the request failed. That is fine for a single toggle and wrong for a settings
- * page: there is no way to change your mind, no way to change two things as one act, and every
- * stray click is a round trip. A staged edit with an explicit Save is what people expect from a
+ * **Why the page does not save on click.** Writing immediately and rolling back if the request
+ * fails is fine for a single toggle and wrong for a settings page: there is no way to change your
+ * mind, no way to change two things as one act, and every stray click is a round trip. A staged edit with an explicit Save is what people expect from a
  * settings screen, and it is what Discord's own does.
  *
  * Each control registers `{ save, revert }` under a stable id. Re-registering the same id

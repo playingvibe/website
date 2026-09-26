@@ -1,5 +1,6 @@
 import { getSession } from "../lib/session.js";
-import { findUserStats, findPremiumActive } from "../lib/mongo.js";
+import { findUserStats } from "../lib/mongo.js";
+import { hasPremium } from "../lib/entitlements.js";
 import { getLevel } from "../lib/generated/level.js";
 import { getEarnedBadgeTiers } from "../lib/generated/badges.js";
 
@@ -60,7 +61,7 @@ export default async function handler(req, res) {
   // lookup blipped would be a worse bug than not showing it at all, and the page is entirely
   // usable without it — so a failure here degrades to "not premium" rather than failing the
   // request that carries someone's whole profile.
-  const premium = await findPremiumActive(session.id).catch(() => false);
+  const premium = await hasPremium(session.id);
 
   res.status(200).json({
     hasData: Boolean(doc),

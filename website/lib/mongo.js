@@ -17,7 +17,7 @@ import { MongoClient } from "mongodb";
  *
  * The connection is cached on `globalThis` because Vercel reuses a warm function instance across
  * invocations, and reconnecting per request would open a new pool each time — the fastest way
- * there is to exhaust an Atlas free tier's connection cap.
+ * there is to exhaust a hosted database's connection cap.
  */
 const globalForMongo = globalThis;
 
@@ -45,7 +45,7 @@ export async function db() {
     //
     // **The cache is cleared if that promise rejects.** A rejected promise left in place is
     // returned to every later request for the life of the warm instance, so one unlucky connect —
-    // a DNS blip, an Atlas failover, a cold start racing the 5 s selection timeout — turns into a
+    // a DNS blip, a database failover, a cold start racing the 5 s selection timeout — turns into a
     // dashboard that is broken until Vercel happens to recycle the instance, with nothing to retry
     // it. Only this promise is cleared: a newer one may already have replaced it.
     const connecting = client.connect().catch((error) => {
@@ -179,37 +179,6 @@ export async function saveRankCardStyle(userId, changes) {
 }
 
 /**
- * Whether this user currently has an active premium entitlement.
- *
- * **Reads the mirror the bot writes, rather than asking Discord.** The flagship's
- * `EntitlementService` sweeps `GET /applications/{id}/entitlements` hourly and writes the answer
- * onto the user document; every reader — the four bots and this website — reads that one row. So
- * the website needs no Discord token, no SKU knowledge and no second implementation of the rule.
- *
- * > This supersedes the note in `api/appearance.js` that said the check would eventually become
- * > "a call to an endpoint the bot exposes". An endpoint would mean a new authenticated surface
- * > between two services that already share a database. Reading the mirror is strictly less.
- *
- * **A null `expiresAt` means active, not expired.** Discord's test entitlements carry no end
- * date, and reading that absence as "already over" is the mistake that makes the whole
- * pre-launch workflow look broken. Kept identical to `isPremiumActive()` in
- * `src/domain/entitlements.js`; the two must not drift.
- * @param {string} userId
- * @returns {Promise<boolean>}
- */
-export async function findPremiumActive(userId) {
-  const users = (await db()).collection("users");
-  const doc = await users.findOne({ _id: userId }, { projection: { premium: 1 } });
-
-  const tier = doc?.premium?.tier ?? null;
-  if (!tier) return false;
-
-  const expiresAt = doc?.premium?.expiresAt ?? null;
-  if (!expiresAt) return true;
-  return new Date(expiresAt).getTime() > Date.now();
-}
-
-/**
  * Which Vibe instances are currently in a guild, and what each one overrides.
  *
  * The presence rows are written by the bots themselves on `guildCreate`/`guildDelete` plus a
@@ -249,8 +218,7 @@ export async function findGuildConfig(guildId) {
  * Mirrors `GuildInstanceRepository.setOverrides()`, including the two conventions that are easy
  * to get wrong: a `null` value **clears** the override so the shared setting applies again, and
  * an empty array on either list means "override to unrestricted". `undefined` and `null` have to
- * stay distinguishable here for the same reason they do in the model — which is also why the lists
- * no longer need the `"none"` sentinel the old single-id field required.
+ * stay distinguishable here for the same reason they do in the model.
  * @param {string} clientId
  * @param {string} guildId
  * @param {object} patch - Already validated by the caller.
@@ -395,10 +363,10 @@ export async function findPassportFavorites(userId, { limit = 12 } = {}) {
  * The playlists a passport's owner chose to show on it.
  *
  * **Only `shared: true`, filtered on the server.** Visibility is per playlist and off by default
- * (the owner's "if the user wants it"), so an unshared playlist must never reach this response —
+ * (nothing is shown unless the user chooses to), so an unshared playlist must never reach this response —
  * not even to be hidden by the page, where anyone reading the network tab would see it.
  *
- * **Readable, not playable** — decided 2026-09-12. So no `uri` leaves the database: a list of links
+ * **Readable, not playable.** So no `uri` leaves the database: a list of links
  * is a playable playlist with extra steps, which would let one subscriber equip a whole friend
  * group. And no `source`, for the rule every user-visible surface follows.
  *

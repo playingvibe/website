@@ -235,8 +235,8 @@ const { readFileSync } = await import("node:fs");
 
 test("a 401 from the token exchange is our misconfiguration, not a transient failure", () => {
   // Discord answers 401 invalid_client when the client secret is wrong. Retrying never fixes it,
-  // so it must not reach the user as "try again in a moment" — which is what cost three deploys
-  // on 2026-09-12.
+  // so it must not reach the user as "try again in a moment", which would send whoever runs the
+  // site looking in the wrong place.
   assert.equal(reasonFor(new DiscordApiError("token_exchange", 401)), "server_misconfigured");
 });
 

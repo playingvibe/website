@@ -2,8 +2,8 @@ import { getSession } from "../lib/session.js";
 import { canManageGuild, fetchGuilds } from "../lib/discord.js";
 import { findGuildConfig, findInstancesByGuild, saveGuildOverrides } from "../lib/mongo.js";
 import { readJson } from "../lib/http.js";
-// Shared with `guilds.js`, which carried its own identical copy of both until 2026-09-21. The
-// reasoning for *which* three fields, and why it is narrower than the bot's own list, is there.
+// Shared with `guilds.js`. The reasoning for *which* three fields, and why it is narrower than the
+// bot's own list, is there.
 import { OVERRIDABLE, pickOverrides } from "../lib/overrides.js";
 
 
@@ -179,7 +179,7 @@ async function patchGuild(req, res, url, guildId, guild) {
  * Duplicated rather than imported for the reason `lib/mongo.js` documents: the Vercel deploy root
  * is `website/`, so nothing under `src/` is in this bundle. The two must keep agreeing — an
  * explicit empty array wins over the legacy single-id field, because `[]` is a real setting
- * ("unrestricted") and must not fall through to whatever `commandsChannelId` used to say.
+ * ("unrestricted") and must not fall through to the older `commandsChannelId` field.
  * @param {?object} source
  * @returns {string[]}
  */

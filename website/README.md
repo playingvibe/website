@@ -34,8 +34,6 @@ gitignored here and Vercel does not read one from the repo anyway.
 | `GUILD_API_SECRET` | Optional; without it the per-server settings page (`/servers/<id>`) answers "not available yet". The same random value as the flagship's `GUILD_API_SECRET` (`openssl rand -hex 32`): the website calls the bot's `/internal/guild-settings` with it, so the site needs **no bot token**. |
 | `BOT_API_ORIGIN` | Optional. Where that call goes; defaults to `https://api.playvibe.gg`. |
 | `SITE_ORIGIN` | Optional. Pins the OAuth redirect origin; without it the origin is derived from the request, which is what makes preview deployments work. |
-| `PREMIUM_OPEN` | Optional, and **closed when unset**. Only the exact value `true` makes premium settings free for everyone — a development convenience. Never set it in production. Must agree with the bot's. |
-| `PREMIUM_SKU_ID` | Optional. The user-tier subscription's Discord SKU id. Unset (or not a snowflake) means nothing is for sale, and the dashboard hides the premium appearance settings from anyone not entitled; set, they show greyed out. Presentation only — the write is refused either way. |
 
 In the Developer Portal, add the redirect URI under **OAuth2 → Redirects**:
 `https://playvibe.gg/api/auth/callback` (plus your preview origin if you want logins to
@@ -62,8 +60,11 @@ about themselves, or about a server they administer:
 - **Six appearance fields on their own user document** — `rankCardAccent`, `rankCardBackground`,
   `rankCardBackgroundColor`, `rankCardFade`, `activityAccent` and `activityBackground`. The first
   four are the card `/rank` draws; the last two are the player `/watch` opens. **This is the only
-  write path for any of them** — no slash command writes an appearance setting — so the
-  entitlement check in `api/appearance.js` is the paywall, not a second copy of it.
+  write path for any of them** — no slash command writes an appearance setting — so the check
+  behind it, in `lib/entitlements.js`, is the only place that decides who may write. That module
+  is the one thing in this repository that differs from production: the copy here is open
+  (everything allowed), so the whole interface can be tested without a subscription, and the
+  production site runs a different implementation of the same functions.
 - `guildInstances.overrides.*` — per-bot settings for a server **they administer**, re-checked
   against Discord on every request rather than trusted from the session. Which three fields, and
   why that is narrower than the bot's own list, is in `lib/overrides.js`.

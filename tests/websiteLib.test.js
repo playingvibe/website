@@ -6,14 +6,10 @@ import { pickOverrides, OVERRIDABLE } from "../website/lib/overrides.js";
 import { normaliseCardColor } from "../website/lib/generated/cardBackgrounds.js";
 
 /**
- * The website's first tests — **it had none at all until 2026-09-21**, which the 2026-09-07 audit
- * filed as a MEDIUM against a surface that is publicly reachable and holds the only write path
- * for every appearance setting.
- *
- * These are the three the audit named as the cheapest with the most value, plus one. All four are
- * pure functions: no database, no browser, no Discord. That is the point — the reason the website
- * had no tests is that testing it *looked* like it needed all three, and the rules most likely to
- * be wrong need none of them.
+ * Tests for the website's pure functions: the rules that decide who may change what, on a surface
+ * that is publicly reachable and holds the only write path for every appearance setting. All of
+ * them are pure: no database, no browser, no Discord. Testing the website can look as if it needs
+ * all three, and the rules most likely to be wrong need none of them.
  *
  * `npm test` at the root runs `node --test` over `tests/`, so these run with everything else.
  */

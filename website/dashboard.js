@@ -17,9 +17,9 @@ import { renderProfile } from "./dash/profile.js";
  * @returns {Promise<void>}
  */
 async function main() {
-  // **Both calls in one `try`, and in parallel.** The profile fetch used to sit outside the
-  // try/catch: a network failure between the two — a tab that woke up on a dead connection, a
-  // dropped Wi-Fi — threw an unhandled rejection and left the page on "Loading…" for ever, with
+  // **Both calls in one `try`, and in parallel.** A fetch outside the try/catch would turn a
+  // network failure between the two — a tab that woke up on a dead connection, a dropped Wi-Fi —
+  // into an unhandled rejection and leave the page on "Loading…" for ever, with
   // `aria-busy="true"` and no way back but a manual reload. Running them together also removes a
   // round trip from the critical path, since neither depends on the other: `/api/me` decrypts a
   // cookie and `/api/profile` reads the database, and the second refuses on its own if there is

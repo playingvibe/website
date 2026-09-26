@@ -364,9 +364,9 @@ export async function renderCardStyle({
           body: JSON.stringify(body),
         }).catch(() => null);
 
-        // **One note, not a pile of them.** Each failed save used to append another paragraph, so
-        // three failures left three identical sentences stacked under the section and none of them
-        // ever went away — not even after a save succeeded, which made a working page look broken.
+        // **One note, not a pile of them.** Appending a paragraph per failed save would leave
+        // three identical sentences stacked under the section, and none would go away — not even
+        // after a save succeeded, which would make a working page look broken.
         host.querySelector(".section-note--save")?.remove();
 
         if (!response?.ok) {
@@ -560,10 +560,10 @@ export async function renderCardStyle({
   /**
    * The Activity's colour: the same eight suggestions the rank card offers, plus a free picker.
    *
-   * **Built once, then only updated.** The first version re-rendered the whole control from inside
-   * the colour input's own `input` handler — which called `replaceChildren` and destroyed the very
-   * `<input>` being dragged, so the picker did nothing at all. Anything that repaints has to leave
-   * the element the user is currently interacting with alone.
+   * **Built once, then only updated.** Re-rendering the whole control from inside the colour
+   * input's own `input` handler would call `replaceChildren` and destroy the very `<input>` being
+   * dragged, so the picker would do nothing at all. Anything that repaints has to leave the
+   * element the user is currently interacting with alone.
    *
    * The suggestions matter as much as the picker: a bare colour well gives no starting point, and
    * most people want *a nice colour*, not to mix one. The palette is the same eight the card uses,

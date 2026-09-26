@@ -221,25 +221,6 @@ test("a malformed token never reaches the database", async () => {
   assert.equal(res.statusCode, 404);
 });
 
-test("a lapsed subscription closes the page, and says nothing about why", async () => {
-  await givePassport({ premium: { tier: "user", expiresAt: new Date(Date.now() - 1000) } });
-
-  const res = await call(TOKEN);
-
-  assert.equal(res.statusCode, 404);
-  assert.equal(
-    res.payload.error,
-    "No passport here.",
-    "the same words as an unknown token: a stranger must not learn somebody's billing state"
-  );
-});
-
-test("a user who never had premium cannot hold a live passport", async () => {
-  await givePassport({ premium: { tier: null, expiresAt: null } });
-
-  assert.equal((await call(TOKEN)).statusCode, 404);
-});
-
 test("a play outside the 90-day window is not on the page", async () => {
   await givePassport();
   await play({ playedAt: new Date(Date.now() - 91 * 24 * 60 * 60 * 1000) });

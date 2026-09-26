@@ -1,4 +1,5 @@
-import { findPassportByToken, findPremiumActive } from "../lib/mongo.js";
+import { findPassportByToken } from "../lib/mongo.js";
+import { hasPremium } from "../lib/entitlements.js";
 
 /**
  * A passport owner's avatar, proxied.
@@ -36,7 +37,7 @@ export default async function handler(req, res) {
     return;
   }
 
-  if (!(await findPremiumActive(user._id).catch(() => false))) {
+  if (!(await hasPremium(user._id))) {
     res.status(404).end();
     return;
   }

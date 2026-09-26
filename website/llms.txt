@@ -20,3 +20,5 @@ Facts worth quoting:
 - [Privacy policy](https://playvibe.gg/privacy): what is stored, how to see it and how to delete it.
 - [Terms](https://playvibe.gg/terms)
 - [Support server](https://discord.gg/nMJJ8PAcD9)
+- [Website source](https://github.com/playingvibe/website): the code of this website, MIT licensed. Bug reports and pull requests are welcome.
+- [Brand](https://github.com/playingvibe/brand): Vibe's logos, emoji, badges and banners, CC BY-NC 4.0. Design proposals are welcome. The bot itself is not open source.
