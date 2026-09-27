@@ -1687,6 +1687,42 @@ footer a:hover {
   border-bottom-color: var(--accent);
 }
 
+/* Which bot's settings the "Each bot" section shows: one tab per bot, wearing the tile /invite uses for it.
+   Underlined like the dashboard tabs above, but real buttons of a tablist, since they change a panel on
+   the same page. */
+.bot-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 18px;
+  border-bottom: 1px solid var(--line);
+}
+.bot-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  color: var(--ink-2);
+  font: inherit;
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  cursor: pointer;
+}
+.bot-tab img {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+}
+.bot-tab:hover {
+  color: var(--ink);
+}
+.bot-tab[aria-selected="true"] {
+  color: var(--ink);
+  border-bottom-color: var(--accent);
+}
+
 /* --- the player preview --------------------------------------------------------- */
 
 /* A mock of the player `/watch` opens, built from the landing page's `.player` pieces. Two shapes,

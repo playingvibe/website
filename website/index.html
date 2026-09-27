@@ -208,16 +208,13 @@
       </section>
 
       <!--
-        **Only the flagship is offered, because only the flagship runs.** Vibe 2, Vibe 3 and Vibe
-        Beta exist as Discord applications but their systemd units are not started and their
-        `CLIENT_ID_*` values are commented out in the host's `shared.env` — so an invite link for
-        any of them adds a bot that never comes online, which is a worse first impression than not
-        offering it. `/invite` already gets this right: an instance with no client id renders as
-        "(Soon)" and disabled. This section was the one surface still contradicting it.
+        **Only the bots that run are offered:** Vibe and Vibe 2. Vibe 3 and Vibe Beta exist as Discord
+        applications but are not started, so an invite link for either adds a bot that never comes
+        online, which is a worse first impression than not offering it. `/invite` gets this right: an
+        instance with no client id renders as "(Soon)" and disabled, and this section follows it.
 
-        **To restore:** uncomment the three blocks below, and change the heading and lede back to
-        the multi-bot version in the comment above them. Do it when the units are actually running,
-        not when the applications exist. Tracked by the maintainers.
+        **To add one:** uncomment its block below when its unit is actually running (and Activities are
+        enabled on its application), not when the application exists.
       -->
       <section id="add">
         <h2>Add Vibe to your server</h2>
@@ -238,29 +235,27 @@
             <span class="instance-desc">The player, the queue, the stats</span>
             <span class="instance-add">Add →</span>
           </a>
+          <a
+            class="instance"
+            style="--i: #4577b8"
+            href="https://discord.com/oauth2/authorize?client_id=1533281867523031070"
+            target="_blank"
+            rel="noopener"
+          >
+            <span class="dot"></span>
+            <span class="instance-name">Vibe 2</span>
+            <span class="instance-desc">A second queue</span>
+            <span class="instance-add">Add →</span>
+          </a>
         </div>
+        <p class="section-lede">
+          Each Vibe is its own bot with its own queue, so you can have music going in two rooms at
+          once. Settings and listening stats are shared between them. Start with the first one and
+          add Vibe 2 if you want a second.
+        </p>
         <!--
-          The multi-bot version of this section, for when the siblings are hosted:
+          The siblings that are not hosted yet, for when they are (inside the .instances row above):
 
-          <h2>Need more than one?</h2>
-          <p class="section-lede">
-            Each Vibe is its own bot with its own queue, so you can have music going in two rooms
-            at once. Settings and listening stats are shared between them. Start with the first one
-            and add more if you find you want them.
-          </p>
-
-            <a
-              class="instance"
-              style="--i: #4577b8"
-              href="https://discord.com/oauth2/authorize?client_id=1533281867523031070"
-              target="_blank"
-              rel="noopener"
-            >
-              <span class="dot"></span>
-              <span class="instance-name">Vibe 2</span>
-              <span class="instance-desc">A second queue</span>
-              <span class="instance-add">Add →</span>
-            </a>
             <a
               class="instance"
               style="--i: #d9b15c"

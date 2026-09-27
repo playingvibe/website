@@ -26,6 +26,14 @@ const SECTIONS = [
   { id: "bots", title: "Each bot", intro: "Give one Vibe its own settings. Anything left alone follows the server." },
 ];
 
+/** The tile each bot wears in `/invite` and on its tab, by application id (see `website/instances/`). Public ids. */
+const MARKS = {
+  "815329807377498153": "vibe",
+  "1533281867523031070": "vibe2",
+  "1001935021436850207": "vibe3",
+  "820636341788344321": "vibe-beta",
+};
+
 /** @param {string} tag @param {object} [props] @param {...(Node|string)} children @returns {HTMLElement} */
 function el(tag, props = {}, ...children) {
   const { ariaLabel, ...rest } = props;
@@ -46,6 +54,8 @@ export async function renderServerSettings(host, { guildId, nav, status, onName 
   let saved = null;
   /** What the person has picked and not saved. */
   const draft = new Map();
+  /** Whose settings the "Each bot" section shows: the flagship's until another tab is chosen. */
+  let activeBot = null;
 
   const say = (text, isError = false) => {
     status.textContent = text;
@@ -265,9 +275,14 @@ export async function renderServerSettings(host, { guildId, nav, status, onName 
     const { options, instances } = saved;
     if (!instances.length) return [el("p", { className: "section-note", textContent: "No Vibe bot has reported in from this server yet." })];
 
-    return instances.map((instance) => {
+    // One bot at a time, chosen from a row of tabs with each bot's logo. The flagship comes first.
+    if (!instances.some((instance) => instance.clientId === activeBot)) {
+      activeBot = (instances.find((instance) => instance.name === "Vibe") ?? instances[0]).clientId;
+    }
+
+    const cardFor = (instance) => {
       const id = instance.clientId;
-      const card = el("article", { className: "bot-card" }, el("h3", { className: "bot-name", textContent: instance.name }));
+      const card = el("article", { className: "bot-card", id: "bot-panel", role: "tabpanel" }, el("h3", { className: "bot-name", textContent: instance.name }));
       const shared = (field) => value(serverKey(field));
 
       const listRow = (field, title, kind, choices) => {
@@ -325,7 +340,30 @@ export async function renderServerSettings(host, { guildId, nav, status, onName 
         );
       }
       return card;
-    });
+    };
+
+    const tabs = el(
+      "div",
+      { className: "bot-tabs", role: "tablist", ariaLabel: "Bots in this server" },
+      ...instances.map((instance) => {
+        const selected = instance.clientId === activeBot;
+        const tab = el("button", { type: "button", className: "bot-tab", role: "tab" });
+        tab.dataset.key = `tab:${instance.clientId}`;
+        tab.setAttribute("aria-selected", String(selected));
+        tab.setAttribute("aria-controls", "bot-panel");
+        if (MARKS[instance.clientId]) {
+          tab.append(el("img", { src: `/instances/${MARKS[instance.clientId]}.png`, alt: "", width: 20, height: 20 }));
+        }
+        tab.append(instance.name);
+        tab.addEventListener("click", () => {
+          activeBot = instance.clientId;
+          draw(tab.dataset.key);
+        });
+        return tab;
+      })
+    );
+
+    return [tabs, cardFor(instances.find((instance) => instance.clientId === activeBot))];
   }
 
   function draw(focusKey = null) {

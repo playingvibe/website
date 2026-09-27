@@ -93,7 +93,8 @@ const GUILDS = [
     icon: null,
     instances: [
       { clientId: "815329807377498153", name: "Vibe" },
-      { clientId: "900000000000000002", name: "Vibe 2" },
+      { clientId: "1533281867523031070", name: "Vibe 2" },
+      { clientId: "1001935021436850207", name: "Vibe 3" },
     ],
   },
   { id: "1002343869440069642", name: "Late Night Listening", icon: null, instances: [
