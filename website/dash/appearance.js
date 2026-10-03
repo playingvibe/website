@@ -191,6 +191,11 @@ export async function renderCardStyle({
   let savedActivity = data.activityAccent ?? null;
   let currentActivityBg = data.activityBackground ?? null;
   let savedActivityBg = data.activityBackground ?? null;
+  // Whether a server's own guild-tier theme wins over this personal accent, in every server that
+  // has one. Meaningless without a personal accent set, but stored independently of it — turning
+  // this on and then clearing the accent should not silently turn it off again.
+  let currentPreferServerTheme = data.preferServerTheme === true;
+  let savedPreferServerTheme = data.preferServerTheme === true;
 
   /**
    * A live mock of the player `/watch` opens, retinted by the colour and background chosen below.
@@ -326,7 +331,8 @@ export async function renderCardStyle({
       (currentBackground !== null && currentBackgroundColor !== savedBackgroundColor) ||
       (currentBackground !== null && currentFade !== savedFade) ||
       currentActivity !== savedActivity ||
-      currentActivityBg !== savedActivityBg;
+      currentActivityBg !== savedActivityBg ||
+      currentPreferServerTheme !== savedPreferServerTheme;
 
     if (!changed) {
       clean("rank-card");
@@ -341,6 +347,7 @@ export async function renderCardStyle({
         currentFade = savedFade;
         currentActivity = savedActivity;
         currentActivityBg = savedActivityBg;
+        currentPreferServerTheme = savedPreferServerTheme;
         paint();
         paintActivity();
         paintActivityBg();
@@ -357,6 +364,7 @@ export async function renderCardStyle({
         if (currentBackground !== null && currentFade !== savedFade) body.fade = currentFade;
         if (currentActivity !== savedActivity) body.activityAccent = currentActivity;
         if (currentActivityBg !== savedActivityBg) body.activityBackground = currentActivityBg;
+        if (currentPreferServerTheme !== savedPreferServerTheme) body.preferServerTheme = currentPreferServerTheme;
 
         const response = await fetch("/api/appearance", {
           method: "PUT",
@@ -398,6 +406,7 @@ export async function renderCardStyle({
         if ("fade" in body) savedFade = body.fade;
         if ("activityAccent" in body) savedActivity = body.activityAccent;
         if ("activityBackground" in body) savedActivityBg = body.activityBackground;
+        if ("preferServerTheme" in body) savedPreferServerTheme = body.preferServerTheme;
         return true;
       },
     });
@@ -640,7 +649,24 @@ export async function renderCardStyle({
     row.setAttribute("aria-label", "Player colour");
     row.append(...swatches, label, reset);
 
-    activityHost.replaceChildren(row);
+    // Only meaningful alongside a server that has its own guild-tier theme, but stored
+    // independently — see the note by `currentPreferServerTheme` above.
+    const preferLabel = document.createElement("label");
+    preferLabel.className = "prefer-server-theme";
+    const preferCheckbox = document.createElement("input");
+    preferCheckbox.type = "checkbox";
+    preferCheckbox.checked = currentPreferServerTheme;
+    preferCheckbox.disabled = !data.entitled;
+    preferCheckbox.addEventListener("change", () => {
+      currentPreferServerTheme = preferCheckbox.checked;
+      stage();
+    });
+    preferLabel.append(
+      preferCheckbox,
+      document.createTextNode(" Prefer a server's own theme there, over this one")
+    );
+
+    activityHost.replaceChildren(row, preferLabel);
     if (!data.entitled) activityHost.append(note("Player colours are a premium feature."));
     refresh();
   };

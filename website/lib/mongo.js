@@ -137,6 +137,7 @@ export async function findRankCardStyle(userId) {
         rankCardFade: 1,
         activityAccent: 1,
         activityBackground: 1,
+        preferServerTheme: 1,
       },
     }
   );
@@ -147,6 +148,7 @@ export async function findRankCardStyle(userId) {
     fade: doc?.rankCardFade ?? null,
     activityAccent: doc?.activityAccent ?? null,
     activityBackground: doc?.activityBackground ?? null,
+    preferServerTheme: doc?.preferServerTheme === true,
   };
 }
 
@@ -161,7 +163,7 @@ export async function findRankCardStyle(userId) {
  * `#rrggbb` lowercased or `null`; `rankCardBackground` is a key from `CardBackgrounds.js` or
  * `null`. Both are validated by the caller before they get here.
  * @param {string} userId
- * @param {{accent?: ?string, background?: ?string, backgroundColor?: ?string, fade?: ?boolean, activityAccent?: ?string, activityBackground?: ?string}} changes
+ * @param {{accent?: ?string, background?: ?string, backgroundColor?: ?string, fade?: ?boolean, activityAccent?: ?string, activityBackground?: ?string, preferServerTheme?: boolean}} changes
  * @returns {Promise<void>}
  */
 export async function saveRankCardStyle(userId, changes) {
@@ -172,6 +174,7 @@ export async function saveRankCardStyle(userId, changes) {
   if ("fade" in changes) set.rankCardFade = changes.fade;
   if ("activityAccent" in changes) set.activityAccent = changes.activityAccent;
   if ("activityBackground" in changes) set.activityBackground = changes.activityBackground;
+  if ("preferServerTheme" in changes) set.preferServerTheme = changes.preferServerTheme;
   if (!Object.keys(set).length) return;
 
   const users = (await db()).collection("users");
@@ -372,43 +375,34 @@ export async function findPassportFavorites(userId, { limit = 12 } = {}) {
  *
  * Tracks are capped per playlist for the page's sake — a 200-track list is a wall, not a profile —
  * with the true count returned beside them.
+ *
+ * Reads the `playlists` collection, one document per playlist keyed on its owner, not an array on
+ * the user. Nothing under `src/` reaches this file, so that shape is quoted here the same way `users`
+ * already is, and the read is a straight `$match` + `$project`.
  * @param {string} userId
  * @param {{tracksPerPlaylist?: number}} [options]
  * @returns {Promise<Array<{name: string, trackCount: number, tracks: Array<{title: string,
  *          author: ?string, unavailable: boolean}>}>>}
  */
 export async function findPassportPlaylists(userId, { tracksPerPlaylist = 50 } = {}) {
-  const users = (await db()).collection("users");
-  const [row] = await users
+  const playlists = (await db()).collection("playlists");
+  return playlists
     .aggregate([
-      { $match: { _id: userId } },
+      { $match: { "owner.kind": "user", "owner.id": userId, shared: true } },
+      { $sort: { createdAt: 1 } },
       {
         $project: {
           _id: 0,
-          playlists: {
+          name: 1,
+          trackCount: { $size: { $ifNull: ["$tracks", []] } },
+          tracks: {
             $map: {
-              input: {
-                $filter: {
-                  input: { $ifNull: ["$playlists", []] },
-                  as: "p",
-                  cond: { $eq: ["$$p.shared", true] },
-                },
-              },
-              as: "p",
+              input: { $slice: [{ $ifNull: ["$tracks", []] }, tracksPerPlaylist] },
+              as: "t",
               in: {
-                name: "$$p.name",
-                trackCount: { $size: { $ifNull: ["$$p.tracks", []] } },
-                tracks: {
-                  $map: {
-                    input: { $slice: [{ $ifNull: ["$$p.tracks", []] }, tracksPerPlaylist] },
-                    as: "t",
-                    in: {
-                      title: "$$t.title",
-                      author: "$$t.author",
-                      unavailable: { $ne: [{ $ifNull: ["$$t.unavailableSince", null] }, null] },
-                    },
-                  },
-                },
+                title: "$$t.title",
+                author: "$$t.author",
+                unavailable: { $ne: [{ $ifNull: ["$$t.unavailableSince", null] }, null] },
               },
             },
           },
@@ -416,6 +410,4 @@ export async function findPassportPlaylists(userId, { tracksPerPlaylist = 50 } =
       },
     ])
     .toArray();
-
-  return row?.playlists ?? [];
 }

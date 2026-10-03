@@ -149,6 +149,18 @@ export default async function handler(req, res) {
     changes.activityBackground = style;
   }
 
+  if (body && "preferServerTheme" in body) {
+    // Whether a server's own guild-tier Activity theme wins over this listener's personal accent,
+    // in every server that has one. Off by default: unlike the fields above, this needs no
+    // premium check of its own — it costs nothing to offer and only ever matters alongside a
+    // personal accent, which this route already gates.
+    if (typeof body.preferServerTheme !== "boolean") {
+      res.status(400).json({ error: "preferServerTheme must be true or false." });
+      return;
+    }
+    changes.preferServerTheme = body.preferServerTheme;
+  }
+
   if (body && "fade" in body) {
     const fade = body.fade ?? null;
     // `null` is accepted and meaningful: it returns the card to the style's own default rather

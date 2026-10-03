@@ -114,10 +114,12 @@ const VOICE = [{ id: "444444444444444441", name: "Lounge" }, { id: "444444444444
 const SETTINGS = new Map();
 const settingsFor = (guildId) => {
   if (!SETTINGS.has(guildId)) {
-    SETTINGS.set(guildId, { djRoles: [], voiceChannels: [], commandsChannels: [], logChannelId: null, announcements: true, tips: true, autoplay: false, autoplayRoomTaste: true, overlayToken: null });
+    SETTINGS.set(guildId, { djRoles: [], voiceChannels: [], commandsChannels: [], logChannelId: null, announcements: true, tips: true, autoplay: false, autoplayRoomTaste: true, shareVoiceChannels: true, overlayToken: null, activityAccent: null });
   }
   return SETTINGS.get(guildId);
 };
+/** The `?bot=` alias `nowplaying/overlay.js` reads, matching the real `inviteClientIds`. */
+const ALIAS_BY_CLIENT_ID = { "815329807377498153": "vibe", "1533281867523031070": "vibe2", "1001935021436850207": "vibe3" };
 const describeSettings = (guild) => {
   const shared = settingsFor(guild.id);
   return {
@@ -131,10 +133,22 @@ const describeSettings = (guild) => {
       tips: shared.tips,
       autoplay: shared.autoplay,
       autoplayRoomTaste: shared.autoplayRoomTaste,
+      shareVoiceChannels: shared.shareVoiceChannels,
       overlay: { on: Boolean(shared.overlayToken), url: shared.overlayToken ? "http://localhost:" + PORT + "/np/" + shared.overlayToken : null },
+      activityAccent: shared.activityAccent,
+    },
+    // Same three states as /api/appearance's stub, and the same reason: `free` exercises the
+    // greyed-out "premium feature" path, `unsold` exercises the section being hidden entirely.
+    premium: {
+      activityTheme: { entitled: state !== "free" && state !== "unsold", forSale: state !== "unsold" },
     },
     options: { roles: ROLES, textChannels: TEXT, voiceChannels: VOICE },
-    instances: guild.instances.map((i) => ({ clientId: i.clientId, name: i.name, overrides: OVERRIDES.get(i.clientId + ":" + guild.id) ?? {} })),
+    instances: guild.instances.map((i) => ({
+      clientId: i.clientId,
+      name: i.name,
+      overrides: OVERRIDES.get(i.clientId + ":" + guild.id) ?? {},
+      alias: ALIAS_BY_CLIENT_ID[i.clientId] ?? null,
+    })),
   };
 };
 const refuse = (res, message) => json(res, 400, { error: message });
@@ -148,6 +162,7 @@ let rankFade = null;
 let activityAccent = null;
 let activityBackground = null;
 let rankAccent = null;
+let preferServerTheme = false;
 
 const body = async (req) => {
   const chunks = [];
@@ -278,6 +293,9 @@ const server = http.createServer(async (req, res) => {
       if ("fade" in patch && patch.fade !== null && typeof patch.fade !== "boolean") {
         return bad("Fade must be true, false, or null.");
       }
+      if ("preferServerTheme" in patch && typeof patch.preferServerTheme !== "boolean") {
+        return bad("preferServerTheme must be true or false.");
+      }
       if (!Object.keys(patch).length) return bad("Send at least one setting to change.");
 
       // Only the keys sent, matching the real handler — a stub that writes both would hide the
@@ -288,6 +306,7 @@ const server = http.createServer(async (req, res) => {
       if ("fade" in patch) rankFade = patch.fade ?? null;
       if ("activityAccent" in patch) activityAccent = normaliseCardColor(patch.activityAccent ?? null);
       if ("activityBackground" in patch) activityBackground = patch.activityBackground ?? null;
+      if ("preferServerTheme" in patch) preferServerTheme = patch.preferServerTheme;
       return json(res, 200, patch);
     }
     return json(res, 200, {
@@ -297,6 +316,7 @@ const server = http.createServer(async (req, res) => {
       fade: rankFade,
       activityAccent,
       activityBackground,
+      preferServerTheme,
       palette: PALETTE,
       backgrounds: CARD_BACKGROUND_STYLES,
       entitled,
@@ -371,7 +391,7 @@ const server = http.createServer(async (req, res) => {
           if (value !== null && !TEXT.some((c) => c.id === value)) return refuse(res, "One of those isn't in this server (or isn't the right kind).");
           shared.logChannelId = value;
           summary = value ? "Audit log set" : "Audit log disabled";
-        } else if (["announcements", "tips", "autoplay", "autoplayRoomTaste"].includes(field)) {
+        } else if (["announcements", "tips", "autoplay", "autoplayRoomTaste", "shareVoiceChannels"].includes(field)) {
           if (typeof value !== "boolean") return refuse(res, field + " must be on or off.");
           shared[field] = value;
           summary = field + (value ? " on" : " off");
@@ -380,6 +400,15 @@ const server = http.createServer(async (req, res) => {
           else if (value === "new" && shared.overlayToken) shared.overlayToken = "fedcba9876543210fedcba9876543210";
           else if (value === "off") shared.overlayToken = null;
           summary = "Now-playing overlay " + value;
+        } else if (field === "activityAccent") {
+          // The bot's own guild-tier gate: refused with the real endpoint's shape whenever this
+          // server isn't entitled, so that path is exercised here too, not only against a live bot.
+          if (state === "free" || state === "unsold") return json(res, 400, { error: "not_entitled", message: "That's a premium feature for this server." });
+          if (value !== null && normaliseCardColor(value) === undefined) {
+            return json(res, 400, { error: "invalid_value", message: "activityAccent must be a hex colour." });
+          }
+          shared.activityAccent = value === null ? null : normaliseCardColor(value);
+          summary = shared.activityAccent ? "Activity theme colour changed" : "Activity theme colour cleared";
         } else return refuse(res, "Unknown setting: " + field + ".");
       } else if (instance) {
         const key = instance.clientId + ":" + guild.id;

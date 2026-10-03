@@ -1276,6 +1276,22 @@ footer a:hover {
 .backdrop-colour {
   margin-top: 12px;
 }
+/* The guild-tier Activity colour on the server settings page: the same round swatch input,
+   beside a Clear button rather than a full palette — one server, one colour, no picker needed. */
+.activity-colour {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+/* The "prefer a server's theme" checkbox under the personal Activity colour picker. */
+.prefer-server-theme {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 14px;
+  color: var(--ink-2);
+}
 .backdrop-colour-label {
   display: inline-flex;
   align-items: center;
@@ -2086,6 +2102,17 @@ footer a:hover {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+.overlay-link-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.overlay-link-label {
+  min-width: 90px;
+  font-size: 13px;
+  color: var(--ink-2);
 }
 .overlay-actions .btn,
 .bot-list .btn,

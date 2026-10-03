@@ -31,6 +31,31 @@ export function pickPlaying(results) {
 }
 
 /**
+ * `?bot=` aliases, in the same order as `API_HOSTS`: the flagship, then each sibling. A numeric
+ * alias and the instance's own name both work (`1` or `vibe`, `2` or `vibe2`, and so on).
+ */
+const BOT_ALIASES = [
+  ["1", "vibe"],
+  ["2", "vibe2"],
+  ["3", "vibe3"],
+  ["beta"],
+];
+
+/**
+ * Pins the overlay to one Vibe's host, so `pickPlaying` only ever sees that one — the pinned bot
+ * being idle or paused is shown as such rather than falling through to another bot's track. An
+ * unknown or missing alias returns `null`, which callers read as "every host" rather than an error:
+ * a stale or mistyped link should still show something.
+ * @param {?string} bot
+ * @returns {?string}
+ */
+export function hostForBot(bot) {
+  if (!bot) return null;
+  const index = BOT_ALIASES.findIndex((aliases) => aliases.includes(bot));
+  return index === -1 ? null : API_HOSTS[index];
+}
+
+/**
  * Where the track is now: the last sample, carried forward by the time since it was taken while it
  * plays, and never past the end. A live stream has no end.
  */

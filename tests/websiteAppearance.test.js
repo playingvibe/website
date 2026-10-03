@@ -140,6 +140,25 @@ test("the Activity's own accent and background are saved separately from the car
   assert.equal(doc.rankCardAccent, undefined);
 });
 
+test("preferServerTheme is saved as its own boolean, and GET reads it back", async () => {
+  const res = await call("PUT", "someone", { preferServerTheme: true });
+
+  assert.equal(res.statusCode, 200);
+  const doc = await stored("someone");
+  assert.equal(doc.preferServerTheme, true);
+
+  const got = await call("GET", "someone");
+  assert.equal(got.payload.preferServerTheme, true);
+});
+
+test("a non-boolean preferServerTheme is refused and nothing is written", async () => {
+  const res = await call("PUT", "someone", { preferServerTheme: "yes" });
+
+  assert.equal(res.statusCode, 400);
+  assert.equal(res.payload.error, "preferServerTheme must be true or false.");
+  assert.equal((await stored("someone"))?.preferServerTheme, undefined);
+});
+
 test("a colour outside the palette, and an unknown background, are refused and nothing is written", async () => {
   const cases = [
     [{ accent: "#000000" }, "Not an available colour."],

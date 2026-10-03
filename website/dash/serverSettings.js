@@ -23,6 +23,7 @@ const SECTIONS = [
   { id: "playback", title: "Playback", intro: "What Vibe does when the queue runs out." },
   { id: "messages", title: "Messages", intro: "What Vibe says in chat." },
   { id: "streaming", title: "Streaming", intro: "For streamers who want what is playing on screen." },
+  { id: "premium", title: "Premium", intro: "Guild-tier customisation for a server with its own subscription." },
   { id: "bots", title: "Each bot", intro: "Give one Vibe its own settings. Anything left alone follows the server." },
 ];
 
@@ -180,6 +181,32 @@ export async function renderServerSettings(host, { guildId, nav, status, onName 
     return button;
   }
 
+  /** Free-form hex, like the personal Activity accent on the profile page. `current === null` means unset. */
+  function colorPicker({ key, label, current, disabled = false }) {
+    const wrap = el("div", { className: "activity-colour" });
+    const input = el("input", {
+      type: "color",
+      className: "backdrop-colour-input",
+      value: current ?? "#e05570",
+      disabled,
+      ariaLabel: label,
+    });
+    input.dataset.key = key;
+    input.addEventListener("input", () => stage(key, input.value.toLowerCase()));
+
+    const reset = el("button", {
+      type: "button",
+      className: "btn btn-ghost",
+      textContent: "Clear",
+      disabled: disabled || current === null,
+    });
+    reset.dataset.key = `${key}:clear`;
+    reset.addEventListener("click", () => stage(key, null));
+
+    wrap.append(input, reset);
+    return wrap;
+  }
+
   const row = (title, hint, control, wide = false) =>
     el(
       "div",
@@ -200,6 +227,7 @@ export async function renderServerSettings(host, { guildId, nav, status, onName 
         row("DJ roles", "They bypass vote-to-skip and the playback guards. None means anyone.", picker({ key: serverKey("djRoles"), label: "DJ roles", selected: v("djRoles"), options: options.roles, kind: "@" }), true),
         row("Voice channels Vibe may join", "None means any voice channel.", picker({ key: serverKey("voiceChannels"), label: "voice channels", selected: v("voiceChannels"), options: options.voiceChannels, kind: "" }), true),
         row("Channels Vibe's commands work in", "None means every channel. /config itself always works.", picker({ key: serverKey("commandsChannels"), label: "commands channels", selected: v("commandsChannels"), options: options.textChannels, kind: "#" }), true),
+        row("Sharing a voice channel between Vibes", "Two Vibes can still play different music in different rooms either way. This is only about whether they may share one room. Only one of them ever tracks your listening time there.", toggle({ key: serverKey("shareVoiceChannels"), label: "Vibes may share a voice channel", current: v("shareVoiceChannels") })),
         row("Audit log", "Who changed what, posted in one channel.", singlePicker({ key: serverKey("logChannelId"), label: "Audit log channel", current: v("logChannelId"), options: options.textChannels }))
       );
     }
@@ -219,6 +247,23 @@ export async function renderServerSettings(host, { guildId, nav, status, onName 
     }
 
     if (section === "streaming") rows.push(overlayRow());
+
+    if (section === "premium") {
+      const theme = saved.premium?.activityTheme;
+      if (theme?.forSale) {
+        const entitled = theme.entitled;
+        rows.push(
+          row(
+            "Activity theme",
+            entitled
+              ? "The player's default colour for anyone here without a personal one of their own."
+              : "This is a premium feature for this server.",
+            colorPicker({ key: serverKey("activityAccent"), label: "Activity theme colour", current: v("activityAccent"), disabled: !entitled })
+          )
+        );
+      }
+    }
+
     return rows;
   }
 
@@ -243,9 +288,28 @@ export async function renderServerSettings(host, { guildId, nav, status, onName 
     } else if (action === "off") {
       control.append(hint("The overlay will be turned off when you save. The link stops working."), undo());
     } else {
-      const link = el("input", { type: "text", readOnly: true, value: overlay.url, className: "overlay-link", ariaLabel: "Overlay link" });
-      link.addEventListener("focus", () => link.select());
-      control.append(link);
+      const links = [{ url: overlay.url, label: "Every Vibe, whichever is playing" }];
+      for (const instance of saved.instances) {
+        if (instance.alias) links.push({ url: `${overlay.url}?bot=${instance.alias}`, label: `${instance.name} only` });
+      }
+      // One bot: no point labelling a choice of one.
+      const makeLink = (url, label) => {
+        const input = el("input", { type: "text", readOnly: true, value: url, className: "overlay-link", ariaLabel: label });
+        input.addEventListener("focus", () => input.select());
+        return input;
+      };
+      const generalLink = makeLink(overlay.url, "Overlay link");
+      if (links.length > 1) {
+        control.append(
+          ...links.map(({ url, label }, i) =>
+            i === 0
+              ? el("div", { className: "overlay-link-row" }, el("span", { className: "overlay-link-label", textContent: label }), generalLink)
+              : el("div", { className: "overlay-link-row" }, el("span", { className: "overlay-link-label", textContent: label }), makeLink(url, label))
+          )
+        );
+      } else {
+        control.append(generalLink);
+      }
       if (action === "new") {
         control.append(hint("A new link replaces this one when you save."), undo());
       } else {
@@ -254,7 +318,7 @@ export async function renderServerSettings(host, { guildId, nav, status, onName 
             await navigator.clipboard.writeText(overlay.url);
             say("Link copied.");
           } catch {
-            link.select();
+            generalLink.select();
             say("Press Ctrl+C to copy the link.");
           }
         });
@@ -366,20 +430,23 @@ export async function renderServerSettings(host, { guildId, nav, status, onName 
     return [tabs, cardFor(instances.find((instance) => instance.clientId === activeBot))];
   }
 
+  // Hidden entirely while nothing is for sale — same "not for sale = no trace of it" rule the
+  // user tier's appearance settings already use, not just a greyed-out control nobody can buy.
+  const visibleSections = () => SECTIONS.filter((s) => s.id !== "premium" || saved.premium?.activityTheme?.forSale);
+
   function draw(focusKey = null) {
     const activeKey = focusKey ?? document.activeElement?.dataset?.key ?? null;
     host.replaceChildren(
-      ...SECTIONS.map(({ id, title, intro }) => {
+      ...visibleSections().map(({ id, title, intro }) => {
         const section = el("section", { id, className: "settings-section" }, el("h2", { textContent: title }), el("p", { className: "settings-intro", textContent: intro }));
         section.append(...(id === "bots" ? bots() : server(id)));
         return section;
       })
     );
+    nav.replaceChildren(...visibleSections().map(({ id, title }) => el("a", { href: `#${id}`, textContent: title })));
     // A redraw would otherwise drop keyboard focus to the top of the page after every edit.
     if (activeKey) [...host.querySelectorAll("[data-key]")].find((node) => node.dataset.key === activeKey)?.focus({ preventScroll: true });
   }
-
-  nav.replaceChildren(...SECTIONS.map(({ id, title }) => el("a", { href: `#${id}`, textContent: title })));
 
   saved = await request();
   if (!saved) {

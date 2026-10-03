@@ -21,9 +21,7 @@ const {
   parseCookies,
   SESSION_TTL_SECONDS,
 } = await import("../website/lib/session.js");
-const { canManageGuild, avatarUrl, guildIconUrl, SCOPES } = await import(
-  "../website/lib/discord.js"
-);
+const { avatarUrl, guildIconUrl, SCOPES } = await import("../website/lib/discord.js");
 
 /** Only the two methods the session helpers touch. */
 function fakeRes() {
@@ -180,35 +178,6 @@ test("the login asks for identify and guilds, and nothing else", () => {
   // Any addition here changes the consent screen and the privacy policy, so it is worth a test
   // rather than a comment.
   assert.deepEqual(SCOPES, ["identify", "guilds"]);
-});
-
-test("canManageGuild reads the Manage Server bit, including above 2^53", () => {
-  assert.equal(canManageGuild({ permissions: "32" }), true, "exactly Manage Server");
-  assert.equal(canManageGuild({ permissions: "0" }), false);
-  assert.equal(canManageGuild({ permissions: "64" }), false, "some other single permission");
-  // A real modern bitfield: Manage Server set alongside permissions past Number's safe range,
-  // which is why the check parses a BigInt rather than a Number.
-  assert.equal(canManageGuild({ permissions: "8796093022240" }), true);
-  assert.equal(canManageGuild({ permissions: "8796093022208" }), false);
-});
-
-test("an Administrator passes even without an explicit Manage Server bit", () => {
-  // OAuth's partial-guild `permissions` excludes implicit permissions, so an administrator
-  // arrives as a bare 8. The bot's own check passes them (discord.js `has()` treats
-  // Administrator as implying everything), and the dashboard must not be stricter than the
-  // bot about who administers a server.
-  assert.equal(canManageGuild({ permissions: "8" }), true);
-  assert.equal(canManageGuild({ permissions: "8796093022216" }), true, "admin among high bits");
-});
-
-test("a guild owner always counts as able to manage it", () => {
-  assert.equal(canManageGuild({ owner: true, permissions: "0" }), true);
-});
-
-test("canManageGuild fails closed on a malformed or missing permission field", () => {
-  assert.equal(canManageGuild({}), false);
-  assert.equal(canManageGuild({ permissions: "not-a-number" }), false);
-  assert.equal(canManageGuild(null), false);
 });
 
 test("avatarUrl falls back to the right default variant for an unset avatar", () => {

@@ -34,6 +34,7 @@ beforeEach(async () => {
   const database = await db();
   await database.collection("users").deleteMany({});
   await database.collection("listeningHistory").deleteMany({});
+  await database.collection("playlists").deleteMany({});
 });
 
 const { db, closeDb } = await import("../website/lib/mongo.js");
@@ -66,8 +67,11 @@ async function call(token) {
   return res;
 }
 
-/** A user holding a passport, entitled unless told otherwise. */
-async function givePassport({ token = TOKEN, premium = { tier: "user", expiresAt: null }, ...rest } = {}) {
+/**
+ * A user holding a passport, entitled unless told otherwise. A `playlists` fixture is inserted into
+ * the `playlists` collection, keyed on its owner, rather than written onto the user document.
+ */
+async function givePassport({ token = TOKEN, premium = { tier: "user", expiresAt: null }, playlists, ...rest } = {}) {
   await (await db()).collection("users").insertOne({
     _id: OWNER_ID,
     premium,
@@ -79,6 +83,21 @@ async function givePassport({ token = TOKEN, premium = { tier: "user", expiresAt
     passport: { token, issuedAt: new Date(), displayName: "Someone", avatar: "abc123" },
     ...rest,
   });
+
+  if (playlists?.length) {
+    await (await db()).collection("playlists").insertMany(
+      playlists.map((p) => ({
+        _id: p.id,
+        owner: { kind: "user", id: OWNER_ID },
+        name: p.name,
+        shared: p.shared ?? false,
+        tracks: p.tracks ?? [],
+        editPolicy: "owner",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }))
+    );
+  }
 }
 
 async function play(over = {}) {

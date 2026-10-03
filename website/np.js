@@ -6,11 +6,13 @@
  * page), which is what an overlay should do. Everything from the network goes in through
  * `textContent` or a validated CSS value, never `innerHTML`.
  *
- * Options in the query string: `?art=0` hides the artwork; `?api=<origin>` asks one host only (for
- * trying it locally; the page's CSP refuses any other host in production).
+ * Options in the query string: `?art=0` hides the artwork; `?bot=<alias>` pins the overlay to one
+ * Vibe (`1`/`vibe`, `2`/`vibe2`, `3`/`vibe3`, `beta`) instead of showing whichever is playing, for a
+ * server running more than one; `?api=<origin>` asks one of the four known hosts only, for trying
+ * it locally (any other value is ignored — the page's CSP would refuse it in production anyway).
  */
 
-import { API_HOSTS, isToken, safeAccent, pickPlaying, progressOf, artworkSrc } from "./nowplaying/overlay.js";
+import { API_HOSTS, isToken, safeAccent, pickPlaying, hostForBot, progressOf, artworkSrc } from "./nowplaying/overlay.js";
 
 const POLL_MS = 2000;
 const TIMEOUT_MS = 4000;
@@ -19,7 +21,9 @@ const IDLE_POLLS = 2;
 
 const token = window.location.pathname.split("/")[2];
 const params = new URLSearchParams(window.location.search);
-const hosts = params.get("api") ? [params.get("api")] : API_HOSTS;
+const apiParam = params.get("api");
+const pinnedHost = hostForBot(params.get("bot"));
+const hosts = apiParam && API_HOSTS.includes(apiParam) ? [apiParam] : pinnedHost ? [pinnedHost] : API_HOSTS;
 
 const card = document.getElementById("np");
 const art = document.getElementById("np-art");
