@@ -67,7 +67,7 @@ export default async function handler(req, res) {
     hasData: Boolean(doc),
     stats: { ...stats, listeningHours: stats.totalListeningTime / MS_PER_HOUR },
     level,
-    badges: getEarnedBadgeTiers({ ...stats, voting: doc?.voting ?? null }),
+    badges: getEarnedBadgeTiers({ ...stats, voting: doc?.voting ?? null, firstSeenAt: doc?.firstSeenAt ?? null }),
     premium,
   });
 }

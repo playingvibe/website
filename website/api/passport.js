@@ -124,6 +124,7 @@ export default async function handler(req, res) {
     totalListeningTime,
     sessionCount: user.sessionCount ?? 0,
     voting: user.voting ?? null,
+    firstSeenAt: user.firstSeenAt ?? null,
   });
 
   res.status(200).json({

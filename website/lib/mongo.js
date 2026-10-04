@@ -92,6 +92,8 @@ export async function findUserStats(userId) {
         longestStreak: 1,
         lastActiveDate: 1,
         listeningGuildIds: 1,
+        // For the Founder badge, which is tenure rather than a count.
+        firstSeenAt: 1,
         // The vote-streak summary, for the third badge track. Only the two fields the streak is
         // decided from — the totals are nobody's business on a profile page.
         "voting.streakWeeks": 1,

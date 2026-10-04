@@ -5,6 +5,13 @@
  * Edit that file and run `npm run sync:web`.
  */
 
+export const FOUNDER_CUTOFF = new Date("2027-01-01T00:00:00.000Z");
+
+export const FOUNDER_BADGE = {
+  "name": "Founder",
+  "color": "#E05570"
+};
+
 export const LISTENING_TIME_BADGES = [
   {
     "hours": 1000,
@@ -94,12 +101,13 @@ const weekIndex = (ms) => Math.floor((Math.floor(ms / DAY_MS) + 3) / 7);
 
 /**
  * Mirror of `getEarnedBadgeTiers()` — highest earned tier per track, not cumulative.
- * @param {{totalListeningTime: number, sessionCount: number, voting?: object}} stats
+ * @param {{totalListeningTime: number, sessionCount: number, voting?: object, firstSeenAt?: Date|string|number|null}} stats
  * @returns {Array<{name: string, color: string}>}
  */
-export function getEarnedBadgeTiers({ totalListeningTime, sessionCount, voting }, now = Date.now()) {
+export function getEarnedBadgeTiers({ totalListeningTime, sessionCount, voting, firstSeenAt }, now = Date.now()) {
   const hours = (totalListeningTime ?? 0) / (60 * 60 * 1000);
   const tiers = [];
+  if (firstSeenAt && new Date(firstSeenAt) < FOUNDER_CUTOFF) tiers.push(FOUNDER_BADGE);
   const timeTier = LISTENING_TIME_BADGES.find((tier) => hours >= tier.hours);
   if (timeTier) tiers.push(timeTier);
   const tracksTier = TRACKS_LISTENED_BADGES.find((tier) => (sessionCount ?? 0) >= tier.count);

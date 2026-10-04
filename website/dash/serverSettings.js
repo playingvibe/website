@@ -57,6 +57,8 @@ export async function renderServerSettings(host, { guildId, nav, status, onName 
   const draft = new Map();
   /** Whose settings the "Each bot" section shows: the flagship's until another tab is chosen. */
   let activeBot = null;
+  /** The `?bot=` alias the overlay link is shown for, or `null` for the link that follows every Vibe. Not saved. */
+  let overlayBot = null;
 
   const say = (text, isError = false) => {
     status.textContent = text;
@@ -86,11 +88,15 @@ export async function renderServerSettings(host, { guildId, nav, status, onName 
   const barId = (key) => `settings:${guildId}:${key}`;
   const value = (key) => effectiveValue(saved, draft, key);
 
-  /** Registers one staged change with the save bar. The bar's Save calls `save`, its Reset calls `revert`. */
-  function stage(key, next) {
+  /**
+   * Registers one staged change with the save bar. The bar's Save calls `save`, its Reset calls `revert`.
+   * `redraw: false` is for a control that is being dragged: a redraw replaces its element, and a native
+   * colour picker closes the moment the input under it is destroyed.
+   */
+  function stage(key, next, { redraw = true } = {}) {
     if (!pick(saved, draft, key, next)) {
       clean(barId(key));
-      draw(key);
+      if (redraw) draw(key);
       return;
     }
 
@@ -117,7 +123,7 @@ export async function renderServerSettings(host, { guildId, nav, status, onName 
         return true;
       },
     });
-    draw(key);
+    if (redraw) draw(key);
   }
 
   const names = (options) => new Map(options.map((option) => [option.id, option.name]));
@@ -192,7 +198,11 @@ export async function renderServerSettings(host, { guildId, nav, status, onName 
       ariaLabel: label,
     });
     input.dataset.key = key;
-    input.addEventListener("input", () => stage(key, input.value.toLowerCase()));
+    // Staged without a redraw, so the picker stays open and follows the pointer, like the personal one.
+    input.addEventListener("input", () => {
+      stage(key, input.value.toLowerCase(), { redraw: false });
+      reset.disabled = disabled;
+    });
 
     const reset = el("button", {
       type: "button",
@@ -288,34 +298,52 @@ export async function renderServerSettings(host, { guildId, nav, status, onName 
     } else if (action === "off") {
       control.append(hint("The overlay will be turned off when you save. The link stops working."), undo());
     } else {
-      const links = [{ url: overlay.url, label: "Every Vibe, whichever is playing" }];
-      for (const instance of saved.instances) {
-        if (instance.alias) links.push({ url: `${overlay.url}?bot=${instance.alias}`, label: `${instance.name} only` });
-      }
-      // One bot: no point labelling a choice of one.
-      const makeLink = (url, label) => {
-        const input = el("input", { type: "text", readOnly: true, value: url, className: "overlay-link", ariaLabel: label });
-        input.addEventListener("focus", () => input.select());
-        return input;
-      };
-      const generalLink = makeLink(overlay.url, "Overlay link");
-      if (links.length > 1) {
+      // One link, as in `/config`: the default follows every Vibe, and a menu pins it to one. Choosing only
+      // changes what is shown, so nothing is staged or saved.
+      const choices = saved.instances.filter((instance) => instance.alias);
+      const picked = choices.find((instance) => instance.alias === overlayBot) ?? null;
+      const shownUrl = picked ? `${overlay.url}?bot=${picked.alias}` : overlay.url;
+      const generalLink = el("input", { type: "text", readOnly: true, value: shownUrl, className: "overlay-link", ariaLabel: "Overlay link" });
+      generalLink.addEventListener("focus", () => generalLink.select());
+      control.append(generalLink);
+
+      if (choices.length > 1) {
         control.append(
-          ...links.map(({ url, label }, i) =>
-            i === 0
-              ? el("div", { className: "overlay-link-row" }, el("span", { className: "overlay-link-label", textContent: label }), generalLink)
-              : el("div", { className: "overlay-link-row" }, el("span", { className: "overlay-link-label", textContent: label }), makeLink(url, label))
+          hint(
+            picked
+              ? `This link only shows ${picked.name}, even while another Vibe is playing here.`
+              : "Works for every Vibe in this server: it shows whichever is playing, and chooses by priority if several are (one that isn't paused first, then Vibe before the others)."
+          )
+        );
+        const choose = (alias, text, clientId) => {
+          const tab = el("button", { type: "button", className: "bot-tab", role: "tab" });
+          tab.dataset.key = `${key}:choose:${alias ?? "all"}`;
+          tab.setAttribute("aria-selected", String((picked?.alias ?? null) === alias));
+          if (clientId && MARKS[clientId]) tab.append(el("img", { src: `/instances/${MARKS[clientId]}.png`, alt: "", width: 20, height: 20 }));
+          tab.append(text);
+          tab.addEventListener("click", () => {
+            overlayBot = alias;
+            draw(tab.dataset.key);
+          });
+          return tab;
+        };
+        control.append(
+          el(
+            "div",
+            { className: "bot-tabs", role: "tablist", ariaLabel: "Which Vibe the link follows" },
+            choose(null, "Every Vibe", null),
+            ...choices.map((instance) => choose(instance.alias, instance.name, instance.clientId))
           )
         );
       } else {
-        control.append(generalLink);
+        control.append(hint("Shows what Vibe is playing in this server."));
       }
       if (action === "new") {
         control.append(hint("A new link replaces this one when you save."), undo());
       } else {
         const copy = button("Copy link", async () => {
           try {
-            await navigator.clipboard.writeText(overlay.url);
+            await navigator.clipboard.writeText(shownUrl);
             say("Link copied.");
           } catch {
             generalLink.select();
@@ -328,7 +356,7 @@ export async function renderServerSettings(host, { guildId, nav, status, onName 
     return row(
       "Now-playing overlay",
       overlay.on
-        ? "Add the link in OBS as a browser source. It shows only the track's title, artist and artwork, whichever Vibe is playing here. Anyone with the link can see it, so keep it private and replace it if it gets out."
+        ? "Add the link in OBS as a browser source. It shows only the track's title, artist and artwork. Anyone with the link can see it, so keep it private and replace it if it gets out."
         : "A link a streamer can put in OBS to show what is playing here. Off until you turn it on.",
       control,
       true
