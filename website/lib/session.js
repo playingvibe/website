@@ -52,13 +52,16 @@ function key() {
   return crypto.createHash("sha256").update(secret).digest();
 }
 
+/** The full 128-bit GCM tag, which is what both ends require. */
+const TAG_BYTES = 16;
+
 /**
  * @param {object} payload
  * @returns {string} `iv.tag.ciphertext`, all base64url.
  */
 function seal(payload) {
   const iv = crypto.randomBytes(12);
-  const cipher = crypto.createCipheriv("aes-256-gcm", key(), iv);
+  const cipher = crypto.createCipheriv("aes-256-gcm", key(), iv, { authTagLength: TAG_BYTES });
   const body = Buffer.concat([
     cipher.update(JSON.stringify(payload), "utf8"),
     cipher.final(),
@@ -77,8 +80,11 @@ function unseal(token) {
       .split(".")
       .map((part) => Buffer.from(part, "base64url"));
     if (!iv || !tag || !body) return null;
+    // Node accepts a shorter tag than it issued unless told the length, and a 4-byte one is checked at
+    // 32 bits: forging a cookie would stop being impossible and become a search.
+    if (tag.length !== TAG_BYTES) return null;
 
-    const decipher = crypto.createDecipheriv("aes-256-gcm", key(), iv);
+    const decipher = crypto.createDecipheriv("aes-256-gcm", key(), iv, { authTagLength: TAG_BYTES });
     decipher.setAuthTag(tag);
     const json = Buffer.concat([decipher.update(body), decipher.final()]).toString("utf8");
     return JSON.parse(json);
@@ -105,9 +111,8 @@ export function parseCookies(req) {
         const raw = pair.slice(index + 1).trim();
         // **Decoded per pair, inside a try.** `decodeURIComponent` throws `URIError` on a lone `%`
         // or a bad escape — and this runs on *every* request to *every* endpoint, before any
-        // handler. One malformed cookie from any source on the domain therefore turned the whole
-        // site into a 500 for that browser, permanently, with no way for the visitor to know why
-        // or to clear it. The raw value is the right fallback: a cookie we cannot decode is a
+        // handler. One malformed cookie from any source on the domain would otherwise turn the whole
+        // site into a 500 for that browser. The raw value is the right fallback: a cookie we cannot decode is a
         // cookie we do not understand, and the session decrypt below will reject it on its own.
         try {
           return [name, decodeURIComponent(raw)];

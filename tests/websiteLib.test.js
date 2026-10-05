@@ -1,8 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { canManageGuild } from "../website/lib/discord.js";
-import { isSnowflake } from "../website/api/guild.js";
-import { pickOverrides, OVERRIDABLE } from "../website/lib/overrides.js";
 import { normaliseCardColor } from "../website/lib/generated/cardBackgrounds.js";
 
 /**
@@ -55,46 +53,6 @@ test("a missing, malformed or absent guild is refused rather than throwing", () 
   }
 });
 
-// --- isSnowflake -------------------------------------------------------------------------------
-
-test("a snowflake is 17 to 20 digits, as a string", () => {
-  assert.equal(isSnowflake("815329807377498153"), true);
-  assert.equal(isSnowflake("12345678901234567"), true);
-  assert.equal(isSnowflake("12345678901234567890"), true);
-});
-
-test("anything else is not, including a number that looks like one", () => {
-  // A number is the interesting rejection: an id past 2^53 cannot survive JSON as one, so
-  // accepting the type at all would mean accepting a corrupted id.
-  for (const value of [815329807377498153, "1234567890123456", "123456789012345678901", "", null,
-    undefined, "81532980737749815a", " 815329807377498153 ", {}, ["815329807377498153"]]) {
-    assert.equal(isSnowflake(value), false, JSON.stringify(value) ?? String(value));
-  }
-});
-
-// --- pickOverrides: absent and empty are different, and the difference is load-bearing ----------
-
-test("only the fields actually set come back", () => {
-  assert.deepEqual(pickOverrides({ announcements: false, somethingElse: 1 }), { announcements: false });
-  assert.deepEqual(pickOverrides({}), {});
-  assert.deepEqual(pickOverrides(), {});
-});
-
-test("an empty list is a real override and survives; an absent key does not become one", () => {
-  // `[]` means "unrestricted for this instance" and `undefined` means "inherit the server's
-  // setting". Collapsing the two would turn an inherited restriction into no restriction.
-  assert.deepEqual(pickOverrides({ voiceChannels: [] }), { voiceChannels: [] });
-  assert.deepEqual(pickOverrides({ voiceChannels: undefined }), {});
-});
-
-test("the overridable list is narrower than the bot's, deliberately", () => {
-  // The bot also allows autoplay and taste seeding; the dashboard offers neither, and an API that
-  // accepts fields no UI sends is a surface nobody has looked at. If this ever needs widening it
-  // should be because a control shipped.
-  assert.deepEqual([...OVERRIDABLE], ["announcements", "voiceChannels", "commandsChannels"]);
-  assert.deepEqual(pickOverrides({ autoplay: true }), {});
-});
-
 // --- normaliseCardColor: the one the appearance endpoint trusts free-form input to ---------------
 
 test("every way of writing one colour normalises to the same string", () => {
@@ -115,4 +73,34 @@ test("null clears it, and anything unparseable is undefined rather than null", (
   for (const value of ["", "red", "#gggggg", "#12345", "#ff00aa00", {}, []]) {
     assert.equal(normaliseCardColor(value), undefined, JSON.stringify(value) ?? String(value));
   }
+});
+
+// --- Discord that does not answer -----------------------------------------------------------------
+
+test("every call to Discord from the functions carries a timeout", async (t) => {
+  const { fetchGuilds, fetchUser, exchangeCode } = await import("../website/lib/discord.js");
+  const seen = [];
+  t.mock.method(globalThis, "fetch", async (_url, init) => {
+    seen.push(init?.signal instanceof AbortSignal);
+    return new Response("[]", { status: 200 });
+  });
+  process.env.DISCORD_CLIENT_ID ??= "1";
+  process.env.DISCORD_CLIENT_SECRET ??= "s";
+
+  await fetchGuilds("token");
+  await fetchUser("token");
+  await exchangeCode({ code: "c", redirect: "https://example.test/cb" });
+
+  assert.deepEqual(seen, [true, true, true]);
+});
+
+test("a timed-out Discord request reads as unavailable, not as a sign-in that expired or a wrong secret", async () => {
+  const { describeGuildFetchFailure, isTimeout } = await import("../website/lib/discord.js");
+  const { reasonFor } = await import("../website/api/auth/callback.js");
+  const timeout = new DOMException("The operation was aborted due to timeout", "TimeoutError");
+
+  assert.equal(isTimeout(timeout), true);
+  assert.equal(isTimeout(new Error("other")), false);
+  assert.equal(describeGuildFetchFailure(timeout).status, 503);
+  assert.equal(reasonFor(timeout), "discord_unavailable");
 });

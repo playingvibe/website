@@ -88,8 +88,8 @@ The code is [MIT](LICENSE). That covers everything except the items below.
 
 - **The Vibe name, the logo and the images in `website/press/` and `website/badges/`** are the
   project's brand. They are here so the site renders, not as a licence to reuse them: don't use them
-  to present another bot or service as Vibe. Artwork is planned to live in its own repository with
-  its own licence; when it does, that repository's terms apply to these images.
+  to present another bot or service as Vibe. The artwork also lives in the project's `brand` repository
+  with its own licence; that repository's terms apply to these images.
 - **Outfit** (`website/fonts/`) is by The Outfit Project Authors under the SIL Open Font License 1.1
   ([`website/fonts/OFL-Outfit.txt`](website/fonts/OFL-Outfit.txt)).
 

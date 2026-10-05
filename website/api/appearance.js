@@ -13,7 +13,7 @@ import { readJson } from "../lib/http.js";
  * The card is rendered on a near-black ground with white text over an accent glow, so a dark or
  * low-contrast accent produces a card that looks broken rather than customised. Offering a wheel
  * would mean either shipping that outcome or writing a contrast validator nobody asked for; a
- * curated set is the smaller, better answer. Free hex can come later if people ask.
+ * curated set is the smaller, better answer.
  */
 export const PALETTE = Object.freeze([
   { name: "Vibe", value: "#e05570" },
@@ -40,6 +40,93 @@ export const PALETTE = Object.freeze([
  * @param {import("node:http").ServerResponse} res
  * @returns {Promise<void>}
  */
+const NOT_A_COLOUR = { error: "Not a colour." };
+const NOT_A_BACKGROUND = { error: "Not an available background." };
+
+/** A background style's key, or `null` to clear it. An allow-list: a key selects a drawing routine, not a file. */
+function backgroundKey(value) {
+  const key = value ?? null;
+  if (key !== null && !CARD_BACKGROUND_STYLES.some((entry) => entry.key === key)) return NOT_A_BACKGROUND;
+  return { value: key };
+}
+
+/** Free-form hex, normalised so `#F0A` and `#ff00aa` cannot be stored as two values meaning the same colour. */
+function colourValue(value) {
+  const colour = normaliseCardColor(value ?? null);
+  return colour === undefined ? NOT_A_COLOUR : { value: colour };
+}
+
+/**
+ * Each setting the page can send, and what makes its value acceptable. A validator returns `{value}` to keep it
+ * or `{error}` to refuse the request, and the table's order is the order errors are found in.
+ */
+const SETTINGS = {
+  accent: (value) => {
+    const accent = value ?? null;
+    // Checked server-side. The page offers eight swatches; a request is not the page, and "the UI
+    // only sends valid values" is not a validation strategy.
+    if (accent !== null && !PALETTE.some((entry) => entry.value === accent)) return { error: "Not an available colour." };
+    return { value: accent };
+  },
+  background: backgroundKey,
+  // Free-form hex is safe **only** because the renderer veils whatever is drawn before any text goes down.
+  backgroundColor: colourValue,
+  // Free-form hex, like the background colour and unlike `accent`. `player.css` mixes this into surfaces at 9%
+  // and into the ambient glow at 2-9%, so no value it can hold makes anything unreadable — where the rank-card
+  // accent is drawn as text and a bar and must carry contrast by itself.
+  activityAccent: colourValue,
+  // Same allow-list as the card's, because it is the same two styles — the Activity turns this into a CSS
+  // class, so an unknown value would silently render nothing while the page claimed otherwise.
+  activityBackground: backgroundKey,
+  // Whether a server's own guild-tier Activity theme wins over this listener's personal accent, in every
+  // server that has one. Off by default, and it needs no premium: it costs nothing to offer, and a lapsed
+  // subscriber's accent outlives the subscription, so this is how they put a server's theme back in front of it.
+  preferServerTheme: (value) =>
+    typeof value === "boolean" ? { value } : { error: "preferServerTheme must be true or false." },
+  // `null` is accepted and meaningful: it returns the card to the style's own default rather than pinning a
+  // preference. A string "true" is refused rather than coerced, because coercion would silently store
+  // something the page never sent.
+  fade: (value) => {
+    const fade = value ?? null;
+    return fade === null || typeof fade === "boolean" ? { value: fade } : { error: "Fade must be true, false, or null." };
+  },
+};
+
+/**
+ * The settings a body sets, checked.
+ *
+ * **Only the keys that were actually sent.** The page has independent controls, and defaulting a missing one to
+ * null would mean changing your colour silently cleared your background. `hasOwn` rather than a truthiness check,
+ * because `null` is a real value here: it is how the settings are cleared.
+ * @param {unknown} body
+ * @returns {{changes: Record<string, string|boolean|null>, error?: string}} `error` is the first refusal,
+ *          and `changes` is then to be ignored.
+ */
+export function validateChanges(body) {
+  const changes = {};
+  if (!body || typeof body !== "object") return { changes };
+  for (const [key, validate] of Object.entries(SETTINGS)) {
+    if (!Object.hasOwn(body, key)) continue;
+    const { value, error } = validate(body[key]);
+    if (error) return { changes, error };
+    changes[key] = value;
+  }
+  return { changes };
+}
+
+/**
+ * Whether a body only takes settings off (`null`) or sets `preferServerTheme`: the two things anyone may
+ * do whether or not they are subscribed. Anything that sets a colour, a background or a pinned fade is
+ * the paid feature.
+ * @param {unknown} body
+ * @returns {boolean}
+ */
+function isUndoOnly(body) {
+  if (!body || typeof body !== "object") return false;
+  const entries = Object.entries(body);
+  return entries.length > 0 && entries.every(([key, value]) => key === "preferServerTheme" || value === null);
+}
+
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
 
@@ -76,101 +163,21 @@ export default async function handler(req, res) {
     return;
   }
 
-  if (!(await isEntitled(session.id))) {
+  const entitled = await isEntitled(session.id);
+  const body = await readJson(req);
+
+  // Setting a colour or a background is the premium feature. Taking one off, and choosing a server's
+  // theme over a personal one, are not: the bot keeps applying what a lapsed subscriber chose, so
+  // they must be able to undo it without deleting all their data.
+  if (!entitled && !isUndoOnly(body)) {
     res.status(402).json({ error: "Custom styling is a premium feature." });
     return;
   }
 
-  const body = await readJson(req);
-
-  // **Only the keys that were actually sent.** The page has two independent controls, and
-  // defaulting a missing one to null would mean changing your colour silently cleared your
-  // background. `in` rather than a truthiness check, because `null` is a real value here: it is
-  // how both settings are cleared.
-  const changes = {};
-
-  if (body && "accent" in body) {
-    const accent = body.accent ?? null;
-    // Checked server-side. The page offers eight swatches; a request is not the page, and "the UI
-    // only sends valid values" is not a validation strategy.
-    if (accent !== null && !PALETTE.some((entry) => entry.value === accent)) {
-      res.status(400).json({ error: "Not an available colour." });
-      return;
-    }
-    changes.accent = accent;
-  }
-
-  if (body && "background" in body) {
-    const background = body.background ?? null;
-    // An allow-list rather than a shape check. The key selects a drawing routine, not a file, so
-    // this is not a traversal question — but an unknown key would render the plain card while the
-    // page claimed otherwise.
-    if (background !== null && !CARD_BACKGROUND_STYLES.some((entry) => entry.key === background)) {
-      res.status(400).json({ error: "Not an available background." });
-      return;
-    }
-    changes.background = background;
-  }
-
-  if (body && "backgroundColor" in body) {
-    // Free-form hex is safe **only** because the renderer veils whatever is drawn before any text
-    // goes down. Normalised rather than merely checked, so `#F0A` and `#ff00aa` cannot be stored
-    // as two different values meaning the same colour.
-    const colour = normaliseCardColor(body.backgroundColor ?? null);
-    if (colour === undefined) {
-      res.status(400).json({ error: "Not a colour." });
-      return;
-    }
-    changes.backgroundColor = colour;
-  }
-
-  if (body && "activityAccent" in body) {
-    // Free-form hex, like the background colour and unlike `accent`. `player.css` mixes this into
-    // surfaces at 9% and into the ambient glow at 2-9%, so no value it can hold makes anything
-    // unreadable — where the rank-card accent is drawn as text and a bar and must carry contrast
-    // by itself.
-    const colour = normaliseCardColor(body.activityAccent ?? null);
-    if (colour === undefined) {
-      res.status(400).json({ error: "Not a colour." });
-      return;
-    }
-    changes.activityAccent = colour;
-  }
-
-  if (body && "activityBackground" in body) {
-    const style = body.activityBackground ?? null;
-    // Same allow-list as the card's, because it is the same two styles — the Activity turns this
-    // into a CSS class, so an unknown value would silently render nothing while the page claimed
-    // otherwise.
-    if (style !== null && !CARD_BACKGROUND_STYLES.some((entry) => entry.key === style)) {
-      res.status(400).json({ error: "Not an available background." });
-      return;
-    }
-    changes.activityBackground = style;
-  }
-
-  if (body && "preferServerTheme" in body) {
-    // Whether a server's own guild-tier Activity theme wins over this listener's personal accent,
-    // in every server that has one. Off by default: unlike the fields above, this needs no
-    // premium check of its own — it costs nothing to offer and only ever matters alongside a
-    // personal accent, which this route already gates.
-    if (typeof body.preferServerTheme !== "boolean") {
-      res.status(400).json({ error: "preferServerTheme must be true or false." });
-      return;
-    }
-    changes.preferServerTheme = body.preferServerTheme;
-  }
-
-  if (body && "fade" in body) {
-    const fade = body.fade ?? null;
-    // `null` is accepted and meaningful: it returns the card to the style's own default rather
-    // than pinning a preference. A string "true" is not a boolean and is refused rather than
-    // coerced, because coercion here would silently store something the page never sent.
-    if (fade !== null && typeof fade !== "boolean") {
-      res.status(400).json({ error: "Fade must be true, false, or null." });
-      return;
-    }
-    changes.fade = fade;
+  const { changes, error } = validateChanges(body);
+  if (error) {
+    res.status(400).json({ error });
+    return;
   }
 
   if (!Object.keys(changes).length) {

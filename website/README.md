@@ -30,7 +30,7 @@ gitignored here and Vercel does not read one from the repo anyway.
 | `DISCORD_CLIENT_ID` | The **flagship** application's client ID. Only Vibe needs a login. |
 | `DISCORD_CLIENT_SECRET` | Same application, OAuth2 → Client Secret. Server-side only. |
 | `SESSION_SECRET` | Any random string of 32+ characters. Rotating it signs everyone out. |
-| `MONGO_URI` | The same cluster the bots use. Needs **read plus write on two fields** — see "Database access" below. |
+| `MONGO_URI` | The same cluster the bots use. Needs **read plus write** on the appearance fields of `users` — see "Database access" below. |
 | `GUILD_API_SECRET` | Optional; without it the per-server settings page (`/servers/<id>`) answers "not available yet". The same random value as the flagship's `GUILD_API_SECRET` (`openssl rand -hex 32`): the website calls the bot's `/internal/guild-settings` with it, so the site needs **no bot token**. |
 | `BOT_API_ORIGIN` | Optional. Where that call goes; defaults to `https://api.playvibe.gg`. |
 | `SITE_ORIGIN` | Optional. Pins the OAuth redirect origin; without it the origin is derived from the request, which is what makes preview deployments work. |
@@ -57,17 +57,18 @@ has nothing to delete.
 The site is not read-only. Everything it writes is a setting the signed-in person is changing
 about themselves, or about a server they administer:
 
-- **Six appearance fields on their own user document** — `rankCardAccent`, `rankCardBackground`,
-  `rankCardBackgroundColor`, `rankCardFade`, `activityAccent` and `activityBackground`. The first
-  four are the card `/rank` draws; the last two are the player `/watch` opens. **This is the only
+- **Seven appearance fields on their own user document** — `rankCardAccent`, `rankCardBackground`,
+  `rankCardBackgroundColor`, `rankCardFade`, `activityAccent`, `activityBackground` and
+  `preferServerTheme`. The first four are the card `/rank` draws; the last three are the player `/watch`
+  opens (and whether a server's theme wins over the member's own accent). **This is the only
   write path for any of them** — no slash command writes an appearance setting — so the check
   behind it, in `lib/entitlements.js`, is the only place that decides who may write. That module
   is the one thing in this repository that differs from production: the copy here is open
   (everything allowed), so the whole interface can be tested without a subscription, and the
   production site runs a different implementation of the same functions.
-- `guildInstances.overrides.*` — per-bot settings for a server **they administer**, re-checked
-  against Discord on every request rather than trusted from the session. Which three fields, and
-  why that is narrower than the bot's own list, is in `lib/overrides.js`.
+- Nothing about a server. Per-server and per-bot settings are changed by **the bot**, which the
+  site asks (see "Why the site holds no bot token"); the site never writes `guilds` or
+  `guildInstances`.
 
 Nothing else. Listening statistics, the listening history, favourites, playlists, passports and
 the shared guild config are the bot's to maintain, and a second writer would mean a second set of
@@ -89,7 +90,5 @@ Discord) before it forwards anything.
 
 ## Known gaps
 
-- **No Content-Security-Policy header yet.** The site has never had one; adding it is a separate,
-  testable change rather than something to slip in alongside auth.
 - Saved tracks and playlists are not shown. They are the large field on the user document and
   nothing on the page needed them yet.

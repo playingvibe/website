@@ -270,3 +270,36 @@ test("every reason the callback can emit has copy on the dashboard", () => {
   const missing = [...reasons].filter((reason) => !copy.has(reason));
   assert.deepEqual(missing, [], `no dashboard copy for: ${missing.join(", ")}`);
 });
+
+test("a cookie whose authentication tag has been cut short is rejected, not checked at 32 bits", () => {
+  const res = fakeRes();
+  setSession(res, { id: "123", username: "A", avatar: null, accessToken: "tok" });
+
+  const [cookie] = [res.headers["Set-Cookie"]].flat();
+  const value = decodeURIComponent(cookie.split("=")[1].split(";")[0]);
+  const [iv, tag, body] = value.split(".");
+  assert.equal(Buffer.from(tag, "base64url").length, 16);
+
+  for (const length of [4, 8, 12, 15]) {
+    const short = Buffer.from(tag, "base64url").subarray(0, length).toString("base64url");
+    assert.equal(getSession({ headers: { cookie: `vibe_session=${iv}.${short}.${body}` } }), null, `${length}-byte tag`);
+  }
+  assert.ok(getSession({ headers: { cookie: `vibe_session=${value}` } }), "the real one still works");
+});
+
+test("sign-out refuses a request the browser says came from another site, and accepts the site's own", async () => {
+  const { default: logout } = await import("../website/api/auth/logout.js");
+  const run = (headers) => {
+    const res = fakeRes();
+    res.status = (code) => ((res.statusCode = code), res);
+    res.json = (body) => ((res.body = body), res);
+    logout({ method: "POST", headers }, res);
+    return res;
+  };
+
+  assert.equal(run({ "sec-fetch-site": "cross-site" }).statusCode, 403);
+  assert.equal(run({ "sec-fetch-site": "same-site" }).statusCode, 403);
+  assert.equal(run({ "sec-fetch-site": "same-origin" }).statusCode, 200);
+  assert.equal(run({}).statusCode, 200, "a client that sends no such header is not a browser steered by a page");
+  assert.equal(run({ "sec-fetch-site": "cross-site" }).headers?.["Set-Cookie"], undefined, "and nothing was cleared");
+});

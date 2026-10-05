@@ -171,3 +171,36 @@ test("the bot being unreachable is a 502, not a hang or a crash", async () => {
 test("other methods are refused", async () => {
   assert.equal((await run({ method: "DELETE" })).statusCode, 405);
 });
+
+// --- Discord failing, as opposed to Discord refusing ----------------------------------------
+
+function discordAnswers(respond) {
+  const before = globalThis.fetch;
+  globalThis.fetch = async (url, init) =>
+    String(url).includes("discord.com") ? respond() : before(url, init);
+}
+
+test("a token Discord refuses is a 401: the person really does need to sign in again", async () => {
+  discordAnswers(() => new Response("{}", { status: 401 }));
+
+  const res = await run();
+
+  assert.equal(res.statusCode, 401);
+  assert.match(res.payload.error, /sign in again/i);
+});
+
+test("a Discord rate limit, outage or dropped connection is a 503, which keeps the page and the draft", async () => {
+  for (const respond of [
+    () => new Response("{}", { status: 429 }),
+    () => new Response("{}", { status: 502 }),
+    () => {
+      throw new TypeError("fetch failed");
+    },
+  ]) {
+    discordAnswers(respond);
+    const res = await run();
+    assert.equal(res.statusCode, 503);
+    assert.doesNotMatch(res.payload.error, /sign in/i);
+  }
+  assert.equal(botCalls().length, 0, "and the bot was never asked on a guess");
+});

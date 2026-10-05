@@ -14,8 +14,18 @@ const MAX_BODY_BYTES = 16 * 1024;
  * @returns {Promise<?object>}
  */
 export async function readJson(req) {
-  if (req.body && typeof req.body === "object") return req.body;
-  if (typeof req.body === "string") return parse(req.body);
+  // Reading `req.body` is itself a risk: where the platform parses lazily, its getter throws on malformed JSON,
+  // and an unguarded read there became the platform's own 500 instead of a body this file calls unparseable.
+  let preparsed;
+  try {
+    preparsed = req.body;
+  } catch {
+    return null;
+  }
+  // Already buffered and parsed by the platform, so the cap below never applied to it. Held to the same cap and
+  // the same shape rules as a body read here.
+  if (preparsed && typeof preparsed === "object") return acceptParsed(preparsed);
+  if (typeof preparsed === "string") return preparsed.length > MAX_BODY_BYTES ? null : parse(preparsed);
 
   const chunks = [];
   let size = 0;
@@ -40,11 +50,24 @@ export async function readJson(req) {
  */
 function parse(raw) {
   try {
-    const value = JSON.parse(raw);
-    // Arrays and primitives are never a valid body here, and letting one through would mean
-    // every caller has to re-check before destructuring.
-    return value && typeof value === "object" && !Array.isArray(value) ? value : null;
+    return acceptParsed(JSON.parse(raw));
   } catch {
     return null;
   }
+}
+
+/**
+ * Arrays and primitives are never a valid body here, and letting one through would mean every caller has to
+ * re-check before destructuring. Nor is one past the size cap.
+ * @param {unknown} value
+ * @returns {?object}
+ */
+function acceptParsed(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  try {
+    if (JSON.stringify(value).length > MAX_BODY_BYTES) return null;
+  } catch {
+    return null;
+  }
+  return value;
 }

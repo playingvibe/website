@@ -1,5 +1,5 @@
 import { getSession } from "../lib/session.js";
-import { canManageGuild, fetchGuilds } from "../lib/discord.js";
+import { canManageGuild, describeGuildFetchFailure, fetchGuilds } from "../lib/discord.js";
 import { readJson } from "../lib/http.js";
 
 /**
@@ -52,8 +52,10 @@ export default async function handler(req, res) {
   let guilds;
   try {
     guilds = await fetchGuilds(session.accessToken);
-  } catch {
-    res.status(401).json({ error: "Your Discord sign-in expired. Sign in again." });
+  } catch (error) {
+    // 401 only for a token Discord refuses; a rate limit or an outage is a 503, which keeps the page.
+    const { status, message } = describeGuildFetchFailure(error);
+    res.status(status).json({ error: message });
     return;
   }
 

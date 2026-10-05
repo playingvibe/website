@@ -15,9 +15,8 @@ import { avatarUrl } from "../lib/discord.js";
 export default function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
 
-  // Gated like `guild.js` and `appearance.js` already are. A read endpoint that answers a
-  // POST is not a vulnerability by itself, but it is a surface that behaves differently from
-  // its siblings for no reason, and it is what makes a CSRF write look plausible to try.
+  // GET only, like the other read endpoints: one that answers a POST behaves differently from its siblings for
+  // no reason, and makes a CSRF write look plausible to try.
   if (req.method !== "GET") {
     res.status(405).json({ error: "Use GET." });
     return;

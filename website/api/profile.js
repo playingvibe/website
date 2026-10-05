@@ -2,6 +2,7 @@ import { getSession } from "../lib/session.js";
 import { findUserStats } from "../lib/mongo.js";
 import { hasPremium } from "../lib/entitlements.js";
 import { getLevel } from "../lib/generated/level.js";
+import { currentListeningStreak } from "../lib/generated/listeningStreak.js";
 import { getEarnedBadgeTiers } from "../lib/generated/badges.js";
 
 const MS_PER_HOUR = 60 * 60 * 1000;
@@ -22,9 +23,8 @@ const MS_PER_HOUR = 60 * 60 * 1000;
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
 
-  // Gated like `guild.js` and `appearance.js` already are. A read endpoint that answers a
-  // POST is not a vulnerability by itself, but it is a surface that behaves differently from
-  // its siblings for no reason, and it is what makes a CSRF write look plausible to try.
+  // GET only, like the other read endpoints: one that answers a POST behaves differently from its siblings for
+  // no reason, and makes a CSRF write look plausible to try.
   if (req.method !== "GET") {
     res.status(405).json({ error: "Use GET." });
     return;
@@ -49,7 +49,7 @@ export default async function handler(req, res) {
   const stats = {
     totalListeningTime: doc?.totalListeningTime ?? 0,
     sessionCount: doc?.sessionCount ?? 0,
-    currentStreak: doc?.currentStreak ?? 0,
+    currentStreak: currentListeningStreak(doc),
     longestStreak: doc?.longestStreak ?? 0,
     lastActiveDate: doc?.lastActiveDate ?? null,
     guildCount: doc?.listeningGuildIds?.length ?? 0,

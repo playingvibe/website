@@ -343,3 +343,14 @@ test("the shared cache is short enough that withdrawing a passport actually with
     `a withdrawn passport must not outlive its withdrawal by ${shared[1]} seconds`
   );
 });
+
+test("a refusal is never cached, so a database blip or a not-yet-live link does not stick for a minute", async () => {
+  const unknown = await call("b".repeat(32));
+  assert.equal(unknown.statusCode, 404);
+  assert.equal(unknown.headers["cache-control"], "no-store");
+
+  await givePassport();
+  const served = await call(TOKEN);
+  assert.equal(served.statusCode, 200);
+  assert.match(served.headers["cache-control"], /s-maxage/, "a page that is served is still cached briefly");
+});

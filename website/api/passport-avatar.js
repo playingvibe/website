@@ -1,5 +1,5 @@
 import { findPassportByToken } from "../lib/mongo.js";
-import { hasPremium } from "../lib/entitlements.js";
+import { isEntitled } from "../lib/entitlements.js";
 
 /**
  * A passport owner's avatar, proxied.
@@ -37,7 +37,7 @@ export default async function handler(req, res) {
     return;
   }
 
-  if (!(await hasPremium(user._id))) {
+  if (!(await isEntitled(user._id))) {
     res.status(404).end();
     return;
   }
@@ -48,7 +48,8 @@ export default async function handler(req, res) {
 
   let response;
   try {
-    response = await fetch(upstream);
+    // Bounded: a CDN that stalls would otherwise hold the function until the platform cuts it off.
+    response = await fetch(upstream, { signal: AbortSignal.timeout(5000) });
   } catch {
     res.status(502).end();
     return;

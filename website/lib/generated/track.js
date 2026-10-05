@@ -16,8 +16,6 @@ import { stripNoiseBrackets, stripNoiseSuffix } from "./titleNoise.js";
  * safe in a language whose every word here is known.
  */
 const TITLE_NOISE = [
-  // (Official Video), [Official Music Video], (Lyrics), [4K Remaster], (HD)...
-  /[([][^)\]]*\b(?:official|lyric|lyrics|audio|visualizer|visualiser|music\s*video|hd|hq|4k|8k|full\s*hd|remaster(?:ed)?|explicit|clean|mv|m\/v)\b[^)\]]*[)\]]/gi,
   // The same words as an unbracketed suffix after a dash or pipe (the full-width `｜` too).
   /\s*[-–—|｜]\s*(?:official\s*)?(?:music\s*)?(?:video|audio|lyric video|lyrics|visualizer|visualiser)\s*$/gi,
   // "Official …" ends a title with no separator at all (`YOASOBI「アイドル」 Official Music Video`): the word
@@ -26,6 +24,22 @@ const TITLE_NOISE = [
   /\s*[-–—|｜]?\s*\b(?:hd|hq|4k|8k)\b\s*$/gi,
 ];
 
+/**
+ * (Official Video), [Official Music Video], (Lyrics), [4K Remaster], (HD)... A bracket is removed when
+ * it holds one of these words. Two steps rather than one pattern with a word list between two
+ * `[^)\]]*` runs: with no closing bracket that pattern is cubic in the title's length, and a title is
+ * whatever a file's tags say.
+ */
+const NOISE_BRACKET = /[([]([^)\]]{0,80})[)\]]/g;
+const NOISE_WORD =
+  /\b(?:official|lyric|lyrics|audio|visualizer|visualiser|music\s*video|hd|hq|4k|8k|full\s*hd|remaster(?:ed)?|explicit|clean|mv|m\/v)\b/i;
+
+/**
+ * Longer than any real title. Lavalink's HTTP source passes a file's own tags through, so the length
+ * is not up to the uploader's good sense; everything below is bounded by this.
+ */
+const MAX_TITLE_LENGTH = 200;
+
 /** One removal can expose another (`Song - Video Oficial - HD`), so the rules run until nothing changes. */
 const MAX_PASSES = 4;
 
@@ -33,6 +47,7 @@ function stripNoise(title) {
   let cleaned = title;
   for (let pass = 0; pass < MAX_PASSES; pass += 1) {
     const before = cleaned;
+    cleaned = cleaned.replace(NOISE_BRACKET, (bracket, inner) => (NOISE_WORD.test(inner) ? "" : bracket));
     for (const pattern of TITLE_NOISE) cleaned = cleaned.replace(pattern, "");
     cleaned = stripNoiseSuffix(stripNoiseBrackets(cleaned)).trimEnd();
     if (cleaned === before) break;
@@ -43,6 +58,7 @@ function stripNoise(title) {
 /** Safe on any source. Never returns empty: a title that is only noise is kept as it was. */
 export function cleanTrackTitle(title) {
   if (!title) return title ?? "";
+  if (title.length > MAX_TITLE_LENGTH) title = title.slice(0, MAX_TITLE_LENGTH);
 
   const cleaned = stripNoise(title)
     .replace(/\s{2,}/g, " ")

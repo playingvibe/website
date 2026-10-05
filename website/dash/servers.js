@@ -1,4 +1,4 @@
-import { template, note } from "./shared.js";
+import { template, note, renderSignedOut } from "./shared.js";
 
 /**
  * The user's manageable servers, each with the Vibe bots in it and a link to configure it. The
@@ -11,6 +11,9 @@ export async function renderServers(host) {
   let data;
   try {
     const response = await fetch("/api/guilds");
+    // A dead Discord token (Vibe removed under Authorized Apps) leaves the site cookie valid for days: the
+    // endpoint answers 401 so the page can say sign in, as the profile and settings pages do.
+    if (response.status === 401) return renderSignedOut();
     if (!response.ok) throw new Error(String(response.status));
     data = await response.json();
   } catch {

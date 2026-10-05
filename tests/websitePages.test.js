@@ -82,7 +82,7 @@ test("the settings page is rewritten from /servers/:id, and loads everything by 
 });
 
 test("the settings modules put other people's role and channel names in text, never in markup", () => {
-  for (const file of ["server.js", "dash/serverSettings.js", "dash/servers.js"]) {
+  for (const file of ["server.js", "dash/serverSettings.js", "dash/controls.js", "dash/servers.js"]) {
     assert.doesNotMatch(read(file), /innerHTML|insertAdjacentHTML|outerHTML/, `${file} builds markup from data`);
   }
 });

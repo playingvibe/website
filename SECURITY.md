@@ -25,8 +25,8 @@ You'll get an answer within a few days. We'll tell you when it's fixed and, if y
 - Discord itself, Vercel, MongoDB, or any other service the project uses: report those to their
   owners.
 - Findings that need a stolen device or a browser you already control, denial-of-service by volume,
-  and missing headers with no demonstrated impact. (A Content-Security-Policy header is a known gap;
-  see `website/README.md`.)
+  and missing headers with no demonstrated impact. (The site sends a Content-Security-Policy; it is in
+  `website/vercel.json`. A way around it is in scope.)
 - The bot's own code and hosting, which aren't in this repository. If you found something there,
   the private route above still reaches us.
 

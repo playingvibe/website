@@ -11,8 +11,6 @@
  * `null` means "follows the server". `s:overlay` holds the action to take: `"on"`, `"off"` or `"new"`.
  */
 
-export const SERVER_FIELDS = ["djRoles", "voiceChannels", "commandsChannels", "logChannelId", "announcements", "tips", "autoplay", "autoplayRoomTaste", "shareVoiceChannels", "activityAccent"];
-
 export const serverKey = (field) => `s:${field}`;
 export const botKey = (clientId, field) => `b:${clientId}:${field}`;
 

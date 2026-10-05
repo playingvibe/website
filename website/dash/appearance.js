@@ -1,6 +1,7 @@
 import { DEFAULT_BACKGROUND_COLOR, resolveCardFade } from "../lib/generated/cardBackgrounds.js";
 import { formatHours, renderSignedOut, note } from "./shared.js";
 import { dirty, clean } from "./saveBar.js";
+import { bodyFor, createDraft, isDirty, markSaved, revert } from "./appearanceDraft.js";
 
 /**
  * The appearance settings. Loaded after the profile has painted rather than alongside it — the
@@ -43,11 +44,9 @@ export async function renderCardStyle({
   for (const element of group) element.hidden = !show;
   if (!show) return;
 
-  let current = data.accent;
-  let currentBackground = data.background ?? null;
-  let currentBackgroundColor = data.backgroundColor ?? DEFAULT_BACKGROUND_COLOR;
-  // `null` until the switch is touched, so the card follows whichever style is picked.
-  let currentFade = data.fade ?? null;
+  // `draft.current` is what is on screen, `draft.saved` what the server holds (`appearanceDraft.js`).
+  const draft = createDraft(data);
+  const state = draft.current;
 
   /**
    * A live preview of the card.
@@ -65,22 +64,22 @@ export async function renderCardStyle({
     if (!preview?.host) return;
 
     const card = document.createElement("div");
-    card.className = currentBackground
-      ? `preview-card backdrop-${currentBackground}`
+    card.className = state.background
+      ? `preview-card backdrop-${state.background}`
       : "preview-card";
-    card.style.setProperty("--bg", currentBackgroundColor);
+    card.style.setProperty("--bg", state.backgroundColor);
     // Through the same resolver the bot uses, so an untouched switch previews the style's default
     // rather than this page's guess at it.
-    if (currentBackground) {
+    if (state.background) {
       card.classList.add(
-        resolveCardFade(currentBackground, currentFade) ? "backdrop-fade" : "backdrop-even"
+        resolveCardFade(state.background, state.fade) ? "backdrop-fade" : "backdrop-even"
       );
     }
     // The accent glow is drawn by the bot *only* on the plain card, because over a background it
     // becomes a second tinted light in the same corner. The preview has to follow that rule or it
     // would show a card nobody can actually get.
-    card.classList.toggle("preview-glow", !currentBackground);
-    card.style.setProperty("--card-accent", current || "var(--accent)");
+    card.classList.toggle("preview-glow", !state.background);
+    card.style.setProperty("--card-accent", state.accent || "var(--accent)");
 
     const avatar = document.createElement("img");
     avatar.className = "preview-avatar";
@@ -131,10 +130,9 @@ export async function renderCardStyle({
   /**
    * Updates the swatches' selected state in place. Replaced by `paint()`; a no-op until then.
    *
-   * Exists for the same reason `paintActivity()`'s own `refresh()` does, and the rank-card half
-   * simply never got it: repainting from inside a control's own handler destroys the element the
-   * user just activated, and focus falls to `<body>`. A keyboard user trying three colours tabbed
-   * from the top of the page three times.
+   * Exists for the same reason `paintActivity()`'s own `refresh()` does: repainting from inside a
+   * control's own handler destroys the element the user just activated, and focus falls to `<body>`.
+   * A keyboard user trying three colours would tab from the top of the page three times.
    */
   let refreshSwatches = () => {};
 
@@ -148,7 +146,7 @@ export async function renderCardStyle({
       // A toggle button, not an ARIA radio: these sit in a group that also holds a reset button,
       // and nothing here implements the arrow-key movement `role="radio"` promises. `aria-pressed`
       // describes what this actually is.
-      swatch.setAttribute("aria-pressed", String(current === entry.value));
+      swatch.setAttribute("aria-pressed", String(state.accent === entry.value));
       swatch.setAttribute("aria-label", entry.name);
       swatch.disabled = !data.entitled;
       swatch.addEventListener("click", () => choose(entry.value));
@@ -159,9 +157,9 @@ export async function renderCardStyle({
 
     refreshSwatches = () => {
       for (const [i, swatch] of swatches.entries()) {
-        swatch.setAttribute("aria-pressed", String(current === data.palette[i].value));
+        swatch.setAttribute("aria-pressed", String(state.accent === data.palette[i].value));
       }
-      reset.disabled = !data.entitled || current === null;
+      reset.disabled = state.accent === null;
     };
 
     host.replaceChildren(...swatches, reset);
@@ -176,26 +174,10 @@ export async function renderCardStyle({
     reset.type = "button";
     reset.className = "swatch-reset";
     reset.textContent = "Use the bot's colour";
-    reset.disabled = !data.entitled || current === null;
+    reset.disabled = state.accent === null;
     reset.addEventListener("click", () => choose(null));
     return reset;
   };
-
-  // What the server currently holds. `current` / `currentBackground` are what is on screen; the
-  // difference between the two pairs is the entire definition of "unsaved".
-  let savedAccent = data.accent;
-  let savedBackground = data.background ?? null;
-  let savedBackgroundColor = data.backgroundColor ?? DEFAULT_BACKGROUND_COLOR;
-  let savedFade = data.fade ?? null;
-  let currentActivity = data.activityAccent ?? null;
-  let savedActivity = data.activityAccent ?? null;
-  let currentActivityBg = data.activityBackground ?? null;
-  let savedActivityBg = data.activityBackground ?? null;
-  // Whether a server's own guild-tier theme wins over this personal accent, in every server that
-  // has one. Meaningless without a personal accent set, but stored independently of it — turning
-  // this on and then clearing the accent should not silently turn it off again.
-  let currentPreferServerTheme = data.preferServerTheme === true;
-  let savedPreferServerTheme = data.preferServerTheme === true;
 
   /**
    * A live mock of the player `/watch` opens, retinted by the colour and background chosen below.
@@ -222,11 +204,11 @@ export async function renderCardStyle({
     };
 
     const mock = document.createElement("div");
-    mock.className = currentActivityBg
-      ? `player-preview backdrop-${currentActivityBg} backdrop-even`
+    mock.className = state.activityBackground
+      ? `player-preview backdrop-${state.activityBackground} backdrop-even`
       : "player-preview";
     // Both, as the tiles do: `--accent` tints the controls, `--bg` the backdrop.
-    const accent = currentActivity ?? DEFAULT_BACKGROUND_COLOR;
+    const accent = state.activityAccent ?? DEFAULT_BACKGROUND_COLOR;
     mock.style.setProperty("--accent", accent);
     mock.style.setProperty("--bg", accent);
     mock.setAttribute("role", "img");
@@ -323,31 +305,14 @@ export async function renderCardStyle({
    */
   const stage = () => {
     paintPlayerPreview();
-    const changed =
-      current !== savedAccent ||
-      currentBackground !== savedBackground ||
-      // Only counts while a style is actually chosen: the colour is meaningless on the plain card,
-      // and letting it mark the form dirty would mean a bar that cannot be explained.
-      (currentBackground !== null && currentBackgroundColor !== savedBackgroundColor) ||
-      (currentBackground !== null && currentFade !== savedFade) ||
-      currentActivity !== savedActivity ||
-      currentActivityBg !== savedActivityBg ||
-      currentPreferServerTheme !== savedPreferServerTheme;
-
-    if (!changed) {
+    if (!isDirty(draft)) {
       clean("rank-card");
       return;
     }
 
     dirty("rank-card", {
       revert: () => {
-        current = savedAccent;
-        currentBackground = savedBackground;
-        currentBackgroundColor = savedBackgroundColor;
-        currentFade = savedFade;
-        currentActivity = savedActivity;
-        currentActivityBg = savedActivityBg;
-        currentPreferServerTheme = savedPreferServerTheme;
+        revert(draft);
         paint();
         paintActivity();
         paintActivityBg();
@@ -355,16 +320,7 @@ export async function renderCardStyle({
         paintPlayerPreview();
       },
       save: async () => {
-        const body = {};
-        if (current !== savedAccent) body.accent = current;
-        if (currentBackground !== savedBackground) body.background = currentBackground;
-        if (currentBackground !== null && currentBackgroundColor !== savedBackgroundColor) {
-          body.backgroundColor = currentBackgroundColor;
-        }
-        if (currentBackground !== null && currentFade !== savedFade) body.fade = currentFade;
-        if (currentActivity !== savedActivity) body.activityAccent = currentActivity;
-        if (currentActivityBg !== savedActivityBg) body.activityBackground = currentActivityBg;
-        if (currentPreferServerTheme !== savedPreferServerTheme) body.preferServerTheme = currentPreferServerTheme;
+        const body = bodyFor(draft);
 
         const response = await fetch("/api/appearance", {
           method: "PUT",
@@ -395,25 +351,14 @@ export async function renderCardStyle({
           return false;
         }
 
-        // **Assigned from `body`, not from the current state.** The body is built conditionally —
-        // the colour and the fade are only sent while a background style is chosen — but this
-        // assigned all six unconditionally, so clearing the background recorded the colour as
-        // saved although it was never sent. The next edit then thought it matched the server and
-        // left it out, and the value silently never reached the database.
-        if ("accent" in body) savedAccent = body.accent;
-        if ("background" in body) savedBackground = body.background;
-        if ("backgroundColor" in body) savedBackgroundColor = body.backgroundColor;
-        if ("fade" in body) savedFade = body.fade;
-        if ("activityAccent" in body) savedActivity = body.activityAccent;
-        if ("activityBackground" in body) savedActivityBg = body.activityBackground;
-        if ("preferServerTheme" in body) savedPreferServerTheme = body.preferServerTheme;
+        markSaved(draft, body);
         return true;
       },
     });
   };
 
   const choose = (accent) => {
-    current = accent;
+    state.accent = accent;
     // In place: a full repaint here would delete the swatch that was just clicked.
     refreshSwatches();
     paintPreview();
@@ -421,7 +366,7 @@ export async function renderCardStyle({
   };
 
   const chooseBackground = (key) => {
-    currentBackground = key;
+    state.background = key;
     refreshBackdrops();
     // Rebuilt rather than refreshed, because whether it exists at all depends on a style being
     // selected. Safe from here: the click was on a tile, never on the colour control itself.
@@ -455,7 +400,6 @@ export async function renderCardStyle({
     none.className = "backdrop backdrop-none";
     none.title = "No background";
     none.setAttribute("aria-label", "No background");
-    none.disabled = !data.entitled;
     none.addEventListener("click", () => chooseBackground(null));
 
     const tiles = data.backgrounds.map((entry) => {
@@ -470,14 +414,14 @@ export async function renderCardStyle({
     });
 
     refreshBackdrops = () => {
-      none.setAttribute("aria-pressed", String(currentBackground === null));
+      none.setAttribute("aria-pressed", String(state.background === null));
       for (const [i, tile] of tiles.entries()) {
         const entry = data.backgrounds[i];
-        const faded = resolveCardFade(entry.key, currentFade);
-        tile.setAttribute("aria-pressed", String(currentBackground === entry.key));
+        const faded = resolveCardFade(entry.key, state.fade);
+        tile.setAttribute("aria-pressed", String(state.background === entry.key));
         tile.classList.toggle("backdrop-fade", faded);
         tile.classList.toggle("backdrop-even", !faded);
-        tile.style.setProperty("--bg", currentBackgroundColor);
+        tile.style.setProperty("--bg", state.backgroundColor);
       }
     };
 
@@ -494,7 +438,7 @@ export async function renderCardStyle({
    *
    * **Only shown once a style is chosen.** A colour input above a plain card sets something that
    * changes nothing, which is a worse experience than not offering it — and it is why the dirty
-   * check ignores the colour while `currentBackground` is null.
+   * check ignores the colour while `state.background` is null.
    *
    * A native `<input type="color">` rather than a wheel of our own: it is the one control every
    * platform already has a good version of, it is keyboard accessible for free, and the veil in
@@ -503,7 +447,7 @@ export async function renderCardStyle({
   const paintColour = () => {
     if (!colourHost) return;
 
-    if (!currentBackground || !data.entitled) {
+    if (!state.background || !data.entitled) {
       colourHost.replaceChildren();
       return;
     }
@@ -515,13 +459,12 @@ export async function renderCardStyle({
     const input = document.createElement("input");
     input.type = "color";
     input.className = "backdrop-colour-input";
-    input.value = currentBackgroundColor;
+    input.value = state.backgroundColor;
     // `input`, not `change`: dragging through a colour wheel should update the tiles live rather
     // than only when the native picker is dismissed.
     input.addEventListener("input", () => {
-      currentBackgroundColor = input.value.toLowerCase();
-      // Already in place — it was this control that taught the file the lesson (see the note on
-      // `paintActivity()`), and `refreshBackdrops()` is now the one way tiles are updated.
+      state.backgroundColor = input.value.toLowerCase();
+      // `refreshBackdrops()` is the one way tiles are updated (see the note on `paintActivity()`).
       refreshBackdrops();
       paintPreview();
       stage();
@@ -538,14 +481,14 @@ export async function renderCardStyle({
     const fadeInput = document.createElement("input");
     fadeInput.type = "checkbox";
     fadeInput.className = "backdrop-fade-input";
-    fadeInput.checked = resolveCardFade(currentBackground, currentFade);
+    fadeInput.checked = resolveCardFade(state.background, state.fade);
     fadeInput.addEventListener("change", () => {
       // Stored explicitly from here on. Once someone has an opinion, it should survive them trying
       // the other style rather than silently reverting to that style's default.
-      currentFade = fadeInput.checked;
-      // **Retints the tiles; never calls `paintBackdrops()`.** That path ran `paintColour()`, which
-      // replaces this checkbox's own container — the control destroyed itself on every toggle and
-      // focus fell to `<body>`.
+      state.fade = fadeInput.checked;
+      // **Retints the tiles; never calls `paintBackdrops()`.** That path runs `paintColour()`, which
+      // replaces this checkbox's own container: the control would destroy itself on every toggle and
+      // focus would fall to `<body>`.
       refreshBackdrops();
       paintPreview();
       stage();
@@ -562,7 +505,7 @@ export async function renderCardStyle({
   const tintActivityTiles = () => {
     if (!activityBgHost) return;
     for (const tile of activityBgHost.querySelectorAll(".backdrop:not(.backdrop-none)")) {
-      tile.style.setProperty("--bg", currentActivity ?? DEFAULT_BACKGROUND_COLOR);
+      tile.style.setProperty("--bg", state.activityAccent ?? DEFAULT_BACKGROUND_COLOR);
     }
   };
 
@@ -596,7 +539,7 @@ export async function renderCardStyle({
       swatch.setAttribute("aria-label", entry.name);
       swatch.disabled = !data.entitled;
       swatch.addEventListener("click", () => {
-        currentActivity = entry.value;
+        state.activityAccent = entry.value;
         free.value = entry.value;
         refresh();
         tintActivityTiles();
@@ -612,11 +555,11 @@ export async function renderCardStyle({
     const free = document.createElement("input");
     free.type = "color";
     free.className = "backdrop-colour-input";
-    free.value = currentActivity ?? DEFAULT_BACKGROUND_COLOR;
+    free.value = state.activityAccent ?? DEFAULT_BACKGROUND_COLOR;
     free.disabled = !data.entitled;
     // No repaint from in here — see the note above. Only the states that are not this element.
     free.addEventListener("input", () => {
-      currentActivity = free.value.toLowerCase();
+      state.activityAccent = free.value.toLowerCase();
       refresh();
       tintActivityTiles();
       stage();
@@ -627,9 +570,9 @@ export async function renderCardStyle({
     reset.type = "button";
     reset.className = "swatch-reset";
     reset.textContent = "Use the bot's colour";
-    reset.disabled = !data.entitled || currentActivity === null;
+    reset.disabled = state.activityAccent === null;
     reset.addEventListener("click", () => {
-      currentActivity = null;
+      state.activityAccent = null;
       refresh();
       tintActivityTiles();
       stage();
@@ -638,9 +581,9 @@ export async function renderCardStyle({
     /** Updates selection state in place. Never rebuilds, never touches the open picker. */
     const refresh = () => {
       for (const [i, swatch] of swatches.entries()) {
-        swatch.setAttribute("aria-pressed", String(currentActivity === data.palette[i].value));
+        swatch.setAttribute("aria-pressed", String(state.activityAccent === data.palette[i].value));
       }
-      reset.disabled = !data.entitled || currentActivity === null;
+      reset.disabled = state.activityAccent === null;
     };
 
     const row = document.createElement("div");
@@ -650,15 +593,14 @@ export async function renderCardStyle({
     row.append(...swatches, label, reset);
 
     // Only meaningful alongside a server that has its own guild-tier theme, but stored
-    // independently — see the note by `currentPreferServerTheme` above.
+    // independently — see the note by `state.preferServerTheme` above.
     const preferLabel = document.createElement("label");
     preferLabel.className = "prefer-server-theme";
     const preferCheckbox = document.createElement("input");
     preferCheckbox.type = "checkbox";
-    preferCheckbox.checked = currentPreferServerTheme;
-    preferCheckbox.disabled = !data.entitled;
+    preferCheckbox.checked = state.preferServerTheme;
     preferCheckbox.addEventListener("change", () => {
-      currentPreferServerTheme = preferCheckbox.checked;
+      state.preferServerTheme = preferCheckbox.checked;
       stage();
     });
     preferLabel.append(
@@ -689,9 +631,8 @@ export async function renderCardStyle({
     none.className = "backdrop backdrop-none";
     none.title = "No background";
     none.setAttribute("aria-label", "No background");
-    none.disabled = !data.entitled;
     none.addEventListener("click", () => {
-      currentActivityBg = null;
+      state.activityBackground = null;
       refresh();
       stage();
     });
@@ -703,12 +644,12 @@ export async function renderCardStyle({
       // Always `backdrop-even`: the card's fade is a property of a still picture, and a live
       // surface that fades out to one side just looks unevenly lit.
       tile.className = `backdrop backdrop-${entry.key} backdrop-even`;
-      tile.style.setProperty("--bg", currentActivity ?? DEFAULT_BACKGROUND_COLOR);
+      tile.style.setProperty("--bg", state.activityAccent ?? DEFAULT_BACKGROUND_COLOR);
       tile.title = entry.description ?? entry.name;
       tile.setAttribute("aria-label", entry.name);
       tile.disabled = !data.entitled;
       tile.addEventListener("click", () => {
-        currentActivityBg = entry.key;
+        state.activityBackground = entry.key;
         refresh();
         stage();
       });
@@ -716,9 +657,9 @@ export async function renderCardStyle({
     }
 
     const refresh = () => {
-      none.setAttribute("aria-pressed", String(currentActivityBg === null));
+      none.setAttribute("aria-pressed", String(state.activityBackground === null));
       for (const [i, entry] of data.backgrounds.entries()) {
-        tiles[i + 1].setAttribute("aria-pressed", String(currentActivityBg === entry.key));
+        tiles[i + 1].setAttribute("aria-pressed", String(state.activityBackground === entry.key));
       }
     };
 

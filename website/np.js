@@ -86,8 +86,20 @@ function tick() {
   requestAnimationFrame(tick);
 }
 
+/**
+ * The next poll starts when the last one has finished, `POLL_MS` later. A fixed interval started a new round
+ * every two seconds whatever the last one was doing, and with a host that hangs (each ask waits up to
+ * `TIMEOUT_MS`) the rounds piled up on top of each other.
+ */
+async function loop() {
+  try {
+    await poll();
+  } finally {
+    setTimeout(loop, POLL_MS);
+  }
+}
+
 if (isToken(token)) {
-  poll();
-  setInterval(poll, POLL_MS);
+  loop();
   requestAnimationFrame(tick);
 }

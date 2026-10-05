@@ -2,7 +2,7 @@ import { dash } from "./shared.js";
 
 /**
  * The page's one save bar: every settings control that has unsaved edits registers here, and the bar
- * saves or reverts them together. Split out of the old `dashboard.js` unchanged.
+ * saves or reverts them together.
  */
 
 /**

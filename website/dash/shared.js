@@ -1,6 +1,6 @@
 /**
  * What every part of the dashboard uses: the mount point, templates, the status line, and the small
- * renderers for numbers. Split out of the old single `dashboard.js` without changing any of it.
+ * renderers for numbers.
  */
 
 export const dash = document.getElementById("dash");

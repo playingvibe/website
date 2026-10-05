@@ -10,8 +10,8 @@ import { MongoClient } from "mongodb";
  * honest about being a reader. **The models under `src/database/models/` own the shape** — every
  * field name below is quoted from one of them.
  *
- * Writes are narrow and deliberate: the two settings a signed-in user can change about
- * themselves (`rankCardAccent`) or about a server they administer (an instance's overrides).
+ * Writes are narrow and deliberate: the appearance settings a signed-in user can change about
+ * themselves (`saveRankCardStyle`) or about a server they administer (an instance's overrides).
  * Nothing here writes listening statistics, favourites, or the shared guild config — those are
  * the bot's to maintain, and a second writer would be a second set of rules about them.
  *
@@ -91,6 +91,7 @@ export async function findUserStats(userId) {
         currentStreak: 1,
         longestStreak: 1,
         lastActiveDate: 1,
+        lastActiveAt: 1,
         listeningGuildIds: 1,
         // For the Founder badge, which is tenure rather than a count.
         firstSeenAt: 1,
@@ -104,23 +105,7 @@ export async function findUserStats(userId) {
 }
 
 /**
- * @param {string} userId
- * @returns {Promise<{favorites: object[], favoritePlaylists: object[]}>}
- */
-export async function findUserLibrary(userId) {
-  const users = (await db()).collection("users");
-  const doc = await users.findOne(
-    { _id: userId },
-    { projection: { favorites: 1, favoritePlaylists: 1 } }
-  );
-  return {
-    favorites: doc?.favorites ?? [],
-    favoritePlaylists: doc?.favoritePlaylists ?? [],
-  };
-}
-
-/**
- * Both rank-card settings in one read.
+ * The appearance settings in one read.
  *
  * One `findOne` rather than two: they are always wanted together, they live on the same document,
  * and the page cannot render half of a picker.
@@ -155,9 +140,9 @@ export async function findRankCardStyle(userId) {
 }
 
 /**
- * Writes whichever of the two rank-card settings the caller actually sent.
+ * Writes whichever of the appearance settings the caller actually sent.
  *
- * **Partial by design.** The page has two independent controls, and a request that set both every
+ * **Partial by design.** The page has independent controls, and a request that set them all every
  * time would mean changing your colour silently reset your background to whatever the page last
  * happened to know. Only keys present in `changes` are written.
  *
@@ -209,54 +194,6 @@ export async function findInstancesByGuild(guildIds) {
 }
 
 /**
- * @param {string} guildId
- * @returns {Promise<?object>} The shared guild config, or `null` if the server has never had one
- *          created — which simply means nobody has run a command there yet.
- */
-export async function findGuildConfig(guildId) {
-  return (await db()).collection("guilds").findOne({ _id: guildId });
-}
-
-/**
- * Writes one instance's overrides for one guild.
- *
- * Mirrors `GuildInstanceRepository.setOverrides()`, including the two conventions that are easy
- * to get wrong: a `null` value **clears** the override so the shared setting applies again, and
- * an empty array on either list means "override to unrestricted". `undefined` and `null` have to
- * stay distinguishable here for the same reason they do in the model.
- * @param {string} clientId
- * @param {string} guildId
- * @param {object} patch - Already validated by the caller.
- * @returns {Promise<void>}
- */
-export async function saveGuildOverrides(clientId, guildId, patch) {
-  const set = {};
-  const unset = {};
-
-  for (const [field, value] of Object.entries(patch)) {
-    if (value === null) unset[`overrides.${field}`] = "";
-    else set[`overrides.${field}`] = value;
-  }
-
-  // Mirrors `setOverridesFor()`: a decision about the list supersedes the legacy single id, which
-  // would otherwise return as the fallback once the list override is cleared.
-  if ("overrides.commandsChannels" in set || "overrides.commandsChannels" in unset) {
-    unset["overrides.commandsChannelId"] = "";
-  }
-
-  const update = {};
-  if (Object.keys(set).length) update.$set = set;
-  if (Object.keys(unset).length) update.$unset = unset;
-  if (!Object.keys(update).length) return;
-
-  // Not an upsert: a row only exists because a bot wrote it, and creating one from here would
-  // invent a presence record for an instance that is not actually in the guild.
-  await (await db())
-    .collection("guildInstances")
-    .updateOne({ _id: `${clientId}:${guildId}` }, update);
-}
-
-/**
  * A public listening passport, by its share token.
  *
  * **The token is the entire authorisation**, so this is written to give nothing away when it does
@@ -284,6 +221,8 @@ export async function findPassportByToken(token) {
         sessionCount: 1,
         currentStreak: 1,
         longestStreak: 1,
+        lastActiveDate: 1,
+        lastActiveAt: 1,
         listeningGuildIds: 1,
         firstSeenAt: 1,
         listeningHistoryOptOut: 1,

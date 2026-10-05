@@ -1,8 +1,7 @@
 import { resolveInstanceName } from "../lib/generated/instances.js";
 import { getSession } from "../lib/session.js";
-import { canManageGuild, fetchGuilds, guildIconUrl } from "../lib/discord.js";
+import { canManageGuild, describeGuildFetchFailure, fetchGuilds, guildIconUrl } from "../lib/discord.js";
 import { findInstancesByGuild } from "../lib/mongo.js";
-import { pickOverrides } from "../lib/overrides.js";
 
 /**
  * The servers the signed-in user administers, each with the Vibe bots actually in it.
@@ -21,9 +20,8 @@ import { pickOverrides } from "../lib/overrides.js";
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
 
-  // Gated like `guild.js` and `appearance.js` already are. A read endpoint that answers a
-  // POST is not a vulnerability by itself, but it is a surface that behaves differently from
-  // its siblings for no reason, and it is what makes a CSRF write look plausible to try.
+  // GET only, like the other read endpoints: one that answers a POST behaves differently from its siblings for
+  // no reason, and makes a CSRF write look plausible to try.
   if (req.method !== "GET") {
     res.status(405).json({ error: "Use GET." });
     return;
@@ -38,10 +36,10 @@ export default async function handler(req, res) {
   let guilds;
   try {
     guilds = await fetchGuilds(session.accessToken);
-  } catch {
-    // Almost always an expired or revoked token. 401 puts the page back on the sign-in view,
-    // which is the actual remedy, rather than showing an error about a server list.
-    res.status(401).json({ error: "Your Discord sign-in expired. Sign in again." });
+  } catch (error) {
+    // 401 only for a token Discord refuses; a rate limit or an outage is a 503, which keeps the page.
+    const { status, message } = describeGuildFetchFailure(error);
+    res.status(status).json({ error: message });
     return;
   }
 
@@ -67,10 +65,6 @@ export default async function handler(req, res) {
             // Resolved from the client id first: `row.name` is a snapshot taken at reconcile
             // time and is empty on rows written before that field existed.
             name: resolveInstanceName(row.clientId, row.name),
-            // Included here rather than left to a per-guild call: the dashboard needs each
-            // instance's current setting to render its toggle, and fetching them separately
-            // would be one request per server for data already in hand.
-            overrides: pickOverrides(row.overrides),
           }))
           .sort((a, b) => a.name.localeCompare(b.name)),
       }))

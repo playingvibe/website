@@ -1,4 +1,4 @@
-import { DiscordApiError, exchangeCode, fetchUser, redirectUri } from "../../lib/discord.js";
+import { DiscordApiError, exchangeCode, fetchUser, isTimeout, redirectUri } from "../../lib/discord.js";
 import { SessionConfigError, setSession, verifyState } from "../../lib/session.js";
 
 /**
@@ -26,7 +26,7 @@ export function reasonFor(error) {
 
   // `fetch` rejects with a TypeError when the request never completes at all — DNS, TLS, a dropped
   // connection. Nothing about the deployment is wrong in that case.
-  if (error instanceof TypeError) return "discord_unavailable";
+  if (error instanceof TypeError || isTimeout(error)) return "discord_unavailable";
 
   return "exchange_failed";
 }

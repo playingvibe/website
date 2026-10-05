@@ -4,8 +4,9 @@ import {
   findPassportListening,
   findPassportPlaylists,
 } from "../lib/mongo.js";
-import { hasPremium } from "../lib/entitlements.js";
+import { isEntitled } from "../lib/entitlements.js";
 import { getLevel } from "../lib/generated/level.js";
+import { currentListeningStreak } from "../lib/generated/listeningStreak.js";
 import { getEarnedBadgeTiers } from "../lib/generated/badges.js";
 import { cleanTrackTitle } from "../lib/generated/track.js";
 
@@ -43,42 +44,23 @@ const MS_PER_HOUR = 60 * 60 * 1000;
  * @param {import("node:http").ServerResponse} res
  * @returns {Promise<void>}
  */
-export default async function handler(req, res) {
-  // **The shared cache is short because revocation has to be fast, not because the data changes.**
-  // `/passport` says "the link stops working immediately", and **Get a new link**, **Turn it off**
-  // and a lapsed subscription all have to mean it. A five-minute `s-maxage` — what this was — let
-  // the edge keep serving a withdrawn page for five minutes after the owner withdrew it, and the
-  // gap was invisible in testing because a local server has no edge in front of it.
-  //
-  // 30 seconds with `stale-while-revalidate` keeps the burst protection that matters: a link being
-  // shared arrives as many requests from many people at once, and each of *them* holds it for a
-  // minute in their own browser regardless. What it gives up is edge caching across a lull, which
-  // was never the case this header existed for.
-  res.setHeader("Cache-Control", "public, max-age=60, s-maxage=30, stale-while-revalidate=30");
+/**
+ * An error is never cached. The header above is set before anything is known, so a 503 from a database blip would
+ * otherwise be kept by browsers for a minute, and a link that was not yet live would stay "not here" after it was.
+ */
+function refuse(res, status, body) {
+  res.setHeader("Cache-Control", "no-store");
+  res.status(status).json(body);
+}
 
-  const token = new URL(req.url, "http://localhost").searchParams.get("token") ?? "";
-
-  let user;
-  try {
-    user = await findPassportByToken(token);
-  } catch {
-    res.status(503).json({ error: "Passports are unavailable right now." });
-    return;
-  }
-
-  if (!user) {
-    res.status(404).json({ error: "No passport here." });
-    return;
-  }
-
-  // A lapse must close the page. Failing closed on an error too: a passport that stays up because
-  // the entitlement lookup blipped is the paywall leaking in public, where it is least noticeable.
-  const entitled = await hasPremium(user._id);
-  if (!entitled) {
-    res.status(404).json({ error: "No passport here." });
-    return;
-  }
-
+/**
+ * What the public page is told about a passport: the user document and the three reads, turned into the response.
+ * Pure, so what is published (and what is deliberately left out) can be tested without MongoDB.
+ * @param {object} user - The owner's `users` document.
+ * @param {{listening: {recent: object[], plays: number, unavailable?: boolean}, favorites: {favorites: object[], total: number}, playlists: object[]}} reads
+ * @returns {object}
+ */
+export function shapePassport(user, { listening, favorites, playlists }) {
   // Titles are cleaned with the bot's own `cleanTrackTitle()`, generated into `lib/generated/` by
   // `sync-web-shared.js`. Every surface in Discord shows the cleaned title, and a public page that
   // showed the raw one would render the same track differently from the embed it was played from.
@@ -96,28 +78,6 @@ export default async function handler(req, res) {
     ...(playedAt ? { playedAt } : {}),
   });
 
-  // All three in one pass, but each on its own: one failing must not blank the others. With
-  // Promise.all, a database user without read access to `listeningHistory` would take the
-  // favourites and the shared playlists, which read `users` and are fine, down with it.
-  const [listeningRead, favoritesRead, playlistsRead] = await Promise.allSettled([
-    findPassportListening(user._id),
-    findPassportFavorites(user._id),
-    findPassportPlaylists(user._id),
-  ]);
-  for (const [name, result] of [["listening", listeningRead], ["favourites", favoritesRead], ["playlists", playlistsRead]]) {
-    // Logged, because swallowing it silently is how a passport with real data rendered empty in production
-    // with nothing anywhere saying why. Name and message only: never the token or the user.
-    if (result.status === "rejected") {
-      console.error(`passport: reading the ${name} failed: ${result.reason?.name}: ${result.reason?.message}`);
-    }
-  }
-  // The page is still worth serving without any of them: level, badges and streak are read from the user
-  // document that already loaded.
-  const listening =
-    listeningRead.status === "fulfilled" ? listeningRead.value : { recent: [], plays: 0, unavailable: true };
-  const favorites = favoritesRead.status === "fulfilled" ? favoritesRead.value : { favorites: [], total: 0 };
-  const playlists = playlistsRead.status === "fulfilled" ? playlistsRead.value : [];
-
   const totalListeningTime = user.totalListeningTime ?? 0;
   const level = getLevel(totalListeningTime);
   const badges = getEarnedBadgeTiers({
@@ -127,7 +87,7 @@ export default async function handler(req, res) {
     firstSeenAt: user.firstSeenAt ?? null,
   });
 
-  res.status(200).json({
+  return {
     owner: {
       displayName: user.passport?.displayName ?? "A Vibe listener",
       // **Proxied, not linked.** Discord's CDN path contains the account id, so linking the avatar
@@ -142,7 +102,7 @@ export default async function handler(req, res) {
     stats: {
       listeningHours: totalListeningTime / MS_PER_HOUR,
       tracksPlayed: user.sessionCount ?? 0,
-      currentStreak: user.currentStreak ?? 0,
+      currentStreak: currentListeningStreak(user),
       longestStreak: user.longestStreak ?? 0,
       servers: user.listeningGuildIds?.length ?? 0,
     },
@@ -170,5 +130,67 @@ export default async function handler(req, res) {
         unavailable: Boolean(track.unavailable),
       })),
     })),
-  });
+  };
+}
+
+export default async function handler(req, res) {
+  // **The shared cache is short because revocation has to be fast, not because the data changes.**
+  // `/passport` says "the link stops working immediately", and **Get a new link**, **Turn it off**
+  // and a lapsed subscription all have to mean it. A long `s-maxage` would let the edge keep serving a
+  // withdrawn page after the owner withdrew it, and that gap is invisible in testing because a local server
+  // has no edge in front of it.
+  //
+  // 30 seconds with `stale-while-revalidate` keeps the burst protection that matters: a link being
+  // shared arrives as many requests from many people at once, and each of *them* holds it for a
+  // minute in their own browser regardless. What it gives up is edge caching across a lull, which
+  // was never the case this header existed for.
+  res.setHeader("Cache-Control", "public, max-age=60, s-maxage=30, stale-while-revalidate=30");
+
+  const token = new URL(req.url, "http://localhost").searchParams.get("token") ?? "";
+
+  let user;
+  try {
+    user = await findPassportByToken(token);
+  } catch {
+    refuse(res, 503, { error: "Passports are unavailable right now." });
+    return;
+  }
+
+  if (!user) {
+    refuse(res, 404, { error: "No passport here." });
+    return;
+  }
+
+  // A lapse must close the page. Failing closed on an error too: a passport that stays up because
+  // the entitlement lookup blipped is the paywall leaking in public, where it is least noticeable.
+  const entitled = await isEntitled(user._id);
+  if (!entitled) {
+    refuse(res, 404, { error: "No passport here." });
+    return;
+  }
+
+
+  // All three in one pass, but each on its own: one failing must not blank the others. With
+  // Promise.all, a database user without read access to `listeningHistory` would take the
+  // favourites and the shared playlists, which read `users` and are fine, down with it.
+  const [listeningRead, favoritesRead, playlistsRead] = await Promise.allSettled([
+    findPassportListening(user._id),
+    findPassportFavorites(user._id),
+    findPassportPlaylists(user._id),
+  ]);
+  for (const [name, result] of [["listening", listeningRead], ["favourites", favoritesRead], ["playlists", playlistsRead]]) {
+    // Logged, because swallowing it silently is how a passport with real data rendered empty in production
+    // with nothing anywhere saying why. Name and message only: never the token or the user.
+    if (result.status === "rejected") {
+      console.error(`passport: reading the ${name} failed: ${result.reason?.name}: ${result.reason?.message}`);
+    }
+  }
+  // The page is still worth serving without any of them: level, badges and streak are read from the user
+  // document that already loaded.
+  const listening =
+    listeningRead.status === "fulfilled" ? listeningRead.value : { recent: [], plays: 0, unavailable: true };
+  const favorites = favoritesRead.status === "fulfilled" ? favoritesRead.value : { favorites: [], total: 0 };
+  const playlists = playlistsRead.status === "fulfilled" ? playlistsRead.value : [];
+
+  res.status(200).json(shapePassport(user, { listening, favorites, playlists }));
 }

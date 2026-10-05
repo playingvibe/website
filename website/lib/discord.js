@@ -8,6 +8,14 @@ const API = "https://discord.com/api/v10";
  * `token_exchange` means our own credentials are wrong, a 503 means Discord is having a moment,
  * and those want opposite responses.
  */
+/** Long enough for Discord on a bad day, short enough to answer before the platform gives up on the function. */
+export const DISCORD_TIMEOUT_MS = 5000;
+
+/** A request that timed out (`AbortSignal.timeout`) or was cut off: Discord did not answer. */
+export function isTimeout(error) {
+  return error?.name === "TimeoutError" || error?.name === "AbortError";
+}
+
 export class DiscordApiError extends Error {
   /**
    * @param {"token_exchange"|"user_fetch"} step
@@ -90,6 +98,9 @@ export function authorizeUrl({ state, redirect }) {
  */
 export async function exchangeCode({ code, redirect }) {
   const response = await fetch(`${API}/oauth2/token`, {
+    // Without one, a Discord that stalls holds the function until the platform's own limit and answers
+    // with the platform's 504 body, and the callback never reaches its "Discord is unavailable" page.
+    signal: AbortSignal.timeout(DISCORD_TIMEOUT_MS),
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
@@ -116,6 +127,7 @@ export async function exchangeCode({ code, redirect }) {
 async function asUser(accessToken, path) {
   const response = await fetch(`${API}${path}`, {
     headers: { Authorization: `Bearer ${accessToken}` },
+    signal: AbortSignal.timeout(DISCORD_TIMEOUT_MS),
   });
   if (!response.ok) throw new DiscordApiError("user_fetch", response.status);
   return response.json();
@@ -135,6 +147,24 @@ export function fetchUser(accessToken) {
  */
 export function fetchGuilds(accessToken) {
   return asUser(accessToken, "/users/@me/guilds");
+}
+
+/**
+ * What to tell the browser when `fetchGuilds()` failed. Only a token Discord refuses is "sign in
+ * again": a rate limit, a server error or a request that never completed says nothing about the
+ * sign-in, and answering 401 for them sent a signed-in manager to the sign-in page in the middle of a
+ * save (and, signing in again, to a different page with the draft gone).
+ * @param {unknown} error
+ * @returns {{status: 401 | 503, message: string}}
+ */
+export function describeGuildFetchFailure(error) {
+  const unavailable =
+    error instanceof TypeError ||
+    isTimeout(error) ||
+    (error instanceof DiscordApiError && (error.status === 429 || error.status >= 500));
+  return unavailable
+    ? { status: 503, message: "Discord isn't answering right now. Try again in a moment." }
+    : { status: 401, message: "Your Discord sign-in expired. Sign in again." };
 }
 
 /**
