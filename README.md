@@ -56,7 +56,9 @@ pass.
 
 ```
 website/                 the site; this directory is the deploy root
-  *.html, *.js, styles.css   pages and their scripts, rendered in the browser
+  *.html, *.js           pages and their scripts, rendered in the browser
+  css/                   the stylesheets: core (tokens, base), marketing, legal, app and appearance
+  DESIGN.md              the design system and the reasoning behind it
   api/                   serverless functions (Node)
   lib/                   code the functions share: session, Discord, Mongo
   lib/generated/         GENERATED, see below

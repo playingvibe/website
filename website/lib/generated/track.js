@@ -69,6 +69,11 @@ export function cleanTrackTitle(title) {
   return cleaned || title;
 }
 
+/** The cleaned title and the author apart, for a list that sets them differently. `artist` is "" when there is none. */
+export function splitTrackTitle(track) {
+  return { title: cleanTrackTitle(track.title), artist: track.author ?? "" };
+}
+
 /** "Author - Title" with the title cleaned; the bare title when there is no author. */
 export function formatTrackTitle(track) {
   const title = cleanTrackTitle(track.title);

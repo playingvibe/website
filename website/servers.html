@@ -10,46 +10,60 @@
     <meta name="robots" content="noindex, nofollow" />
     <link rel="icon" href="V_logo_vectorized.svg" />
     <link rel="preload" href="fonts/outfit-latin.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="css/core.css" />
+    <link rel="stylesheet" href="css/app.css" />
   </head>
   <body>
     <a class="skip" href="#dash">Skip to content</a>
     <div class="wrap">
-      <nav class="nav">
+      <!-- generated:nav -->
+      <nav class="nav" aria-label="Main">
         <a class="nav-brand" href="/">
-          <svg class="mark" viewBox="0 0 1254 1254" aria-hidden="true">
+          <svg class="mark" viewBox="338 337 620 620" aria-hidden="true">
             <path
               d="M 877 349 L 858 344 L 835 344 L 817 348 L 792 361 L 773 379 L 765 390 L 754 410 L 666 623 L 653 646 L 646 653 L 641 655 L 632 653 L 624 643 L 620 634 L 550 415 L 538 390 L 527 377 L 518 370 L 506 364 L 490 360 L 464 360 L 449 363 L 424 373 L 406 385 L 392 399 L 380 419 L 376 434 L 376 452 L 379 465 L 409 537 L 436 608 L 536 884 L 548 909 L 563 930 L 575 940 L 589 947 L 608 950 L 626 948 L 650 938 L 669 925 L 690 904 L 705 885 L 731 843 L 753 799 L 910 457 L 917 439 L 920 424 L 920 404 L 916 388 L 905 369 L 892 357 Z"
             />
           </svg>
-          <span class="wordmark">Vibe</span>
+          Vibe
         </a>
         <div class="nav-links">
-          <a href="/">Home</a>
-          <a href="https://discord.gg/nMJJ8PAcD9" target="_blank" rel="noopener">Support</a>
+          <a href="/commands">Commands</a>
+          <a class="nav-extra" href="https://discord.gg/nMJJ8PAcD9" target="_blank" rel="noopener">Support</a>
+          <a class="nav-extra" href="/dashboard">Your profile</a>
         </div>
+        <a class="btn btn-ghost btn-small" href="https://discord.com/oauth2/authorize?client_id=815329807377498153" target="_blank" rel="noopener">Add to Discord</a>
       </nav>
+      <!-- /generated:nav -->
 
       <main tabindex="-1" class="dash" id="dash" aria-busy="true">
         <p class="dash-status" id="status">Loading…</p>
       </main>
 
-      <footer class="foot">
-        <a href="/">Home</a> · <a href="/terms">Terms</a> · <a href="/privacy">Privacy</a>
+      <!-- generated:footer -->
+      <footer class="footer">
+        <div class="footer-row">
+          <span>&copy; <span id="year">2026</span> Vibe</span>
+          <nav class="footer-links" aria-label="Footer">
+            <a href="/commands">Commands</a>
+            <a href="/terms">Terms</a>
+            <a href="/privacy">Privacy</a>
+            <a href="https://discord.gg/nMJJ8PAcD9" target="_blank" rel="noopener">Support server</a>
+            <a href="https://github.com/playingvibe" target="_blank" rel="noopener">Open source</a>
+          </nav>
+        </div>
       </footer>
+      <!-- /generated:footer -->
     </div>
 
     <template id="tpl-signed-out">
       <section class="signin">
-        <h1>Your listening, on the web</h1>
-        <p class="lede">
+        <h1>Your listening, <b>on the web.</b></h1>
+        <p class="signin-lede">
           Sign in with Discord to see your listening time, streaks, level and badges. The same
-          numbers <strong>/rank</strong> shows, without opening Discord.
+          numbers <span class="cmd">/rank</span> shows, without opening Discord.
         </p>
-        <div class="cta-row">
-          <a class="btn btn-primary" href="/api/auth/login">Sign in with Discord</a>
-        </div>
-        <p class="hero-note">
+        <a class="btn btn-primary" href="/api/auth/login">Sign in with Discord</a>
+        <p class="signin-note">
           Vibe asks only for your username and your server list. It cannot read your messages,
           and it never sees your password or email.
         </p>
@@ -59,10 +73,9 @@
     <template id="tpl-servers">
       <header class="profile-head">
         <div>
-          <p class="eyebrow">Manage</p>
           <h1 class="profile-name">Your servers</h1>
         </div>
-        <button class="btn btn-ghost signout" type="button">Sign out</button>
+        <button class="btn btn-ghost btn-small signout" type="button">Sign out</button>
       </header>
 
       <nav class="dash-tabs" aria-label="Dashboard">
@@ -90,6 +103,9 @@
       </article>
     </template>
 
+    <script>
+      document.getElementById("year").textContent = new Date().getFullYear();
+    </script>
     <script type="module" src="servers.js"></script>
   </body>
 </html>

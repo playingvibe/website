@@ -1,0 +1,179 @@
+/*
+ * Vibe website: long-form pages (privacy, terms) and the command reference. Loaded after core.css.
+ *
+ * One column set for reading: under 62 characters a line, headings that can be linked to, and
+ * nothing that moves. The commands page is written by scripts/sync-web-shared.js and uses the same
+ * column with a wider measure for its two-column rows.
+ */
+
+.prose {
+  max-width: var(--max-prose);
+  padding-top: clamp(var(--s-6), 6vw, var(--s-8));
+}
+.prose.commands {
+  max-width: 54rem;
+}
+
+.prose h1 {
+  font-size: var(--step-4);
+  font-weight: var(--light);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--track-display);
+}
+.prose-meta {
+  margin-top: var(--s-3);
+  color: var(--ink-3);
+  font-size: var(--step--1);
+}
+
+.prose h2 {
+  margin-top: var(--s-8);
+  font-size: var(--step-2);
+  font-weight: var(--medium);
+}
+.prose h3 {
+  margin-top: var(--s-6);
+  font-size: var(--step-1);
+  font-weight: var(--medium);
+}
+.prose p,
+.prose li {
+  max-width: var(--measure);
+  color: var(--ink-2);
+}
+.prose h2 + p,
+.prose h3 + p {
+  margin-top: var(--s-3);
+}
+.prose p + p,
+.prose p + ul,
+.prose ul + p,
+.prose p + ol,
+.prose ol + p {
+  margin-top: var(--s-4);
+}
+.prose ul,
+.prose ol {
+  padding-left: var(--s-5);
+}
+.prose li + li {
+  margin-top: var(--s-2);
+}
+.prose strong {
+  color: var(--ink);
+  font-weight: var(--medium);
+}
+.prose a {
+  color: var(--ink);
+  text-decoration-color: var(--line-control);
+  text-underline-offset: 0.25em;
+}
+.prose a:hover {
+  text-decoration-color: currentColor;
+}
+
+/* The one-paragraph summary under the title: set apart, but not boxed in a card. */
+.prose .callout {
+  color: var(--ink);
+  margin-top: var(--s-6);
+  padding: var(--s-4) var(--s-5);
+  border-radius: var(--r-2);
+  background: var(--surface);
+  box-shadow: var(--ring);
+}
+
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--target);
+  margin-top: var(--s-8);
+  color: var(--ink-2);
+  text-decoration: none;
+}
+.back:hover {
+  color: var(--ink);
+}
+
+/* --- command reference ---------------------------------------------------------------------- */
+
+.cmd-jump {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin-top: var(--s-6);
+}
+.cmd-jump a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--target);
+  padding-inline: var(--s-4);
+  border-radius: var(--r-full);
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--ink);
+  font-size: var(--step--1);
+  text-decoration: none;
+  transition: background var(--t-fast);
+}
+.cmd-jump a:hover {
+  background: rgba(255, 255, 255, 0.13);
+}
+
+.cmd-group {
+  margin-top: var(--s-8);
+}
+.cmd-group h2 {
+  margin-top: 0;
+}
+.cmd-group-desc {
+  margin-top: var(--s-1);
+  color: var(--ink-3);
+  font-size: var(--step--1);
+}
+.cmd-group-about {
+  margin-top: var(--s-4);
+  max-width: var(--measure);
+  color: var(--ink-2);
+}
+
+/* The name column is fixed, so every description starts on the same line: a ragged edge is what
+   makes a list of commands hard to scan, and scanning is this page's one job. */
+.prose .cmd-list {
+  margin-top: var(--s-5);
+  padding: 0;
+  list-style: none;
+}
+.cmd-row {
+  display: grid;
+  grid-template-columns: 9.5rem minmax(0, 1fr);
+  gap: var(--s-1) var(--s-4);
+  align-items: baseline;
+  padding-block: var(--s-3);
+  border-top: 1px solid var(--line);
+}
+.cmd-row:last-child {
+  border-bottom: 1px solid var(--line);
+}
+.cmd-row .cmd {
+  position: relative;
+  justify-self: start;
+  text-decoration: none;
+}
+/* The chip stays small; the area that answers a tap reaches 44px. */
+.cmd-row .cmd::after {
+  content: "";
+  position: absolute;
+  inset: -0.5rem 0;
+}
+.cmd-row:target .cmd {
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.cmd-desc {
+  max-width: var(--measure);
+  color: var(--ink-2);
+}
+@media (max-width: 40rem) {
+  .cmd-row {
+    grid-template-columns: 1fr;
+  }
+}

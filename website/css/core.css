@@ -1,0 +1,532 @@
+/*
+ * Vibe website: core. Loaded by every page, before that page's own sheet.
+ *
+ * Order: fonts, tokens, base, layout, shared components (skip link, nav, footer, button, link,
+ * command chip, badge, card). Everything a single area needs lives in that area's sheet:
+ * marketing.css, legal.css or app.css. The scale and the reasoning are in DESIGN.md.
+ */
+
+/* --- fonts ---------------------------------------------------------------------------------- */
+
+@font-face {
+  font-family: "Outfit";
+  src: url("../fonts/outfit-latin.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Outfit";
+  src: url("../fonts/outfit-latin-ext.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
+    U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0,
+    U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* --- tokens --------------------------------------------------------------------------------- */
+
+:root {
+  /* The site is dark only; this also puts native controls and scrollbars in dark chrome. */
+  color-scheme: dark;
+
+  /* Colour. Three grounds, three inks, one accent. Every ink clears 4.5:1 on every ground
+     it is allowed on; the table is in DESIGN.md. */
+  --ground: #0b0b0d;
+  --surface: #131317;
+  --surface-2: #1b1b20;
+  --line: rgba(255, 255, 255, 0.09);
+  --line-strong: rgba(255, 255, 255, 0.17);
+  /* The edge of a control someone has to find: 3.4:1 against the ground. */
+  --line-control: rgba(255, 255, 255, 0.38);
+  --ink: #f5f2f3;
+  --ink-2: #aba5a9;
+  --ink-3: #8d868b;
+  --accent: #e05570;
+  --accent-hover: #ec6a83;
+  --accent-ink: #14090c;
+  --accent-soft: color-mix(in srgb, var(--accent) 16%, var(--surface));
+  --accent-line: color-mix(in srgb, var(--accent) 45%, transparent);
+  --danger: #ff8a8a;
+  --gold: #f5c542;
+
+  /* Type. One family; a major-third scale from a 17px body, fluid from step 3 up. */
+  --font: "Outfit", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", "Segoe UI Mono", Menlo, Consolas, monospace;
+  --step--2: 0.8125rem;
+  --step--1: 0.9375rem;
+  --step-0: 1.0625rem;
+  --step-1: 1.25rem;
+  --step-2: 1.5rem;
+  --step-3: clamp(1.75rem, 1.4rem + 1.4vw, 2.25rem);
+  --step-4: clamp(2rem, 1.3rem + 3vw, 3.5rem);
+  --step-5: clamp(2.5rem, 1.2rem + 5.6vw, 5.5rem);
+  --light: 300;
+  --regular: 400;
+  --medium: 500;
+  --bold: 600;
+  --leading-tight: 1.02;
+  --leading-snug: 1.25;
+  --leading: 1.55;
+  --track-display: -0.04em;
+  --track-heading: -0.02em;
+  --measure: 62ch;
+
+  /* Space, on a 4px base. */
+  --s-1: 0.25rem;
+  --s-2: 0.5rem;
+  --s-3: 0.75rem;
+  --s-4: 1rem;
+  --s-5: 1.5rem;
+  --s-6: 2rem;
+  --s-7: 3rem;
+  --s-8: 4rem;
+  --s-9: 6rem;
+  --gutter: clamp(1.25rem, 4vw, 3rem);
+  --section: clamp(4.5rem, 10vw, 9rem);
+  --max: 80rem;
+  --max-prose: 46rem;
+  --target: 2.75rem; /* 44px, the smallest thing a finger is asked to hit */
+
+  /* Radii: small for controls and thumbnails, medium for surfaces, large for the stage, full
+     for pills. Nothing else. */
+  --r-1: 0.5rem;
+  --r-2: 0.75rem;
+  --r-3: 1.25rem;
+  --r-full: 999px;
+
+  /* Elevation: a hairline for things on the page, a shadow for things above it. */
+  --ring: 0 0 0 1px var(--line);
+  --float: 0 0 0 1px var(--line-strong), 0 0.75rem 2.5rem rgba(0, 0, 0, 0.6);
+  --stage-glow: 0 3rem 6rem -2rem color-mix(in srgb, var(--accent) 18%, transparent);
+
+  /* Motion. */
+  --t-fast: 120ms;
+  --t: 200ms;
+  --t-slow: 600ms;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Layers. */
+  --z-bar: 40;
+  --z-toast: 50;
+  --z-skip: 100;
+}
+
+/* --- base ----------------------------------------------------------------------------------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font: var(--regular) var(--step-0) / var(--leading) var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+p,
+ul,
+ol {
+  margin: 0;
+}
+
+h1,
+h2,
+h3 {
+  font-weight: var(--bold);
+  letter-spacing: var(--track-heading);
+  line-height: var(--leading-snug);
+  text-wrap: balance;
+}
+
+a {
+  color: inherit;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+img {
+  height: auto;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+a,
+button,
+summary,
+input,
+select,
+label {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* An anchor that is jumped to keeps some air above it. */
+[id] {
+  scroll-margin-top: var(--s-5);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* The attribute has to win over any display a class sets, or hiding by attribute hides nothing. */
+[hidden] {
+  display: none !important;
+}
+
+/* --- layout --------------------------------------------------------------------------------- */
+
+.wrap {
+  max-width: var(--max);
+  margin-inline: auto;
+  padding-inline: max(var(--gutter), env(safe-area-inset-left)) max(var(--gutter), env(safe-area-inset-right));
+}
+
+.stack > * + * {
+  margin-top: var(--stack, var(--s-4));
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* --- skip link ------------------------------------------------------------------------------ */
+
+.skip {
+  position: absolute;
+  top: var(--s-3);
+  left: var(--s-3);
+  z-index: var(--z-skip);
+  padding: var(--s-3) var(--s-4);
+  border-radius: var(--r-1);
+  background: var(--surface-2);
+  box-shadow: var(--float);
+  text-decoration: none;
+  transform: translateY(-200%);
+}
+.skip:focus {
+  transform: none;
+}
+
+/* --- nav ------------------------------------------------------------------------------------ */
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 4.5rem;
+}
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: var(--target);
+  margin-right: auto;
+  font-size: var(--step-1);
+  font-weight: var(--bold);
+  letter-spacing: var(--track-heading);
+  text-decoration: none;
+}
+.mark {
+  width: 1.75rem;
+  height: 1.75rem;
+  flex: none;
+  fill: var(--accent);
+}
+.nav-links {
+  display: flex;
+  align-items: center;
+}
+.nav-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--target);
+  padding-inline: var(--s-3);
+  color: var(--ink-2);
+  font-size: var(--step--1);
+  text-decoration: none;
+  transition: color var(--t-fast);
+}
+.nav-links a:hover,
+.nav-links a[aria-current="page"] {
+  color: var(--ink);
+}
+/* The links that can wait leave first; the brand and the action never do. */
+@media (max-width: 40rem) {
+  .nav-links .nav-extra {
+    display: none;
+  }
+  .nav-links a {
+    padding-inline: var(--s-2);
+  }
+}
+
+/* At 320px the brand, one link and the action have to share 280px. */
+@media (max-width: 24rem) {
+  .nav {
+    gap: var(--s-1);
+  }
+  .nav-brand {
+    font-size: var(--step-0);
+  }
+  .nav-links a {
+    padding-inline: var(--s-2);
+  }
+  .nav .btn-small {
+    padding-inline: var(--s-3);
+  }
+}
+
+/* --- button --------------------------------------------------------------------------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  min-height: 3rem;
+  padding-inline: var(--s-5);
+  border: 0;
+  border-radius: var(--r-full);
+  font-size: var(--step-0);
+  font-weight: var(--bold);
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background var(--t-fast),
+    color var(--t-fast),
+    box-shadow var(--t-fast),
+    transform var(--t-fast) var(--ease);
+}
+.btn:active {
+  transform: scale(0.98);
+}
+.btn-primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.btn-primary:hover {
+  background: var(--accent-hover);
+}
+.btn-ghost {
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--ink);
+  font-weight: var(--medium);
+}
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.13);
+}
+.btn-small {
+  min-height: var(--target);
+  padding-inline: var(--s-4);
+  font-size: var(--step--1);
+}
+.btn:disabled,
+.btn[aria-disabled="true"] {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* --- link ----------------------------------------------------------------------------------- */
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--target);
+  color: var(--ink-2);
+  text-decoration-color: var(--line-strong);
+  text-underline-offset: 0.25em;
+  transition: color var(--t-fast);
+}
+.link:hover {
+  color: var(--ink);
+}
+
+/* --- command chip --------------------------------------------------------------------------- */
+/* A slash command, set the way it looks while it is being typed. */
+
+.cmd {
+  display: inline-block;
+  padding: 0.02em 0.3em 0.08em;
+  border-radius: 0.25em;
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1px var(--accent-line);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 0.92em;
+  font-weight: var(--medium);
+  letter-spacing: -0.03em;
+  white-space: nowrap;
+}
+/* The quiet form, for a command named in the middle of a paragraph. */
+code {
+  font-family: var(--mono);
+  font-size: 0.9em;
+  color: var(--ink);
+}
+
+/* --- badge ---------------------------------------------------------------------------------- */
+
+.badge {
+  --badge: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  padding-inline: var(--s-3);
+  border-radius: var(--r-full);
+  background: color-mix(in srgb, var(--badge) 12%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--badge) 40%, transparent);
+  color: var(--badge);
+  font-size: var(--step--1);
+  font-weight: var(--medium);
+}
+
+/* --- card ----------------------------------------------------------------------------------- */
+/* Only where something really is a separate object: a server, a bot, a playlist. */
+
+.card {
+  padding: var(--s-5);
+  border-radius: var(--r-2);
+  background: var(--surface);
+  box-shadow: var(--ring);
+}
+
+/* --- footer --------------------------------------------------------------------------------- */
+
+.footer {
+  margin-top: var(--section);
+  padding-block: var(--s-6) var(--s-7);
+  border-top: 1px solid var(--line);
+  color: var(--ink-3);
+  font-size: var(--step--1);
+}
+.footer-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2) var(--s-5);
+}
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  margin-left: auto;
+  margin-right: calc(var(--s-3) * -1);
+}
+.footer-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--target);
+  padding-inline: var(--s-3);
+  color: var(--ink-2);
+  text-decoration: none;
+  transition: color var(--t-fast);
+}
+.footer-links a:hover {
+  color: var(--ink);
+}
+.footer-note {
+  margin-top: var(--s-3);
+  max-width: var(--measure);
+  font-size: var(--step--2);
+}
+@media (max-width: 40rem) {
+  .footer-links {
+    margin-left: calc(var(--s-3) * -1);
+  }
+}
+
+/* --- reduced motion ------------------------------------------------------------------------- */
+/* Durations collapse instead of disappearing, so transitionend and animationend still fire. */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* --- forced colours (Windows high contrast) ------------------------------------------------- */
+/* Shadows and backgrounds are dropped there, so every edge drawn with one needs a real outline. */
+
+@media (forced-colors: active) {
+  .btn,
+  .cmd,
+  .badge,
+  .chip,
+  .boost,
+  .card,
+  .callout,
+  .stage,
+  .queue,
+  .screen,
+  .server,
+  .bot-card,
+  .input,
+  .overlay-link,
+  .select,
+  .picker-add,
+  .swatch,
+  .backdrop,
+  .switch::before,
+  .save-bar,
+  .toast,
+  .passport-list,
+  .passport-playlist,
+  .cmd-jump a {
+    outline: 1px solid CanvasText;
+    outline-offset: -1px;
+  }
+  .swatch[aria-pressed="true"],
+  .backdrop[aria-pressed="true"] {
+    outline: 3px solid Highlight;
+  }
+  .switch.is-on::before,
+  .boost-on {
+    background: Highlight;
+    color: HighlightText;
+  }
+  .level-fill,
+  .screen-bar,
+  .seek span {
+    background: Highlight;
+  }
+}

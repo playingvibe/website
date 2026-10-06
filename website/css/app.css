@@ -1,0 +1,911 @@
+/*
+ * Vibe website: the signed-in pages and the passport. Loaded after core.css.
+ *
+ * This file holds the controls first (field, select, checkbox, switch, tabs, chips, setting row,
+ * save bar, toast). The page layouts (profile, servers, one server, passport) and the appearance
+ * previews are added under them when those pages move over.
+ */
+
+/* The save bar floats over the bottom of the page; a focused control scrolls clear of it. */
+html {
+  scroll-padding-bottom: var(--s-9);
+}
+
+/* --- fields --------------------------------------------------------------------------------- */
+
+.field {
+  display: grid;
+  gap: var(--s-2);
+  max-width: 28rem;
+}
+.field-label {
+  font-size: var(--step--1);
+  font-weight: var(--medium);
+}
+.field-hint {
+  color: var(--ink-3);
+  font-size: var(--step--2);
+}
+.field-error {
+  color: var(--danger);
+  font-size: var(--step--2);
+}
+
+.input,
+.overlay-link,
+.select,
+.picker-add {
+  min-height: var(--target);
+  max-width: 100%;
+  padding-inline: var(--s-3);
+  border: 0;
+  border-radius: var(--r-1);
+  background-color: var(--surface-2);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--line-control);
+  font-size: var(--step--1);
+  transition: box-shadow var(--t-fast);
+}
+.input:hover,
+.overlay-link:hover,
+.select:hover,
+.picker-add:hover {
+  box-shadow: inset 0 0 0 1px var(--ink-2);
+}
+.input[aria-invalid="true"] {
+  box-shadow: inset 0 0 0 1px var(--danger);
+}
+.input:disabled,
+.select:disabled,
+.picker-add:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.select,
+.picker-add {
+  padding-right: var(--s-6);
+  cursor: pointer;
+}
+
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: var(--target);
+  color: var(--ink-2);
+  font-size: var(--step--1);
+  cursor: pointer;
+}
+.check input {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+/* A colour input is on the profile page and on a server's Premium section, so it lives here. */
+/* The native colour input, drawn as a round swatch to match the ones above it. */
+.backdrop-colour-input {
+  width: var(--target);
+  height: var(--target);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+  overflow: hidden;
+}
+.backdrop-colour-input::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+.backdrop-colour-input::-webkit-color-swatch,
+.backdrop-colour-input::-moz-color-swatch {
+  border: 0;
+  border-radius: 50%;
+}
+.activity-colour {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+/* --- switch --------------------------------------------------------------------------------- */
+/* A real button with role="switch"; the script sets .is-on and writes On or Off inside it. The
+   track is drawn before the word, so the state never rests on colour alone. */
+
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: var(--target);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink-2);
+  font-size: var(--step--1);
+  cursor: pointer;
+}
+.switch::before {
+  content: "";
+  width: 2.75rem;
+  height: 1.5rem;
+  border-radius: var(--r-full);
+  background:
+    radial-gradient(circle at 0.75rem 50%, var(--ink-2) 0.5rem, transparent 0.53rem),
+    var(--surface-2);
+  box-shadow: inset 0 0 0 1px var(--line-control);
+  transition: background-color var(--t) var(--ease);
+}
+.switch.is-on {
+  color: var(--ink);
+}
+.switch.is-on::before {
+  background:
+    radial-gradient(circle at 2rem 50%, var(--accent-ink) 0.5rem, transparent 0.53rem),
+    var(--accent);
+  box-shadow: none;
+}
+.switch:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* --- tabs ----------------------------------------------------------------------------------- */
+/* Two kinds that look alike: links between pages (aria-current) and buttons that change a panel
+   on the same page (aria-pressed). The row scrolls sideways inside itself on a narrow screen. */
+
+.dash-tabs,
+.bot-tabs {
+  display: flex;
+  gap: var(--s-1);
+  border-bottom: 1px solid var(--line);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.dash-tabs a,
+.bot-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex: none;
+  min-height: var(--target);
+  padding-inline: var(--s-3);
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--ink-2);
+  font-size: var(--step--1);
+  text-decoration: none;
+  cursor: pointer;
+  transition: color var(--t-fast);
+}
+.dash-tabs a:hover,
+.bot-tab:hover {
+  color: var(--ink);
+}
+.dash-tabs a[aria-current],
+.bot-tab[aria-pressed="true"] {
+  border-bottom-color: var(--accent);
+  color: var(--ink);
+  font-weight: var(--medium);
+}
+.dash-tabs a:focus-visible,
+.bot-tab:focus-visible {
+  outline-offset: -2px;
+}
+.bot-tab img {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: var(--s-1);
+}
+
+/* --- chips ---------------------------------------------------------------------------------- */
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  padding: 0;
+  list-style: none;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  min-height: 2rem;
+  padding-left: var(--s-3);
+  border-radius: var(--r-full);
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+  font-size: var(--step--1);
+  overflow-wrap: anywhere;
+}
+.chip-empty {
+  padding-right: var(--s-3);
+  background: none;
+  color: var(--ink-3);
+}
+/* The visible cross is small; the button around it is a full target. */
+.chip-remove {
+  display: grid;
+  place-items: center;
+  width: var(--target);
+  height: var(--target);
+  margin-block: calc((2rem - var(--target)) / 2);
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--ink-2);
+  font-size: var(--step-1);
+  line-height: 1;
+  cursor: pointer;
+}
+.chip-remove:hover {
+  color: var(--ink);
+}
+
+/* --- setting row ---------------------------------------------------------------------------- */
+
+.setting {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3) var(--s-5);
+  padding-block: var(--s-4);
+  border-top: 1px solid var(--line);
+}
+.setting-text {
+  flex: 1 1 16rem;
+  min-width: 0;
+}
+.setting-text h3 {
+  font-size: var(--step-0);
+  font-weight: var(--medium);
+}
+.setting-hint {
+  max-width: 52ch;
+  color: var(--ink-3);
+  font-size: var(--step--1);
+}
+
+/* --- save bar ------------------------------------------------------------------------------- */
+/* Fixed, because the controls it speaks for are spread down a long page. */
+
+.save-bar {
+  position: fixed;
+  left: 50%;
+  bottom: var(--s-5);
+  z-index: var(--z-bar);
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  width: max-content;
+  max-width: calc(100vw - 2 * var(--s-4));
+  padding: var(--s-2) var(--s-2) var(--s-2) var(--s-5);
+  border-radius: var(--r-full);
+  background: var(--surface-2);
+  box-shadow: var(--float);
+  transform: translateX(-50%);
+  animation: bar-in var(--t) var(--ease);
+}
+@keyframes bar-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, var(--s-4));
+  }
+}
+.save-bar-text {
+  margin-right: auto;
+  padding-right: var(--s-3);
+  font-size: var(--step--1);
+}
+.save-bar-reset,
+.save-bar-save {
+  min-height: var(--target);
+  padding-inline: var(--s-4);
+  border: 0;
+  border-radius: var(--r-full);
+  font-size: var(--step--1);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.save-bar-reset {
+  background: none;
+  color: var(--ink-2);
+}
+.save-bar-reset:hover:not(:disabled) {
+  color: var(--ink);
+}
+.save-bar-save {
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: var(--bold);
+}
+.save-bar-save:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+.save-bar-reset:disabled,
+.save-bar-save:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+@media (max-width: 32rem) {
+  .save-bar {
+    left: var(--s-4);
+    right: var(--s-4);
+    width: auto;
+    max-width: none;
+    transform: none;
+    animation: none;
+  }
+}
+
+/* --- toast ---------------------------------------------------------------------------------- */
+/* For something that just happened and needs no answer: "Saved", "Link copied". */
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: var(--s-5);
+  z-index: var(--z-toast);
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: var(--target);
+  max-width: calc(100vw - 2 * var(--s-4));
+  padding-inline: var(--s-5);
+  border-radius: var(--r-full);
+  background: var(--surface-2);
+  box-shadow: var(--float);
+  font-size: var(--step--1);
+  transform: translateX(-50%);
+  animation: bar-in var(--t) var(--ease);
+}
+.toast.is-error {
+  color: var(--danger);
+}
+
+/* --- page shell ----------------------------------------------------------------------------- */
+
+/* Filled after a response. A full-screen floor keeps the footer below the fold before and after the
+   fill, so nothing visible moves when the content arrives. */
+.dash {
+  min-height: 100svh;
+  padding-top: clamp(var(--s-5), 4vw, var(--s-7));
+}
+.dash-status {
+  color: var(--ink-2);
+}
+.dash-error {
+  margin-bottom: var(--s-5);
+  padding: var(--s-3) var(--s-4);
+  border-radius: var(--r-1);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--danger) 55%, transparent);
+}
+.section-note {
+  max-width: var(--measure);
+  color: var(--ink-3);
+  font-size: var(--step--1);
+}
+.section-note--save {
+  margin-top: var(--s-3);
+  color: var(--ink);
+}
+
+/* Signed out: one sentence and one action. */
+.signin {
+  max-width: 42rem;
+  padding-top: var(--s-6);
+}
+.signin h1 {
+  font-size: var(--step-4);
+  font-weight: var(--light);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--track-display);
+}
+.signin h1 b {
+  font-weight: var(--bold);
+}
+.signin-lede {
+  max-width: 36ch;
+  margin-top: var(--s-5);
+  color: var(--ink-2);
+  font-size: var(--step-1);
+  line-height: 1.45;
+}
+.signin .btn {
+  margin-top: var(--s-5);
+}
+.signin-note {
+  max-width: 46ch;
+  margin-top: var(--s-4);
+  color: var(--ink-3);
+  font-size: var(--step--1);
+}
+
+/* --- profile header, level, statistics ------------------------------------------------------ */
+
+.profile-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-4);
+  padding-bottom: var(--s-5);
+}
+.profile-head > div {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+.profile-meta {
+  color: var(--ink-3);
+  font-size: var(--step--1);
+}
+.profile-meta a {
+  text-decoration: none;
+}
+.profile-meta a:hover {
+  color: var(--ink);
+}
+.profile-name-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-3);
+}
+.profile-name {
+  font-size: var(--step-3);
+  font-weight: var(--light);
+  letter-spacing: var(--track-heading);
+  overflow-wrap: anywhere;
+}
+.avatar {
+  flex: none;
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: 50%;
+  background: var(--surface);
+}
+.premium-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 2rem;
+  padding-inline: var(--s-3);
+  border-radius: var(--r-full);
+  background: color-mix(in srgb, var(--gold) 12%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--gold) 35%, transparent);
+  color: var(--gold);
+  font-size: var(--step--1);
+  font-weight: var(--bold);
+  white-space: nowrap;
+}
+.premium-chip img {
+  width: 1.0625rem;
+  height: 1.0625rem;
+}
+
+.dash-tabs {
+  margin-bottom: var(--s-6);
+}
+
+.group-heading {
+  margin-top: var(--s-8);
+  padding-top: var(--s-6);
+  border-top: 1px solid var(--line);
+  font-size: var(--step-2);
+  font-weight: var(--medium);
+}
+.group-heading:first-of-type {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+.group-note {
+  max-width: var(--measure);
+  margin-top: var(--s-2);
+  color: var(--ink-2);
+}
+.group-note + p {
+  margin-top: var(--s-4);
+}
+
+.level-card {
+  margin-top: var(--s-5);
+}
+.level-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-1) var(--s-4);
+  margin-bottom: var(--s-3);
+}
+.level-badge {
+  font-size: var(--step-2);
+  font-weight: var(--bold);
+}
+.level-next {
+  color: var(--ink-3);
+  font-size: var(--step--1);
+}
+.level-track {
+  height: 0.375rem;
+  border-radius: var(--r-full);
+  background: var(--line-strong);
+  overflow: hidden;
+}
+/* The width is set from the level's progress; 0% is a real state, so there is no minimum. */
+.level-fill {
+  display: block;
+  height: 100%;
+  border-radius: var(--r-full);
+  background: var(--accent);
+  transition: width var(--t-slow) var(--ease);
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--s-5) var(--s-6);
+  margin-top: var(--s-6);
+}
+.level-card + .dash-status {
+  margin-top: var(--s-4);
+}
+@media (max-width: 40rem) {
+  .stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  padding-top: var(--s-3);
+  border-top: 1px solid var(--line);
+}
+.stat-value {
+  font-size: var(--step-3);
+  font-weight: var(--light);
+  line-height: var(--leading-snug);
+  font-variant-numeric: tabular-nums;
+}
+.stat-label {
+  color: var(--ink-2);
+  font-size: var(--step--1);
+}
+.stat-note {
+  color: var(--ink-3);
+  font-size: var(--step--2);
+}
+
+.badge-section {
+  margin-top: var(--s-7);
+}
+.badge-section h2 {
+  margin-bottom: var(--s-3);
+  font-size: var(--step-1);
+  font-weight: var(--medium);
+}
+.badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+.badge-empty {
+  color: var(--ink-3);
+}
+
+/* What is coming, said once and quietly. */
+.soon {
+  margin-top: var(--s-8);
+  padding-top: var(--s-5);
+  border-top: 1px solid var(--line);
+  color: var(--ink-2);
+}
+.soon h3 {
+  color: var(--ink);
+  font-size: var(--step-0);
+  font-weight: var(--medium);
+}
+.soon ul {
+  margin-top: var(--s-2);
+  padding-left: var(--s-5);
+}
+
+/* --- your servers (the list) ---------------------------------------------------------------- */
+
+.servers-section {
+  margin-top: var(--s-5);
+}
+.servers {
+  display: grid;
+  gap: var(--s-3);
+  min-height: 7.5rem;
+}
+.server {
+  padding: var(--s-3) var(--s-4);
+  border-radius: var(--r-2);
+  background: var(--surface);
+  box-shadow: var(--ring);
+}
+.server-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-1) var(--s-3);
+}
+.server-icon {
+  flex: none;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--r-1);
+  background: var(--surface-2);
+}
+.server-initial {
+  display: grid;
+  place-items: center;
+  color: var(--ink-2);
+  font-weight: var(--bold);
+}
+.server-name {
+  flex: 1 1 10rem;
+  min-width: 0;
+  font-weight: var(--medium);
+  overflow-wrap: anywhere;
+}
+.server-count {
+  flex: 0 1 auto;
+  color: var(--ink-3);
+  font-size: var(--step--1);
+}
+.server-action {
+  min-height: var(--target);
+  margin-left: auto;
+  padding-inline: var(--s-4);
+  font-size: var(--step--1);
+}
+
+/* --- one server's settings ------------------------------------------------------------------ */
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--target);
+  text-decoration: none;
+}
+.back-link:hover {
+  color: var(--ink);
+}
+.settings-title {
+  font-size: var(--step-3);
+  font-weight: var(--light);
+  overflow-wrap: anywhere;
+}
+.settings-nav {
+  margin-bottom: var(--s-4);
+}
+.settings-status {
+  min-height: 1.5em;
+  margin-bottom: var(--s-5);
+  color: var(--ink-3);
+  font-size: var(--step--1);
+}
+.settings-status.is-error {
+  color: var(--danger);
+}
+.settings-section {
+  margin-bottom: var(--s-7);
+}
+.settings-section h2 {
+  font-size: var(--step-2);
+  font-weight: var(--medium);
+}
+.settings-intro {
+  margin-bottom: var(--s-4);
+  color: var(--ink-3);
+  font-size: var(--step--1);
+}
+
+/* A row whose control needs the room (a picker, the overlay): the text above, the control below. */
+.setting-wide {
+  flex-direction: column;
+  align-items: stretch;
+}
+/* In a column the 16rem basis of the text would be a height. */
+.setting-wide .setting-text,
+.setting-wide .setting-control {
+  flex: 0 0 auto;
+}
+.setting-control {
+  display: flex;
+  min-width: 0;
+}
+.picker,
+.overlay,
+.bot-list {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-3);
+  min-width: 0;
+  max-width: 100%;
+}
+.overlay-link {
+  width: min(32.5rem, 100%);
+}
+.overlay-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+.overlay-actions .btn,
+.bot-list .btn,
+.bot-reset {
+  min-height: var(--target);
+  padding-inline: var(--s-4);
+  font-size: var(--step--1);
+}
+.bot-tabs {
+  margin-bottom: var(--s-4);
+}
+.bot-card {
+  padding: var(--s-2) var(--s-5) var(--s-5);
+  border-radius: var(--r-2);
+  background: var(--surface);
+  box-shadow: var(--ring);
+}
+.bot-name {
+  margin-top: var(--s-3);
+  font-size: var(--step-1);
+  font-weight: var(--medium);
+}
+.bot-card .setting:first-of-type {
+  border-top: 0;
+}
+.follows {
+  color: var(--ink-3);
+  font-size: var(--step--1);
+}
+.bot-reset {
+  margin-top: var(--s-3);
+}
+@media (max-width: 40rem) {
+  .setting {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .setting-text,
+  .setting-control {
+    flex: 0 0 auto;
+  }
+}
+
+/* --- the listening passport (public) -------------------------------------------------------- */
+
+.passport-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-5);
+}
+.passport-head h1 {
+  font-size: var(--step-4);
+  font-weight: var(--light);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--track-display);
+  /* A display name is somebody else's text: a 32-character word or a run of emoji must not break the layout. */
+  overflow-wrap: anywhere;
+}
+.passport-head .lede {
+  margin-top: var(--s-2);
+  color: var(--ink-2);
+}
+.passport-head .lede strong {
+  color: var(--ink);
+  font-weight: var(--medium);
+}
+.passport-avatar {
+  flex: none;
+  width: 6rem;
+  height: 6rem;
+  border-radius: 50%;
+  background: var(--surface);
+  object-fit: cover;
+}
+@media (max-width: 40rem) {
+  .passport-avatar {
+    width: 4rem;
+    height: 4rem;
+  }
+  .passport-head h1 {
+    font-size: var(--step-3);
+  }
+}
+.passport-list {
+  padding: 0;
+  list-style: none;
+  border-radius: var(--r-2);
+  background: var(--surface);
+  box-shadow: var(--ring);
+  overflow: hidden;
+}
+.passport-list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: var(--s-1) var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  border-top: 1px solid var(--line);
+}
+.passport-list li:first-child {
+  border-top: 0;
+}
+.passport-title {
+  font-weight: var(--medium);
+  overflow-wrap: anywhere;
+}
+.passport-sub {
+  grid-column: 1;
+  color: var(--ink-2);
+  font-size: var(--step--1);
+  overflow-wrap: anywhere;
+}
+/* A relative time, never wrapped: "3 days ago" over two lines reads as two facts. */
+.passport-meta {
+  grid-row: 1 / span 2;
+  grid-column: 2;
+  align-self: center;
+  color: var(--ink-3);
+  font-size: var(--step--1);
+  white-space: nowrap;
+}
+.passport-playlist {
+  margin-bottom: var(--s-3);
+  border-radius: var(--r-2);
+  background: var(--surface);
+  box-shadow: var(--ring);
+  overflow: hidden;
+}
+.passport-playlist summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  min-height: 3.5rem;
+  padding: var(--s-2) var(--s-4);
+  list-style: none;
+  cursor: pointer;
+}
+.passport-playlist summary::-webkit-details-marker {
+  display: none;
+}
+.passport-playlist summary .passport-title {
+  flex: 1;
+  min-width: 0;
+}
+.passport-playlist summary:focus-visible {
+  outline-offset: -2px;
+}
+.passport-playlist[open] summary {
+  border-bottom: 1px solid var(--line);
+}
+.passport-playlist .passport-list {
+  border-radius: 0;
+  box-shadow: none;
+}
+.passport-playlist > .stat-note {
+  padding: var(--s-3) var(--s-4);
+}
+.passport-cover {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--r-1);
+  color: #fff;
+  font-weight: var(--bold);
+}

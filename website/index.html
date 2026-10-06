@@ -6,34 +6,33 @@
     <title>Vibe: a Discord music bot with a live player</title>
     <meta
       name="description"
-      content="Vibe plays music in your Discord voice channels, and /watch opens a real player right there in Discord: artwork, a seek bar you can drag, and the whole queue."
+      content="Vibe plays music in your Discord voice channel, and /watch opens a live player right there: artwork, a seek bar you can drag and the whole queue, in sync for everyone."
     />
     <meta name="theme-color" content="#0b0b0d" />
     <link rel="canonical" href="https://playvibe.gg/" />
     <meta property="og:site_name" content="Vibe" />
     <meta property="og:url" content="https://playvibe.gg/" />
-    <meta property="og:image" content="https://playvibe.gg/press/og-card.jpg" />
+    <meta property="og:image" content="https://playvibe.gg/press/og-home.jpg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Vibe: listen together, in Discord" />
+    <meta property="og:image:alt" content="Everyone hears it. Now everyone sees it. The Vibe player, open in a Discord voice channel." />
     <meta name="twitter:card" content="summary_large_image" />
     <meta property="og:title" content="Vibe: a Discord music bot with a live player" />
     <meta
       property="og:description"
-      content="A real player that opens inside Discord, plus listening stats and rank cards that follow you between servers."
+      content="Everyone hears it. Now everyone sees it. A live player inside Discord: artwork, a seek bar and the whole queue, in sync for the room."
     />
     <meta property="og:type" content="website" />
     <link rel="icon" href="V_logo_vectorized.svg" />
     <link rel="preload" href="fonts/outfit-latin.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="css/core.css" />
+    <link rel="stylesheet" href="css/marketing.css" />
     <!--
       Structured data. Two audiences: search engines, which use SoftwareApplication to render an
       app result rather than a plain blue link, and assistants answering "a free Discord music
       bot with a player", which quote machine-readable facts far more readily than prose.
 
-      `price: 0` is the load-bearing field and it is true today: there is no paid tier on sale,
-      and playing music free is the actual difference from the funded competitor, whose own player
-      costs $4.99/mo to host a session with.
+      `price: 0` is the load-bearing field and it is true today: playing music is free.
 
       WHEN A SKU GOES ON SALE THIS BECOMES TWO OFFERS, not one edited price. Vibe itself stays
       free, so `price: 0` remains correct for the application; the subscription is a second offer
@@ -48,8 +47,8 @@
         "applicationCategory": "MultimediaApplication",
         "operatingSystem": "Discord",
         "url": "https://playvibe.gg/",
-        "image": "https://playvibe.gg/press/og-card.jpg",
-        "description": "A Discord music bot with a real player. /watch opens it inside Discord: artwork, a seek bar you can drag, and the whole queue, in sync for everyone in the voice channel.",
+        "image": "https://playvibe.gg/press/og-home.jpg",
+        "description": "A Discord music bot with a live player. /watch opens it inside Discord: artwork, a seek bar you can drag and the whole queue, in sync for everyone in the voice channel.",
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
       }
     </script>
@@ -57,339 +56,331 @@
   <body>
     <a class="skip" href="#main">Skip to content</a>
     <div class="wrap">
-      <nav class="nav">
-        <svg class="mark" viewBox="0 0 1254 1254" aria-hidden="true">
-          <path
-            d="M 877 349 L 858 344 L 835 344 L 817 348 L 792 361 L 773 379 L 765 390 L 754 410 L 666 623 L 653 646 L 646 653 L 641 655 L 632 653 L 624 643 L 620 634 L 550 415 L 538 390 L 527 377 L 518 370 L 506 364 L 490 360 L 464 360 L 449 363 L 424 373 L 406 385 L 392 399 L 380 419 L 376 434 L 376 452 L 379 465 L 409 537 L 436 608 L 536 884 L 548 909 L 563 930 L 575 940 L 589 947 L 608 950 L 626 948 L 650 938 L 669 925 L 690 904 L 705 885 L 731 843 L 753 799 L 910 457 L 917 439 L 920 424 L 920 404 L 916 388 L 905 369 L 892 357 Z"
-          />
-        </svg>
-        <span class="wordmark">Vibe</span>
-        <div class="nav-links"><a href="/commands">Commands</a>
-          <a href="#features">Features</a>
-          <a href="#add">Add to server</a>
-          <a href="https://discord.gg/nMJJ8PAcD9" target="_blank" rel="noopener">Support</a>
-          <a href="/dashboard">Your profile</a>
+      <!-- generated:nav -->
+      <nav class="nav" aria-label="Main">
+        <a class="nav-brand" href="/" aria-current="page">
+          <svg class="mark" viewBox="338 337 620 620" aria-hidden="true">
+            <path
+              d="M 877 349 L 858 344 L 835 344 L 817 348 L 792 361 L 773 379 L 765 390 L 754 410 L 666 623 L 653 646 L 646 653 L 641 655 L 632 653 L 624 643 L 620 634 L 550 415 L 538 390 L 527 377 L 518 370 L 506 364 L 490 360 L 464 360 L 449 363 L 424 373 L 406 385 L 392 399 L 380 419 L 376 434 L 376 452 L 379 465 L 409 537 L 436 608 L 536 884 L 548 909 L 563 930 L 575 940 L 589 947 L 608 950 L 626 948 L 650 938 L 669 925 L 690 904 L 705 885 L 731 843 L 753 799 L 910 457 L 917 439 L 920 424 L 920 404 L 916 388 L 905 369 L 892 357 Z"
+            />
+          </svg>
+          Vibe
+        </a>
+        <div class="nav-links">
+          <a href="/commands">Commands</a>
+          <a class="nav-extra" href="https://discord.gg/nMJJ8PAcD9" target="_blank" rel="noopener">Support</a>
+          <a class="nav-extra" href="/dashboard">Your profile</a>
         </div>
+        <a class="btn btn-ghost btn-small" href="https://discord.com/oauth2/authorize?client_id=815329807377498153" target="_blank" rel="noopener">Add to Discord</a>
       </nav>
+      <!-- /generated:nav -->
 
       <main id="main" tabindex="-1">
-      <header class="hero">
-        <div>
-          <p class="eyebrow">Music for Discord</p>
-          <h1>Finally, a music bot with a player.</h1>
-          <p class="lede">
-            Vibe plays music in your voice channels like every other bot. Then you run
-            <strong>/watch</strong> and get an actual player inside Discord: artwork, a seek bar you
-            can drag, the whole queue, buttons that do what they say. It stays in sync for everyone
-            in the call.
-          </p>
-          <div class="cta-row">
-            <a
-              class="btn btn-primary"
-              href="https://discord.com/oauth2/authorize?client_id=815329807377498153"
-              target="_blank"
-              rel="noopener"
-              >Add Vibe to Discord</a
-            >
-            <a class="btn btn-ghost" href="#features">What it does</a>
-          </div>
-          <!--
-            **This sentence has to stay true after premium ships**, which is why it says what is
-            free rather than that everything is. "Nothing locked behind a paywall" was a promise
-            with an expiry date on it, and it was written while a paid tier was already built and
-            gated. What is claimed now is the thing that will not change: the music, the sources
-            and the audio are free and are not what premium sells.
-          -->
-          <p class="hero-note">
-            Free to use, and the music always will be. Hosting a session costs nothing, it asks for
-            five permissions, and it can't read your messages.
-          </p>
-        </div>
-
-        <!-- A reproduction of the real Activity, built from the same design tokens the app
-             uses. Not a stock illustration. -->
-        <!-- `role="img"`, because `aria-label` on a plain div is ignored: a div has no role, and
-             a name on a role-less element is dropped by every screen reader. It also correctly
-             suppresses the loose inner text, which is a mock track title and reads as nonsense
-             announced word by word. -->
-        <div class="player" role="img" aria-label="Preview of the Vibe player">
-          <p class="player-eyebrow">Now playing</p>
-          <div class="art">
-            <svg viewBox="0 0 1254 1254" aria-hidden="true">
-              <path
-                d="M 877 349 L 858 344 L 835 344 L 817 348 L 792 361 L 773 379 L 765 390 L 754 410 L 666 623 L 653 646 L 646 653 L 641 655 L 632 653 L 624 643 L 620 634 L 550 415 L 538 390 L 527 377 L 518 370 L 506 364 L 490 360 L 464 360 L 449 363 L 424 373 L 406 385 L 392 399 L 380 419 L 376 434 L 376 452 L 379 465 L 409 537 L 436 608 L 536 884 L 548 909 L 563 930 L 575 940 L 589 947 L 608 950 L 626 948 L 650 938 L 669 925 L 690 904 L 705 885 L 731 843 L 753 799 L 910 457 L 917 439 L 920 424 L 920 404 L 916 388 L 905 369 L 892 357 Z"
-              />
-            </svg>
-          </div>
-          <p class="track">Whatever you queued</p>
-          <p class="artist">Playing in your voice channel</p>
-          <div class="seek"><span></span></div>
-          <div class="times"><span>1:47</span><span>4:18</span></div>
-          <div class="controls">
-            <svg class="ctl" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M6 6h2v12H6zm3.5 6 8.5 6V6z" />
-            </svg>
-            <div class="play">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
+        <header class="hero">
+          <div class="hero-top">
+            <h1 class="hero-title">Everyone hears it. <b>Now everyone sees it.</b></h1>
+            <div>
+              <p class="hero-lede">
+                Vibe plays music in your Discord voice channel. Type
+                <span class="cmd">/watch</span> and a live player opens right there, in sync for
+                everyone.
+              </p>
+              <div class="hero-cta">
+                <a
+                  class="btn btn-primary"
+                  href="https://discord.com/oauth2/authorize?client_id=815329807377498153"
+                  target="_blank"
+                  rel="noopener"
+                  >Add to Discord</a
+                >
+                <a class="link" href="/commands">See every command</a>
+              </div>
             </div>
-            <svg class="ctl" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z" />
-            </svg>
           </div>
-        </div>
-      </header>
 
-      <section id="features">
-        <h2>What it does</h2>
-        <p class="section-lede">
-          Most music bots give you a queue and a "now playing" message and stop there. Vibe goes a
-          bit further.
-        </p>
-        <div class="features">
-          <article class="feature">
-            <h3>The player</h3>
-            <p>
-              <code>/watch</code> opens it right in your voice channel, and it updates live for
-              everyone watching. Drag the seek bar, click a queued song to jump straight to it, or
-              hide the queue when you just want the artwork.
-            </p>
-          </article>
-          <article class="feature">
-            <h3>DJ roles that stick</h3>
-            <p>
-              Set a DJ role and it covers the player too, so nobody gets around it by opening
-              <code>/watch</code>. Non-DJs see the buttons greyed out with a reason, and a skip vote
-              from the player counts toward the same vote as <code>/skip</code>.
-            </p>
-          </article>
-          <article class="feature">
-            <h3>Boost what you want next</h3>
-            <p>
-              Everyone in the channel shares one queue, and anyone can boost a song in it from the
-              player. A boost counts as a vote, so nobody has to jump the line alone, and a DJ can
-              send a track straight to next.
-            </p>
-          </article>
-          <article class="feature">
-            <h3>For streamers</h3>
-            <p>
-              Turn on the now-playing overlay in <code>/config</code> and Vibe gives you a link to
-              use as an OBS browser source. It shows the title, artist and artwork of what's
-              playing, follows skips and pauses, and only ever shows that. Running two Vibes at
-              once, you can pin the overlay to one of them instead of showing whichever is playing.
-              You can replace the link or switch it off whenever you like.
-            </p>
-          </article>
-          <article class="feature">
-            <h3>Stats worth checking</h3>
-            <p>
-              Vibe counts how long you listen, your daily streak, your level and your badges.
-              <code>/rank</code> draws you a card, <code>/leaderboard</code> ranks the server, and
-              it all follows you between servers. On your profile page you can pick the colours
-              of your rank card and player, with a live preview.
-            </p>
-          </article>
-          <article class="feature">
-            <h3>It doesn't fall over</h3>
-            <p>
-              When a track fails, Vibe quietly tries other sources before giving up. When an audio
-              server dies mid-song, it moves to a spare one and picks up where it was. Usually you
-              won't notice either happened.
-            </p>
-          </article>
-          <article class="feature">
-            <h3>Everything else</h3>
-            <p>
-              <code>/like</code> saves whatever's playing. Save whole playlists too, edit the queue
-              with <code>/remove</code> and <code>/move</code>, add filters, pull up lyrics.
-              <code>/help</code> sorts every command by category.
-            </p>
-          </article>
-        </div>
-      </section>
+          <!-- The real player, captured from its own demo mode with invented songs and generated
+               covers. Never a drawing of it. -->
+          <div class="stage">
+            <picture>
+              <source media="(max-width: 40rem)" srcset="press/player-phone.webp" width="780" height="1600" />
+              <img
+                src="press/player-wide.webp"
+                srcset="press/player-wide-1100.webp 1100w, press/player-wide.webp 1920w"
+                sizes="(max-width: 80rem) 94vw, 1184px"
+                width="1920"
+                height="1080"
+                fetchpriority="high"
+                alt="The Vibe player open in a voice channel: the artwork and title of the song that is playing, the queue of what is next, and the playback controls."
+              />
+            </picture>
+          </div>
 
-      <!--
-        **Only the bots that run are offered:** Vibe and Vibe 2. Vibe 3 and Vibe Beta exist as Discord
-        applications but are not started, so an invite link for either adds a bot that never comes
-        online, which is a worse first impression than not offering it. `/invite` gets this right: an
-        instance with no client id renders as "(Soon)" and disabled, and this section follows it.
+          <!--
+            **These three have to stay true after premium ships**, which is why the first says what
+            is free rather than that everything is: the music is free and is not what premium sells.
+          -->
+          <ul class="facts">
+            <li><strong>Free</strong>The music is free and always will be.</li>
+            <li><strong>Five permissions</strong>The basics a music bot needs, nothing more.</li>
+            <li><strong>Private</strong>It cannot read your messages.</li>
+          </ul>
+        </header>
 
-        **To add one:** uncomment its block below when its unit is actually running (and Activities are
-        enabled on its application), not when the application exists.
-      -->
-      <section id="add">
-        <h2>Add Vibe to your server</h2>
-        <p class="section-lede">
-          One click, five permissions, and it works the moment it joins. Nothing to configure
-          first &mdash; run <code>/watch</code> and the player is there.
-        </p>
-        <div class="instances">
+        <section class="band" id="features" aria-labelledby="features-title">
+          <div class="feature">
+            <h2 class="band-title" id="features-title">One queue, and <b>everyone can reach it.</b></h2>
+            <!-- The queue as its own object: only the songs and their boost buttons. A picture of
+                 the control, so the buttons are not real ones. -->
+            <div class="feature-media" role="img" aria-label="The queue in the player: five songs, each with a boost button. The first has two boosts of two and is next.">
+              <ol class="queue" aria-hidden="true">
+                <li class="queue-row">
+                  <img class="queue-art" src="press/art-4.webp" width="360" height="360" alt="" loading="lazy" />
+                  <p class="queue-title">Glass Garden<span>The Lowlands</span></p>
+                  <span class="queue-time">7:28</span>
+                  <span class="boost boost-on"><svg viewBox="0 0 16 16"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5" /></svg>2/2</span>
+                </li>
+                <li class="queue-row">
+                  <img class="queue-art" src="press/art-2.webp" width="360" height="360" alt="" loading="lazy" />
+                  <p class="queue-title">Paper Lanterns<span>Miro Vale</span></p>
+                  <span class="queue-time">3:45</span>
+                  <span class="boost"><svg viewBox="0 0 16 16"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5" /></svg>1/2</span>
+                </li>
+                <li class="queue-row">
+                  <img class="queue-art" src="press/art-3.webp" width="360" height="360" alt="" loading="lazy" />
+                  <p class="queue-title">Night Bus Home<span>Okono</span></p>
+                  <span class="queue-time">4:55</span>
+                  <span class="boost"><svg viewBox="0 0 16 16"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5" /></svg></span>
+                </li>
+                <li class="queue-row">
+                  <img class="queue-art" src="press/art-6.webp" width="360" height="360" alt="" loading="lazy" />
+                  <p class="queue-title">Soft Static<span>Ines Calder</span></p>
+                  <span class="queue-time">4:04</span>
+                  <span class="boost"><svg viewBox="0 0 16 16"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5" /></svg></span>
+                </li>
+                <li class="queue-row">
+                  <img class="queue-art" src="press/art-7.webp" width="360" height="360" alt="" loading="lazy" />
+                  <p class="queue-title">Open Windows<span>Juniper Hale</span></p>
+                  <span class="queue-time">3:21</span>
+                  <span class="boost"><svg viewBox="0 0 16 16"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5" /></svg></span>
+                </li>
+              </ol>
+            </div>
+            <div class="feature-body">
+              <ul class="points">
+                <li class="point">
+                  <h3>Drag the seek bar</h3>
+                  <p>Jump to the chorus, or click a queued song to play it now. It moves for everyone at once.</p>
+                </li>
+                <li class="point">
+                  <h3>Boost what you want next</h3>
+                  <p>A boost is a vote. Enough of them and the song moves up, so nobody jumps the line alone.</p>
+                </li>
+                <li class="point">
+                  <h3>DJ roles cover the player too</h3>
+                  <p>
+                    Set a DJ role with <code>/config</code>. Everyone else sees why a button is off,
+                    and a skip from the player counts toward the same vote as <code>/skip</code>.
+                  </p>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="band" aria-labelledby="commands-title">
+          <h2 class="band-title" id="commands-title">Four commands <b>cover most nights.</b></h2>
+          <ul class="says">
+            <li class="say">Use <span class="cmd">/play</span> and <b>add songs to the queue</b> by name or link.</li>
+            <li class="say">Type <span class="cmd">/watch</span> and <b>open the player</b> right away.</li>
+            <li class="say">Run <span class="cmd">/rank</span> and <b>see your listening time</b>, your streak and your badges.</li>
+            <li class="say">Open <span class="cmd">/config</span> and <b>decide who controls the music.</b></li>
+          </ul>
+          <p class="band-after"><a class="link" href="/commands">See every command</a></p>
+        </section>
+
+        <section class="band" aria-labelledby="sync-title">
+          <div class="feature feature-flip">
+            <h2 class="band-title" id="sync-title">One room, <b>one player.</b></h2>
+            <div class="screens feature-media" role="img" aria-label="Two screens showing the same song at the same position: one on a desktop, one on a phone.">
+              <div class="screen" data-screen>
+                <p class="screen-who"><i>M</i>mara, on desktop</p>
+                <img class="screen-art" src="press/art-1.webp" width="360" height="360" alt="" />
+                <p class="screen-title">Slow Tide</p>
+                <p class="screen-artist">Halden Row</p>
+                <div class="screen-bar"></div>
+                <div class="screen-time"><span data-pos>1:10</span><span>3:33</span></div>
+              </div>
+              <div class="screen" data-screen>
+                <p class="screen-who"><i>J</i>juno, on a phone</p>
+                <img class="screen-art" src="press/art-1.webp" width="360" height="360" alt="" />
+                <p class="screen-title">Slow Tide</p>
+                <p class="screen-artist">Halden Row</p>
+                <div class="screen-bar"></div>
+                <div class="screen-time"><span data-pos>1:10</span><span>3:33</span></div>
+              </div>
+            </div>
+            <div class="feature-body">
+              <p class="band-lede">
+                Whoever moves the song, moves it for the room. On a phone or a desktop, everyone in
+                the voice channel sees the same moment.
+              </p>
+              <!-- Shown by home.js, which is what makes it work; without the script there is
+                   nothing to drag, so there is nothing to see. -->
+              <label class="scrub" data-scrub-label hidden>
+                Drag this, and watch both screens
+                <input data-scrub type="range" min="0" max="213" value="70" />
+              </label>
+            </div>
+          </div>
+        </section>
+
+        <section class="band" aria-labelledby="more-title">
+          <h2 class="band-title" id="more-title">And it <b>keeps going.</b></h2>
+          <ul class="points points-row">
+            <li class="point">
+              <h3>It doesn't fall over</h3>
+              <p>
+                When a track fails, Vibe tries elsewhere before giving up. When an audio server
+                dies mid-song, it moves to a spare and picks up where it was.
+              </p>
+            </li>
+            <li class="point">
+              <h3>Your stats are yours</h3>
+              <p>
+                Listening time, streak, level and badges follow you between servers. On
+                <a href="/dashboard">your profile</a> you can pick the colours of your rank card and
+                player.
+              </p>
+            </li>
+            <li class="point">
+              <h3>For streamers</h3>
+              <p>
+                Turn on the now-playing overlay in <code>/config</code> and use its link as an OBS
+                browser source. It shows the title, artist and artwork, and nothing else.
+              </p>
+            </li>
+          </ul>
+        </section>
+
+        <section class="band" id="faq" aria-labelledby="faq-title">
+          <h2 class="band-title" id="faq-title">Questions <b>people ask.</b></h2>
+          <!--
+            Written as questions with the answer in the first sentence, because that is the shape
+            people search for and the shape an assistant quotes. Every answer must stay true: the
+            facts come from the support server's FAQ panel (`src/presentation/components/faqPanel.js`),
+            so change them together. "Is Vibe free?" describes the music, which is what the premium
+            rules keep free; if a paid tier goes on sale, re-read it.
+          -->
+          <div class="faq">
+            <details>
+              <summary><h3>Is Vibe a free Discord music bot?</h3></summary>
+              <p class="faq-answer">
+                Yes. The music is free: what Vibe plays, which services it plays from and how it
+                sounds are the same for everybody, with no ads and nothing locked behind voting.
+              </p>
+            </details>
+            <details>
+              <summary><h3>How do I add Vibe to my server?</h3></summary>
+              <p class="faq-answer">
+                Use the <a href="#add">Add to Discord button</a> and pick your server. You need the
+                Manage Server permission there, which is Discord's rule. Vibe works the moment it
+                joins, with nothing to configure first.
+              </p>
+            </details>
+            <details>
+              <summary><h3>How do I play music?</h3></summary>
+              <p class="faq-answer">
+                Join a voice channel and run <code>/play</code> with a song name or a link to a
+                song. Everyone in the channel shares one queue.
+              </p>
+            </details>
+            <details>
+              <summary><h3>What is <code>/watch</code>?</h3></summary>
+              <p class="faq-answer">
+                A live player that opens inside Discord, in the voice channel: artwork, a seek bar
+                you can drag, and the whole queue, in sync for everyone. Run <code>/watch</code>
+                while you're in a voice channel.
+              </p>
+            </details>
+            <details>
+              <summary><h3>What permissions does Vibe ask for, and can it read my messages?</h3></summary>
+              <p class="faq-answer">
+                Five: View Channels, Send Messages, Embed Links, Connect and Speak. It asks for no
+                privileged intents and cannot read your messages.
+              </p>
+            </details>
+            <details>
+              <summary><h3>Can I control who is allowed to skip or pause?</h3></summary>
+              <p class="faq-answer">
+                Yes. Set a DJ role with <code>/config</code> and it covers the player as well as the
+                commands. Skipping is a vote for everyone else, and the same vote whichever way it
+                is cast.
+              </p>
+            </details>
+            <details>
+              <summary><h3>Does my listening history follow me between servers?</h3></summary>
+              <p class="faq-answer">
+                Yes. Your listening time, streak, level, badges and saved songs belong to you, not
+                to a server. What Vibe stores, and how to see or delete it, is in the
+                <a href="/privacy">privacy policy</a>.
+              </p>
+            </details>
+          </div>
+        </section>
+
+        <!--
+          **Only the bots that run are offered:** Vibe and Vibe 2. Vibe 3 and Vibe Beta exist as
+          Discord applications but are not started, so an invite link for either adds a bot that
+          never comes online. `/invite` gets this right, and this section follows it.
+
+          **To add one:** when its unit is actually running (and Activities are enabled on its
+          application), add it to the sentence under the button. Vibe 3 is client id
+          1001935021436850207, Vibe Beta is 820636341788344321.
+        -->
+        <section class="band closing" id="add" aria-labelledby="add-title">
+          <h2 class="band-title" id="add-title">Add Vibe <b>to your server.</b></h2>
+          <p class="band-lede">
+            One click, five permissions, and it works the moment it joins. Nothing to set up first:
+            run <code>/watch</code> and the player is there.
+          </p>
           <a
-            class="instance"
-            style="--i: #e05570"
+            class="btn btn-primary"
             href="https://discord.com/oauth2/authorize?client_id=815329807377498153"
             target="_blank"
             rel="noopener"
+            >Add to Discord</a
           >
-            <span class="dot"></span>
-            <span class="instance-name">Vibe</span>
-            <span class="instance-desc">The player, the queue, the stats</span>
-            <span class="instance-add">Add →</span>
-          </a>
-          <a
-            class="instance"
-            style="--i: #4577b8"
-            href="https://discord.com/oauth2/authorize?client_id=1533281867523031070"
-            target="_blank"
-            rel="noopener"
-          >
-            <span class="dot"></span>
-            <span class="instance-name">Vibe 2</span>
-            <span class="instance-desc">A second queue</span>
-            <span class="instance-add">Add →</span>
-          </a>
-        </div>
-        <p class="section-lede">
-          Each Vibe is its own bot with its own queue, so you can have music going in two rooms at
-          once. Settings and listening stats are shared between them. Start with the first one and
-          add Vibe 2 if you want a second.
-        </p>
-        <!--
-          The siblings that are not hosted yet, for when they are (inside the .instances row above):
-
-            <a
-              class="instance"
-              style="--i: #d9b15c"
-              href="https://discord.com/oauth2/authorize?client_id=1001935021436850207"
-              target="_blank"
-              rel="noopener"
-            >
-              <span class="dot"></span>
-              <span class="instance-name">Vibe 3</span>
-              <span class="instance-desc">A third, for busy servers</span>
-              <span class="instance-add">Add →</span>
-            </a>
-            <a
-              class="instance"
-              style="--i: #559e68"
-              href="https://discord.com/oauth2/authorize?client_id=820636341788344321"
-              target="_blank"
-              rel="noopener"
-            >
-              <span class="dot"></span>
-              <span class="instance-name">Vibe Beta</span>
-              <span class="instance-desc">New stuff lands here first</span>
-              <span class="instance-add">Add →</span>
-            </a>
-        -->
-      </section>
-
-      <section id="faq">
-        <h2>Questions people ask</h2>
-        <!--
-          Written as questions with the answer in the first sentence, because that is the shape
-          people search for and the shape an assistant quotes. Every answer must stay true: the
-          facts come from the support server's FAQ panel (`src/presentation/components/faqPanel.js`),
-          so change them together. "Is Vibe free?" describes the music, which is what the premium
-          rules keep free; if a paid tier goes on sale, re-read it.
-        -->
-        <div class="faq">
-          <div class="faq-item">
-            <h3>Is Vibe a free Discord music bot?</h3>
-            <p>
-              Yes. The music is free: what Vibe plays, which services it plays from and how it
-              sounds are the same for everybody, with no ads and nothing locked behind voting.
-            </p>
-          </div>
-          <div class="faq-item">
-            <h3>How do I add Vibe to my server?</h3>
-            <p>
-              Use the <a href="#add">Add button</a> above and pick your server. You need the Manage
-              Server permission there, which is Discord's rule. Vibe works the moment it joins, with
-              nothing to configure first.
-            </p>
-          </div>
-          <div class="faq-item">
-            <h3>How do I play music?</h3>
-            <p>
-              Join a voice channel and run <code>/play</code> with a song name, a YouTube or Spotify
-              link, or a playlist link. Everyone in the channel shares one queue.
-            </p>
-          </div>
-          <div class="faq-item">
-            <h3>What is <code>/watch</code>?</h3>
-            <p>
-              A live player that opens inside Discord, in the voice channel: artwork, a seek bar you
-              can drag, and the whole queue, in sync for everyone. Run <code>/watch</code> while
-              you're in a voice channel.
-            </p>
-          </div>
-          <div class="faq-item">
-            <h3>What permissions does Vibe ask for, and can it read my messages?</h3>
-            <p>
-              Five: View Channels, Send Messages, Embed Links, Connect and Speak. It asks for no
-              privileged intents and cannot read your messages.
-            </p>
-          </div>
-          <div class="faq-item">
-            <h3>Can I control who is allowed to skip or pause?</h3>
-            <p>
-              Yes. Set a DJ role with <code>/config</code> and it covers the player as well as the
-              commands. Skipping is a vote for everyone else, and the same vote whichever way it is
-              cast.
-            </p>
-          </div>
-          <div class="faq-item">
-            <h3>Does my listening history follow me between servers?</h3>
-            <p>
-              Yes. Your listening time, streak, level, badges and saved songs belong to you, not to
-              a server. What Vibe stores, and how to see or delete it, is in the
-              <a href="/privacy">privacy policy</a>.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section>
-        <h2>Being worked on</h2>
-        <p class="section-lede">
-          Here so you know where Vibe is going. Everything below is genuinely not built yet
-          &mdash; when something ships it moves out of this section.
-        </p>
-        <!--
-          **Only things that genuinely do not exist yet.** This section listed the listening
-          profile, per-Vibe settings and rank-card customisation as unbuilt while the nav linked
-          straight to the page that has all three — so the site told a visitor the dashboard was
-          not ready and then offered it to them. What is left is what `dashboard.html` itself
-          already says is coming.
-        -->
-        <div class="soon">
-          <h3>More on your profile page</h3>
-          <p>The dashboard is live. Still to come on it:</p>
-          <ul>
-            <li>Your saved tracks and playlists, playable from the page</li>
-          </ul>
-        </div>
-      </section>
-
+          <p class="closing-more">
+            Want music in two rooms at once?
+            <a href="https://discord.com/oauth2/authorize?client_id=1533281867523031070" target="_blank" rel="noopener"
+              >Add Vibe 2</a
+            >, a second bot with its own queue. Settings and listening stats are shared between them.
+          </p>
+        </section>
       </main>
 
-      <footer>
-        <span>© <span id="year">2026</span> Vibe</span>
-        <nav>
-          <a href="/terms">Terms</a>
-          <a href="/privacy">Privacy</a>
-          <a href="https://discord.gg/nMJJ8PAcD9" target="_blank" rel="noopener">Support server</a>
-          <a href="https://github.com/playingvibe" target="_blank" rel="noopener">Open source</a>
-        </nav>
-        <p class="disclaimer">
+      <!-- generated:footer -->
+      <footer class="footer">
+        <div class="footer-row">
+          <span>&copy; <span id="year">2026</span> Vibe</span>
+          <nav class="footer-links" aria-label="Footer">
+            <a href="/commands">Commands</a>
+            <a href="/terms">Terms</a>
+            <a href="/privacy">Privacy</a>
+            <a href="https://discord.gg/nMJJ8PAcD9" target="_blank" rel="noopener">Support server</a>
+            <a href="https://github.com/playingvibe" target="_blank" rel="noopener">Open source</a>
+          </nav>
+        </div>
+        <p class="footer-note">
           Not affiliated with or endorsed by Discord Inc. or any music service. Vibe streams from
           third-party sources. It doesn't host, store or distribute recordings.
         </p>
       </footer>
+      <!-- /generated:footer -->
     </div>
     <script>
       document.getElementById("year").textContent = new Date().getFullYear();
     </script>
+    <script type="module" src="home.js"></script>
   </body>
 </html>

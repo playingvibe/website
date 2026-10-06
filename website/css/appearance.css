@@ -1,0 +1,554 @@
+/*
+ * Vibe website: the appearance controls on the profile page. Loaded after core.css and app.css, and
+ * only there: the background tiles carry drawn artwork (about 9 KB) that no other page needs.
+ *
+ * Order: colour swatches, background tiles and their artwork, the colour and fade controls, the
+ * rank card preview, the player preview.
+ *
+ * The preview and the tile share the same `.backdrop-*` classes on purpose, so a preview can never
+ * disagree with the swatch it sits above.
+ */
+
+/* --- colour swatches ------------------------------------------------------------------------ */
+/* A 44px target holding a smaller disc; the chosen one is ringed in its own colour, with a gap. */
+
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-1);
+  min-height: var(--target);
+}
+.swatch {
+  --swatch: var(--accent);
+  width: var(--target);
+  height: var(--target);
+  padding: var(--s-2);
+  border: 0;
+  border-radius: 50%;
+  background: var(--swatch) content-box;
+  cursor: pointer;
+  transition: box-shadow var(--t-fast);
+}
+.swatch[aria-pressed="true"] {
+  box-shadow: inset 0 0 0 2px var(--swatch);
+}
+.swatch:disabled,
+.swatch-reset:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.swatch-reset {
+  min-height: var(--target);
+  margin-left: var(--s-2);
+  padding-inline: var(--s-4);
+  border: 0;
+  border-radius: var(--r-full);
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--ink);
+  font-size: var(--step--1);
+  cursor: pointer;
+}
+.swatch-reset:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.13);
+}
+
+/* --- background tiles ----------------------------------------------------------------------- */
+/* Reserved height: these are filled after a response, and a floor stops the page jumping. */
+
+.backdrops,
+.activity-backdrops {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: var(--target);
+}
+.activity-backdrops {
+  margin-top: var(--s-4);
+}
+.backdrop {
+  --bg: var(--accent);
+  width: 6rem;
+  height: var(--target);
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-1);
+  background-color: var(--ground);
+  box-shadow: var(--ring);
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: box-shadow var(--t-fast);
+}
+.backdrop[aria-pressed="true"] {
+  box-shadow:
+    0 0 0 2px var(--ground),
+    0 0 0 4px var(--ink);
+}
+/* The tile for no background says so; the others are pictures of what they draw. */
+.backdrop-none::before {
+  content: "None";
+  font-size: var(--step--2);
+}
+.backdrop:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.backdrop:focus-visible {
+  outline-offset: 5px;
+}
+
+/* Approximations of what the bot draws, not the real thing — see paintBackdrops().
+
+   **Split into a tint layer and a pattern layer**, mirroring the renderer, because the fade is
+   the user's switch rather than a property of the style. Baking the ramp into `.backdrop-waves`
+   would mean the preview could not show Waves without a fade — a state the card can now be in. */
+.backdrop-fade {
+  background-image:
+    radial-gradient(60% 120% at 16% -20%, color-mix(in srgb, var(--bg) 45%, transparent), transparent 70%),
+    linear-gradient(135deg, color-mix(in srgb, var(--bg) 55%, transparent), transparent 75%);
+}
+.backdrop-even {
+  background-image:
+    radial-gradient(60% 120% at 16% -20%, color-mix(in srgb, var(--bg) 26%, transparent), transparent 70%),
+    linear-gradient(0deg, color-mix(in srgb, var(--bg) 30%, transparent), color-mix(in srgb, var(--bg) 30%, transparent));
+}
+
+/* The pattern layers sit on ::after so they compose with either tint above. */
+.backdrop-waves,
+.backdrop-marks,
+.backdrop-bars,
+.backdrop-grid,
+.backdrop-aurora {
+  position: relative;
+  overflow: hidden;
+}
+.backdrop-waves::after,
+.backdrop-marks::after,
+.backdrop-bars::after,
+.backdrop-grid::after,
+.backdrop-aurora::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+/* The waveform is the *same curve*, not an invented squiggle: sampled from the renderer's own
+   three-summed-sines formula and inlined as SVG, so the preview and the card cannot disagree
+   about its shape. */
+.backdrop-waves::after {
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%20900%20320'%20preserveAspectRatio%3D'none'%3E%3Cpath%20d%3D'M-20.0%20270.2%20L-4.3%20271.7%20L11.3%20272.7%20L27.0%20273.4%20L42.7%20273.6%20L58.3%20273.4%20L74.0%20272.9%20L89.7%20272.0%20L105.3%20270.9%20L121.0%20269.6%20L136.7%20268.1%20L152.3%20266.4%20L168.0%20264.8%20L183.7%20263.1%20L199.3%20261.5%20L215.0%20260.0%20L230.7%20258.5%20L246.3%20257.3%20L262.0%20256.1%20L277.7%20255.1%20L293.3%20254.3%20L309.0%20253.6%20L324.7%20253.0%20L340.3%20252.5%20L356.0%20252.1%20L371.7%20251.6%20L387.3%20251.2%20L403.0%20250.6%20L418.7%20250.0%20L434.3%20249.3%20L450.0%20248.3%20L465.7%20247.2%20L481.3%20245.9%20L497.0%20244.4%20L512.7%20242.6%20L528.3%20240.7%20L544.0%20238.6%20L559.7%20236.3%20L575.3%20233.9%20L591.0%20231.5%20L606.7%20229.0%20L622.3%20226.6%20L638.0%20224.3%20L653.7%20222.1%20L669.3%20220.2%20L685.0%20218.5%20L700.7%20217.1%20L716.3%20216.1%20L732.0%20215.5%20L747.7%20215.3%20L763.3%20215.6%20L779.0%20216.3%20L794.7%20217.4%20L810.3%20218.9%20L826.0%20220.7%20L841.7%20223.0%20L857.3%20225.5%20L873.0%20228.2%20L888.7%20231.1%20L904.3%20234.1%20L920.0%20237.1'%20fill%3D'none'%20stroke%3D'rgba(255%2C255%2C255%2C0.30)'%20stroke-width%3D'3'%20stroke-linecap%3D'round'%2F%3E%3Cpath%20d%3D'M-20.0%20277.0%20L-4.3%20275.6%20L11.3%20274.3%20L27.0%20273.2%20L42.7%20272.2%20L58.3%20271.3%20L74.0%20270.6%20L89.7%20270.0%20L105.3%20269.5%20L121.0%20269.0%20L136.7%20268.7%20L152.3%20268.3%20L168.0%20267.9%20L183.7%20267.5%20L199.3%20267.0%20L215.0%20266.5%20L230.7%20265.9%20L246.3%20265.1%20L262.0%20264.3%20L277.7%20263.4%20L293.3%20262.3%20L309.0%20261.2%20L324.7%20260.0%20L340.3%20258.8%20L356.0%20257.5%20L371.7%20256.3%20L387.3%20255.2%20L403.0%20254.1%20L418.7%20253.1%20L434.3%20252.3%20L450.0%20251.7%20L465.7%20251.3%20L481.3%20251.1%20L497.0%20251.2%20L512.7%20251.6%20L528.3%20252.2%20L544.0%20253.1%20L559.7%20254.2%20L575.3%20255.6%20L591.0%20257.2%20L606.7%20259.0%20L622.3%20260.9%20L638.0%20262.9%20L653.7%20264.9%20L669.3%20267.0%20L685.0%20269.0%20L700.7%20271.0%20L716.3%20272.9%20L732.0%20274.5%20L747.7%20276.0%20L763.3%20277.3%20L779.0%20278.3%20L794.7%20279.1%20L810.3%20279.6%20L826.0%20279.9%20L841.7%20279.8%20L857.3%20279.6%20L873.0%20279.1%20L888.7%20278.4%20L904.3%20277.5%20L920.0%20276.5'%20fill%3D'none'%20stroke%3D'rgba(255%2C255%2C255%2C0.16)'%20stroke-width%3D'2'%20stroke-linecap%3D'round'%2F%3E%3C%2Fsvg%3E");
+  background-size: 100% 100%;
+}
+/* Tilted and barely there, matching how the renderer tiles it. An upright legible logo repeated
+   across somebody's personal card is branding; tilted at low opacity it is texture. */
+.backdrop-marks::after {
+  inset: -20%;
+  background-image: url("../V_logo_vectorized.svg");
+  background-size: 15px 15px;
+  background-repeat: space;
+  opacity: 0.14;
+  transform: rotate(-16deg);
+}
+
+/* Tiles are approximations by design — see the note above the group. */
+/* The bars are the *same 46 bars*, sampled from the renderer's own hash and inlined — the same
+   device the waveform uses, and for the same reason. A repeating gradient of even 2px stripes
+   would read at this size as hatching rather than as an equaliser: ~180 identical lines where the
+   card draws 46 rounded bars of varying height. */
+.backdrop-bars::after {
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20900%20320%27%20preserveAspectRatio%3D%27none%27%3E%3Crect%20x%3D%270%27%20y%3D%27304%27%20width%3D%2715%27%20height%3D%2716%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%2720%27%20y%3D%27207%27%20width%3D%2715%27%20height%3D%27113%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%2739%27%20y%3D%27298%27%20width%3D%2715%27%20height%3D%2722%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%2759%27%20y%3D%27245%27%20width%3D%2715%27%20height%3D%2775%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%2779%27%20y%3D%27265%27%20width%3D%2715%27%20height%3D%2755%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%2798%27%20y%3D%27256%27%20width%3D%2715%27%20height%3D%2764%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%27118%27%20y%3D%27238%27%20width%3D%2715%27%20height%3D%2782%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%27138%27%20y%3D%27287%27%20width%3D%2715%27%20height%3D%2733%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%27157%27%20y%3D%27269%27%20width%3D%2715%27%20height%3D%2751%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%27177%27%20y%3D%27247%27%20width%3D%2715%27%20height%3D%2773%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%27197%27%20y%3D%27201%27%20width%3D%2715%27%20height%3D%27119%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%27216%27%20y%3D%27217%27%20width%3D%2715%27%20height%3D%27103%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%27236%27%20y%3D%27285%27%20width%3D%2715%27%20height%3D%2735%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%27256%27%20y%3D%27199%27%20width%3D%2715%27%20height%3D%27121%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%27275%27%20y%3D%27218%27%20width%3D%2715%27%20height%3D%27102%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%27295%27%20y%3D%27257%27%20width%3D%2715%27%20height%3D%2763%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%27315%27%20y%3D%27206%27%20width%3D%2715%27%20height%3D%27114%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%27334%27%20y%3D%27258%27%20width%3D%2715%27%20height%3D%2762%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%27354%27%20y%3D%27236%27%20width%3D%2715%27%20height%3D%2784%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%27374%27%20y%3D%27270%27%20width%3D%2715%27%20height%3D%2750%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%27393%27%20y%3D%27224%27%20width%3D%2715%27%20height%3D%2796%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%27413%27%20y%3D%27245%27%20width%3D%2715%27%20height%3D%2775%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%27433%27%20y%3D%27234%27%20width%3D%2715%27%20height%3D%2786%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%27453%27%20y%3D%27260%27%20width%3D%2715%27%20height%3D%2760%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%27472%27%20y%3D%27290%27%20width%3D%2715%27%20height%3D%2730%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%27492%27%20y%3D%27269%27%20width%3D%2715%27%20height%3D%2751%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%27512%27%20y%3D%27252%27%20width%3D%2715%27%20height%3D%2768%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%27531%27%20y%3D%27304%27%20width%3D%2715%27%20height%3D%2716%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%27551%27%20y%3D%27287%27%20width%3D%2715%27%20height%3D%2733%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%27571%27%20y%3D%27260%27%20width%3D%2715%27%20height%3D%2760%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%27590%27%20y%3D%27200%27%20width%3D%2715%27%20height%3D%27120%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%27610%27%20y%3D%27228%27%20width%3D%2715%27%20height%3D%2792%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%27630%27%20y%3D%27274%27%20width%3D%2715%27%20height%3D%2746%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%27649%27%20y%3D%27260%27%20width%3D%2715%27%20height%3D%2760%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%27669%27%20y%3D%27283%27%20width%3D%2715%27%20height%3D%2737%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%27689%27%20y%3D%27243%27%20width%3D%2715%27%20height%3D%2777%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%27708%27%20y%3D%27200%27%20width%3D%2715%27%20height%3D%27120%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%27728%27%20y%3D%27207%27%20width%3D%2715%27%20height%3D%27113%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%27748%27%20y%3D%27254%27%20width%3D%2715%27%20height%3D%2766%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%27767%27%20y%3D%27223%27%20width%3D%2715%27%20height%3D%2797%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%27787%27%20y%3D%27241%27%20width%3D%2715%27%20height%3D%2779%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%27807%27%20y%3D%27205%27%20width%3D%2715%27%20height%3D%27115%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%27826%27%20y%3D%27256%27%20width%3D%2715%27%20height%3D%2764%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%27846%27%20y%3D%27281%27%20width%3D%2715%27%20height%3D%2739%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%27866%27%20y%3D%27231%27%20width%3D%2715%27%20height%3D%2789%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3Crect%20x%3D%27885%27%20y%3D%27220%27%20width%3D%2715%27%20height%3D%27100%27%20rx%3D%277%27%20fill%3D%27rgba(255%2C255%2C255%2C0.2)%27%2F%3E%3C%2Fsvg%3E");
+  background-size: 100% 100%;
+}
+.backdrop-grid::after {
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.085) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.085) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+.backdrop-aurora::after {
+  inset: 0;
+  background-image:
+    linear-gradient(115deg, transparent 18%, rgba(255, 255, 255, 0.3) 36%, transparent 54%),
+    linear-gradient(115deg, transparent 56%, rgba(255, 255, 255, 0.16) 72%, transparent 88%);
+}
+
+/* --- colour and fade ------------------------------------------------------------------------ */
+
+.backdrop-colour {
+  margin-top: var(--s-3);
+}
+.backdrop-colour:empty {
+  margin-top: 0;
+}
+.backdrop-colour-label,
+.backdrop-fade-label,
+.prefer-server-theme {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: var(--target);
+  color: var(--ink-2);
+  font-size: var(--step--1);
+}
+.backdrop-fade-label,
+.prefer-server-theme {
+  cursor: pointer;
+}
+.backdrop-fade-label {
+  margin-left: var(--s-5);
+}
+.backdrop-fade-input,
+.prefer-server-theme input {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.activity-accent {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: var(--target);
+  margin-top: var(--s-3);
+}
+.card-section {
+  margin-top: var(--s-7);
+}
+.card-section h2 {
+  font-size: var(--step-1);
+  font-weight: var(--medium);
+}
+.card-section .section-note {
+  margin-bottom: var(--s-4);
+}
+
+/* --- rank card preview ---------------------------------------------------------------------- */
+
+.preview-card {
+  --bg: var(--accent);
+  --card-accent: var(--accent);
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  width: 100%;
+  max-width: 35rem;
+  padding: var(--s-5);
+  border-radius: var(--r-3);
+  background-color: var(--ground);
+  background-size: cover;
+  box-shadow: var(--ring);
+  overflow: hidden;
+}
+/* Only on the plain card, as the renderer does: over a background it would be a second light. */
+.preview-glow::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(46% 150% at 12% 0%, color-mix(in srgb, var(--card-accent) 26%, transparent), transparent 70%);
+  pointer-events: none;
+}
+.preview-avatar {
+  position: relative;
+  flex: none;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+}
+.preview-body {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+.preview-name {
+  overflow: hidden;
+  font-size: var(--step-1);
+  font-weight: var(--bold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.preview-level {
+  margin: var(--s-1) 0 var(--s-2);
+  color: var(--card-accent);
+  font-size: var(--step--2);
+  font-weight: var(--bold);
+  letter-spacing: 0.08em;
+}
+.preview-track {
+  height: 0.4375rem;
+  border-radius: var(--r-full);
+  background: var(--line-strong);
+  overflow: hidden;
+}
+.preview-fill {
+  height: 100%;
+  border-radius: var(--r-full);
+  background: var(--card-accent);
+}
+.preview-stats {
+  display: flex;
+  gap: var(--s-5);
+  margin-top: var(--s-3);
+}
+.preview-stat-value {
+  display: block;
+  font-size: var(--step--1);
+  font-weight: var(--bold);
+}
+.preview-stat-label {
+  display: block;
+  color: rgba(245, 242, 243, 0.7);
+  font-size: var(--step--2);
+}
+/* The tile artwork is sized for 96px; at card size the mark has to be bigger or it reads as noise.
+   Sized to the renderer's density: about 16 marks across, tilted. */
+.preview-card.backdrop-marks::after {
+  background-size: 34px 34px;
+  opacity: 0.1;
+}
+
+/* --- player preview ------------------------------------------------------------------------- */
+/* A mock of the player /watch opens, in two shapes chosen by the container's width, not the
+   viewport's: narrow is the phone's vertical player; wide is the desktop window with the queue
+   beside the artwork and the transport underneath. `--accent` and `--bg` are set inline from the
+   chosen colour, which retints everything inside, including the .play button and the seek fill. */
+
+.player-preview-host {
+  container-type: inline-size;
+  max-width: 47.5rem;
+  margin-bottom: var(--s-3);
+}
+.player-preview {
+  --bg: var(--accent);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--r-3);
+  background-color: var(--ground);
+  box-shadow: var(--ring);
+  overflow: hidden;
+}
+.pp-stage {
+  position: relative;
+  z-index: 1;
+  padding: var(--s-5) var(--s-5) var(--s-2);
+}
+.pp-main {
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+}
+.player-preview .art {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  max-width: 12.5rem;
+  margin: 0 auto var(--s-4);
+  aspect-ratio: 1;
+  border-radius: var(--r-2);
+  background:
+    radial-gradient(circle at 32% 26%, var(--line-strong), transparent 58%),
+    linear-gradient(148deg, color-mix(in srgb, var(--accent) 34%, #1a1a20), #101015);
+  box-shadow: var(--ring);
+}
+.player-preview .art svg {
+  width: 34%;
+  fill: #fff;
+  opacity: 0.28;
+}
+.player-eyebrow {
+  color: var(--accent);
+  font-size: var(--step--2);
+  font-weight: var(--bold);
+}
+.player-preview .track {
+  font-weight: var(--bold);
+}
+.player-preview .artist {
+  color: var(--ink-2);
+  font-size: var(--step--1);
+}
+.pp-queue,
+.pp-mini,
+.pp-volume {
+  display: none;
+}
+.pp-bar {
+  position: relative;
+  z-index: 1;
+  padding: var(--s-3) var(--s-5) var(--s-5);
+  border-top: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.28);
+}
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-5);
+  margin-bottom: var(--s-3);
+}
+.ctl {
+  width: 1.25rem;
+  height: 1.25rem;
+  fill: var(--ink);
+  opacity: 0.6;
+}
+.play {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.play svg {
+  width: 1.0625rem;
+  height: 1.0625rem;
+  margin-left: 2px;
+  fill: var(--accent-ink);
+}
+.pp-timeline {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+.seek {
+  flex: 1;
+  height: 0.25rem;
+  border-radius: var(--r-full);
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+.seek span {
+  display: block;
+  width: 41%;
+  height: 100%;
+  border-radius: var(--r-full);
+  background: var(--accent);
+}
+.pp-time {
+  color: var(--ink-3);
+  font-size: var(--step--2);
+  font-variant-numeric: tabular-nums;
+}
+.pp-queue-title {
+  margin-bottom: var(--s-2);
+  color: var(--ink-3);
+  font-size: var(--step--2);
+  font-weight: var(--bold);
+}
+.pp-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding-block: var(--s-2);
+  font-size: var(--step--1);
+}
+.pp-thumb {
+  flex: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--s-2);
+  background: color-mix(in srgb, var(--accent) 18%, #1a1a20);
+}
+.pp-row-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pp-row-time {
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+@container (min-width: 35rem) {
+  .pp-stage {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 40%;
+    gap: var(--s-5);
+    min-height: 15.5rem;
+    padding: var(--s-5);
+  }
+  .pp-main {
+    align-items: center;
+    justify-content: center;
+  }
+  .player-preview .pp-main .art {
+    width: 9.5rem;
+    margin-bottom: var(--s-3);
+  }
+  .pp-queue {
+    display: block;
+    padding-top: var(--s-2);
+  }
+  .pp-bar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 1fr);
+    align-items: center;
+    gap: var(--s-4);
+    padding: var(--s-3) var(--s-5);
+  }
+  .pp-mini,
+  .pp-volume {
+    display: flex;
+    align-items: center;
+    gap: var(--s-3);
+  }
+  .pp-mini-art {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 2.375rem;
+    aspect-ratio: 1;
+    border-radius: var(--r-1);
+    background: linear-gradient(148deg, color-mix(in srgb, var(--accent) 34%, #1a1a20), #101015);
+  }
+  .pp-mini-art svg {
+    width: 50%;
+    fill: #fff;
+    opacity: 0.28;
+  }
+  .pp-mini-text {
+    min-width: 0;
+  }
+  .pp-mini-text .track {
+    overflow: hidden;
+    font-size: var(--step--1);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .pp-mini-text .artist {
+    font-size: var(--step--2);
+  }
+  .controls {
+    margin-bottom: var(--s-2);
+  }
+  .pp-volume {
+    justify-content: flex-end;
+  }
+  .pp-volume svg {
+    width: 1rem;
+    fill: var(--ink);
+    opacity: 0.6;
+  }
+  .pp-volume-track {
+    width: 5.625rem;
+    height: 0.25rem;
+    border-radius: var(--r-full);
+    background: rgba(255, 255, 255, 0.12);
+    overflow: hidden;
+  }
+  .pp-volume-track span {
+    display: block;
+    width: 70%;
+    height: 100%;
+    background: var(--accent);
+  }
+}

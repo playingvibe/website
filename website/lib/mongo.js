@@ -105,6 +105,23 @@ export async function findUserStats(userId) {
 }
 
 /**
+ * The appearance settings: the key the page and `PUT /api/appearance` use, and the field it is stored under on the
+ * `users` document (`src/database/models/User.model.js` owns the field names). The one place the two are paired:
+ * the read below and the write after it are driven from it, and `tests/appearanceKeys.test.js` holds it to the
+ * route's validators and the page's draft, so a setting added to one and not the others fails there.
+ * @type {Readonly<Record<string, string>>}
+ */
+export const APPEARANCE_DOCUMENT_FIELDS = Object.freeze({
+  accent: "rankCardAccent",
+  background: "rankCardBackground",
+  backgroundColor: "rankCardBackgroundColor",
+  fade: "rankCardFade",
+  activityAccent: "activityAccent",
+  activityBackground: "activityBackground",
+  preferServerTheme: "preferServerTheme",
+});
+
+/**
  * The appearance settings in one read.
  *
  * One `findOne` rather than two: they are always wanted together, they live on the same document,
@@ -116,27 +133,15 @@ export async function findRankCardStyle(userId) {
   const users = (await db()).collection("users");
   const doc = await users.findOne(
     { _id: userId },
-    {
-      projection: {
-        rankCardAccent: 1,
-        rankCardBackground: 1,
-        rankCardBackgroundColor: 1,
-        rankCardFade: 1,
-        activityAccent: 1,
-        activityBackground: 1,
-        preferServerTheme: 1,
-      },
-    }
+    { projection: Object.fromEntries(Object.values(APPEARANCE_DOCUMENT_FIELDS).map((field) => [field, 1])) }
   );
-  return {
-    accent: doc?.rankCardAccent ?? null,
-    background: doc?.rankCardBackground ?? null,
-    backgroundColor: doc?.rankCardBackgroundColor ?? null,
-    fade: doc?.rankCardFade ?? null,
-    activityAccent: doc?.activityAccent ?? null,
-    activityBackground: doc?.activityBackground ?? null,
-    preferServerTheme: doc?.preferServerTheme === true,
-  };
+  return Object.fromEntries(
+    Object.entries(APPEARANCE_DOCUMENT_FIELDS).map(([key, field]) => [
+      key,
+      // A flag that was never set is off; everything else that was never set is "follow the bot".
+      key === "preferServerTheme" ? doc?.[field] === true : (doc?.[field] ?? null),
+    ])
+  );
 }
 
 /**
@@ -154,14 +159,11 @@ export async function findRankCardStyle(userId) {
  * @returns {Promise<void>}
  */
 export async function saveRankCardStyle(userId, changes) {
+  // Only the keys that were sent, and only keys that are settings: `hasOwn`, so nothing inherited is one.
   const set = {};
-  if ("accent" in changes) set.rankCardAccent = changes.accent;
-  if ("background" in changes) set.rankCardBackground = changes.background;
-  if ("backgroundColor" in changes) set.rankCardBackgroundColor = changes.backgroundColor;
-  if ("fade" in changes) set.rankCardFade = changes.fade;
-  if ("activityAccent" in changes) set.activityAccent = changes.activityAccent;
-  if ("activityBackground" in changes) set.activityBackground = changes.activityBackground;
-  if ("preferServerTheme" in changes) set.preferServerTheme = changes.preferServerTheme;
+  for (const [key, field] of Object.entries(APPEARANCE_DOCUMENT_FIELDS)) {
+    if (Object.hasOwn(changes, key)) set[field] = changes[key];
+  }
   if (!Object.keys(set).length) return;
 
   const users = (await db()).collection("users");

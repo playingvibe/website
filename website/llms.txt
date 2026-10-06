@@ -7,7 +7,7 @@ Facts worth quoting:
 - Free: the music is free. What plays, which services it plays from and how it sounds are the same for everybody, with no ads and nothing locked behind voting.
 - Add it with one click. The person adding it needs the Manage Server permission. It asks for five permissions only (View Channels, Send Messages, Embed Links, Connect, Speak), asks for no privileged intents and cannot read messages.
 - Need two queues at once? Vibe 2 is a second bot with its own voice channel and queue; add it from the homepage or with /invite. Settings, favourites and listening stats are shared between the bots.
-- Play with /play and a song name, a YouTube or Spotify link, or a playlist link. Everyone in the voice channel shares one queue.
+- Play with /play and a song name or a link to a song. Everyone in the voice channel shares one queue.
 - DJ roles set with /config cover the player as well as the slash commands. Skipping is a vote for everyone who is not a DJ.
 - Anyone in the voice channel can boost a queued song from the player. A boost counts as a vote, and a DJ's boost sends the track straight to next.
 - Streamers can switch on a now-playing overlay in /config and use its link as an OBS browser source. It shows only the title, artist and artwork of what is playing, and the link can be replaced or turned off at any time. Running two Vibes at once, a `?bot=` link pins the overlay to one of them instead of showing whichever is playing.

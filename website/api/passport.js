@@ -9,6 +9,7 @@ import { getLevel } from "../lib/generated/level.js";
 import { currentListeningStreak } from "../lib/generated/listeningStreak.js";
 import { getEarnedBadgeTiers } from "../lib/generated/badges.js";
 import { cleanTrackTitle } from "../lib/generated/track.js";
+import { LIKED_COVER, playlistCover } from "../lib/generated/playlistCover.js";
 
 const MS_PER_HOUR = 60 * 60 * 1000;
 
@@ -117,12 +118,14 @@ export function shapePassport(user, { listening, favorites, playlists }) {
       recent: listening.recent.map(asTrack),
       ...(listening.unavailable ? { unavailable: true } : {}),
     },
-    favorites: { total: favorites.total, items: favorites.favorites.map(asTrack) },
+    favorites: { total: favorites.total, items: favorites.favorites.map(asTrack), cover: LIKED_COVER },
     // Only the playlists their owner marked shared, readable and never playable: no link on any
     // track, so this cannot be turned into a list to queue. Empty when none are shared, and the
     // page then shows no section at all rather than an empty one.
     playlists: playlists.map((playlist) => ({
       name: playlist.name,
+      // The default picture, until a playlist has artwork: the same letter and gradient Discord draws.
+      cover: playlistCover(playlist.name),
       trackCount: playlist.trackCount,
       tracks: playlist.tracks.map((track) => ({
         title: cleanTrackTitle(track.title),

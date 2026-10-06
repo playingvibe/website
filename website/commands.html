@@ -18,14 +18,15 @@
       property="og:description"
       content="Every command the Vibe Discord music bot understands, grouped by what it does."
     />
-    <meta property="og:image" content="https://playvibe.gg/press/og-card.jpg" />
+    <meta property="og:image" content="https://playvibe.gg/press/og-home.jpg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Vibe: listen together, in Discord" />
+    <meta property="og:image:alt" content="Everyone hears it. Now everyone sees it. The Vibe player, open in a Discord voice channel." />
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon" href="V_logo_vectorized.svg" />
     <link rel="preload" href="fonts/outfit-latin.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="css/core.css" />
+    <link rel="stylesheet" href="css/legal.css" />
   </head>
   <body>
     <a class="skip" href="#main">Skip to content</a>
@@ -37,220 +38,240 @@
       Edit that file and run `npm run sync:web`.
     -->
     <div class="wrap">
-      <nav class="nav">
-        <svg class="mark" viewBox="0 0 1254 1254" aria-hidden="true">
-          <path
-            d="M 877 349 L 858 344 L 835 344 L 817 348 L 792 361 L 773 379 L 765 390 L 754 410 L 666 623 L 653 646 L 646 653 L 641 655 L 632 653 L 624 643 L 620 634 L 550 415 L 538 390 L 527 377 L 518 370 L 506 364 L 490 360 L 464 360 L 449 363 L 424 373 L 406 385 L 392 399 L 380 419 L 376 434 L 376 452 L 379 465 L 409 537 L 436 608 L 536 884 L 548 909 L 563 930 L 575 940 L 589 947 L 608 950 L 626 948 L 650 938 L 669 925 L 690 904 L 705 885 L 731 843 L 753 799 L 910 457 L 917 439 L 920 424 L 920 404 L 916 388 L 905 369 L 892 357 Z"
-          />
-        </svg>
-        <span class="wordmark">Vibe</span>
-        <div class="nav-links"><a href="/">Home</a><a href="/privacy">Privacy</a></div>
+      <nav class="nav" aria-label="Main">
+        <a class="nav-brand" href="/">
+          <svg class="mark" viewBox="338 337 620 620" aria-hidden="true">
+            <path
+              d="M 877 349 L 858 344 L 835 344 L 817 348 L 792 361 L 773 379 L 765 390 L 754 410 L 666 623 L 653 646 L 646 653 L 641 655 L 632 653 L 624 643 L 620 634 L 550 415 L 538 390 L 527 377 L 518 370 L 506 364 L 490 360 L 464 360 L 449 363 L 424 373 L 406 385 L 392 399 L 380 419 L 376 434 L 376 452 L 379 465 L 409 537 L 436 608 L 536 884 L 548 909 L 563 930 L 575 940 L 589 947 L 608 950 L 626 948 L 650 938 L 669 925 L 690 904 L 705 885 L 731 843 L 753 799 L 910 457 L 917 439 L 920 424 L 920 404 L 916 388 L 905 369 L 892 357 Z"
+            />
+          </svg>
+          Vibe
+        </a>
+        <div class="nav-links">
+          <a href="/commands" aria-current="page">Commands</a>
+          <a class="nav-extra" href="https://discord.gg/nMJJ8PAcD9" target="_blank" rel="noopener">Support</a>
+          <a class="nav-extra" href="/dashboard">Your profile</a>
+        </div>
+        <a class="btn btn-ghost btn-small" href="https://discord.com/oauth2/authorize?client_id=815329807377498153" target="_blank" rel="noopener">Add to Discord</a>
       </nav>
 
-      <main class="legal commands" id="main" tabindex="-1">
+      <main class="prose commands" id="main" tabindex="-1">
         <h1>Commands</h1>
-        <p class="updated">Grouped by what they do. Everything is a slash command.</p>
+        <p class="prose-meta">Grouped by what they do. Everything is a slash command.</p>
 
         <p class="callout">
-          You never need this page to use Vibe - <code>/help</code> shows the same list inside
+          You never need this page to use Vibe: <code>/help</code> shows the same list inside
           Discord, browsable by category. This one exists so you can read it before adding the bot,
           and link straight to a single command.
         </p>
 
-        <div class="cmd-jump"><a href="#playing">Playing</a><a href="#controls">Controls</a><a href="#queue">Queue</a><a href="#favorites">Liked</a><a href="#server">Server</a></div>
+        <nav class="cmd-jump" aria-label="Command groups"><a href="#playing">Playing</a><a href="#controls">Controls</a><a href="#queue">Queue</a><a href="#favorites">Liked</a><a href="#server">Server</a></nav>
 
         <section class="cmd-group" id="playing">
           <h2>Playing</h2>
           <p class="cmd-group-desc">Start something playing, or see what already is</p>
-          <p class="cmd-group-about">Join a voice channel and run <code>/play</code> with a song name, a YouTube or Spotify link, or a playlist link, and Vibe queues it and starts. <code>/search</code> shows the results first so you can pick one. <code>/watch</code> opens the live player inside Discord: artwork, a seek bar you can drag and the whole queue, in sync for everyone in the channel.</p>
-          <div class="cmd" id="play">
-            <a class="cmd-name" href="#play">/play</a>
-            <p class="cmd-desc">queue a song by name or link. <code>/p</code> is the same thing, shorter</p>
-          </div>
-          <div class="cmd" id="search">
-            <a class="cmd-name" href="#search">/search</a>
-            <p class="cmd-desc">search, then pick which result to queue</p>
-          </div>
-          <div class="cmd" id="watch">
-            <a class="cmd-name" href="#watch">/watch</a>
-            <p class="cmd-desc">open the live player everyone in the channel can see and control</p>
-          </div>
-          <div class="cmd" id="lyrics">
-            <a class="cmd-name" href="#lyrics">/lyrics</a>
-            <p class="cmd-desc">lyrics for whatever is playing</p>
-          </div>
-          <div class="cmd" id="nowplaying">
-            <a class="cmd-name" href="#nowplaying">/nowplaying</a>
-            <p class="cmd-desc">what's playing right now, with a progress bar</p>
-          </div>
+          <p class="cmd-group-about">Join a voice channel and run <code>/play</code> with a song name or a link to a song, and Vibe queues it and starts. <code>/search</code> shows the results first so you can pick one. <code>/watch</code> opens the live player inside Discord: artwork, a seek bar you can drag and the whole queue, in sync for everyone in the channel.</p>
+          <ul class="cmd-list">
+            <li class="cmd-row" id="play">
+              <a class="cmd" href="#play">/play</a>
+              <p class="cmd-desc">queue a song by name or link. <code>/p</code> is the same thing, shorter</p>
+            </li>
+            <li class="cmd-row" id="search">
+              <a class="cmd" href="#search">/search</a>
+              <p class="cmd-desc">search, then pick which result to queue</p>
+            </li>
+            <li class="cmd-row" id="watch">
+              <a class="cmd" href="#watch">/watch</a>
+              <p class="cmd-desc">open the live player everyone in the channel can see and control</p>
+            </li>
+            <li class="cmd-row" id="lyrics">
+              <a class="cmd" href="#lyrics">/lyrics</a>
+              <p class="cmd-desc">lyrics for whatever is playing</p>
+            </li>
+            <li class="cmd-row" id="nowplaying">
+              <a class="cmd" href="#nowplaying">/nowplaying</a>
+              <p class="cmd-desc">what's playing right now, with a progress bar</p>
+            </li>
+          </ul>
         </section>
 
         <section class="cmd-group" id="controls">
           <h2>Controls</h2>
           <p class="cmd-group-desc">Skip, seek, loop, and shape how it sounds</p>
           <p class="cmd-group-about">Playback controls follow the server's DJ rules. With a DJ role set in <code>/config</code>, pausing, seeking, volume, looping and filters belong to people with that role, to anyone with Manage Server, and to whoever is alone in the channel with the bot. Skipping is open to everyone: without a DJ role it starts a vote, and it is the same vote whether it is cast with <code>/skip</code> or from the player.</p>
-          <div class="cmd" id="pause">
-            <a class="cmd-name" href="#pause">/pause</a>
-            <p class="cmd-desc">pause, or unpause if already paused</p>
-          </div>
-          <div class="cmd" id="resume">
-            <a class="cmd-name" href="#resume">/resume</a>
-            <p class="cmd-desc">start playing again after a pause</p>
-          </div>
-          <div class="cmd" id="skip">
-            <a class="cmd-name" href="#skip">/skip</a>
-            <p class="cmd-desc">skip the current track. Not a DJ? It starts a vote</p>
-          </div>
-          <div class="cmd" id="stop">
-            <a class="cmd-name" href="#stop">/stop</a>
-            <p class="cmd-desc">stop everything and clear the queue. <code>/leave</code> does the same</p>
-          </div>
-          <div class="cmd" id="seek">
-            <a class="cmd-name" href="#seek">/seek</a>
-            <p class="cmd-desc">jump to a timestamp, like <code>1:30</code></p>
-          </div>
-          <div class="cmd" id="rewind">
-            <a class="cmd-name" href="#rewind">/rewind</a>
-            <p class="cmd-desc">go back 15 seconds, or however far you ask</p>
-          </div>
-          <div class="cmd" id="forward">
-            <a class="cmd-name" href="#forward">/forward</a>
-            <p class="cmd-desc">skip ahead 15 seconds, or however far you ask</p>
-          </div>
-          <div class="cmd" id="replay">
-            <a class="cmd-name" href="#replay">/replay</a>
-            <p class="cmd-desc">start the current track again from the beginning</p>
-          </div>
-          <div class="cmd" id="last">
-            <a class="cmd-name" href="#last">/last</a>
-            <p class="cmd-desc">add the track before this one to the queue again</p>
-          </div>
-          <div class="cmd" id="loop">
-            <a class="cmd-name" href="#loop">/loop</a>
-            <p class="cmd-desc">repeat one track, the whole queue, or nothing</p>
-          </div>
-          <div class="cmd" id="volume">
-            <a class="cmd-name" href="#volume">/volume</a>
-            <p class="cmd-desc">set how loud Vibe plays, 0 to 200</p>
-          </div>
-          <div class="cmd" id="filter">
-            <a class="cmd-name" href="#filter">/filter</a>
-            <p class="cmd-desc">Bass Boost, Nightcore, Vaporwave, 8D and more. Combinable</p>
-          </div>
+          <ul class="cmd-list">
+            <li class="cmd-row" id="pause">
+              <a class="cmd" href="#pause">/pause</a>
+              <p class="cmd-desc">pause, or unpause if already paused</p>
+            </li>
+            <li class="cmd-row" id="resume">
+              <a class="cmd" href="#resume">/resume</a>
+              <p class="cmd-desc">start playing again after a pause</p>
+            </li>
+            <li class="cmd-row" id="skip">
+              <a class="cmd" href="#skip">/skip</a>
+              <p class="cmd-desc">skip the current track. Not a DJ? It starts a vote</p>
+            </li>
+            <li class="cmd-row" id="stop">
+              <a class="cmd" href="#stop">/stop</a>
+              <p class="cmd-desc">stop everything and clear the queue. <code>/leave</code> does the same</p>
+            </li>
+            <li class="cmd-row" id="seek">
+              <a class="cmd" href="#seek">/seek</a>
+              <p class="cmd-desc">jump to a timestamp, like <code>1:30</code></p>
+            </li>
+            <li class="cmd-row" id="rewind">
+              <a class="cmd" href="#rewind">/rewind</a>
+              <p class="cmd-desc">go back 15 seconds, or however far you ask</p>
+            </li>
+            <li class="cmd-row" id="forward">
+              <a class="cmd" href="#forward">/forward</a>
+              <p class="cmd-desc">skip ahead 15 seconds, or however far you ask</p>
+            </li>
+            <li class="cmd-row" id="replay">
+              <a class="cmd" href="#replay">/replay</a>
+              <p class="cmd-desc">start the current track again from the beginning</p>
+            </li>
+            <li class="cmd-row" id="last">
+              <a class="cmd" href="#last">/last</a>
+              <p class="cmd-desc">add the track before this one to the queue again</p>
+            </li>
+            <li class="cmd-row" id="loop">
+              <a class="cmd" href="#loop">/loop</a>
+              <p class="cmd-desc">repeat one track, the whole queue, or nothing</p>
+            </li>
+            <li class="cmd-row" id="volume">
+              <a class="cmd" href="#volume">/volume</a>
+              <p class="cmd-desc">set how loud Vibe plays, 0 to 200</p>
+            </li>
+            <li class="cmd-row" id="filter">
+              <a class="cmd" href="#filter">/filter</a>
+              <p class="cmd-desc">Bass Boost, Nightcore, Vaporwave, 8D and more. Combinable</p>
+            </li>
+          </ul>
         </section>
 
         <section class="cmd-group" id="queue">
           <h2>Queue</h2>
           <p class="cmd-group-desc">See what's lined up, and change the order</p>
-          <p class="cmd-group-about">Everyone in the voice channel shares one queue. <code>/queue</code> shows what is coming up page by page, and <code>/move</code>, <code>/remove</code>, <code>/clear</code> and <code>/shuffle</code> change it. Whatever changes it, the queue in <code>/watch</code> updates for everyone straight away. There, anyone can also **boost** a queued track with the arrow on its row: a boost counts as a vote, and a DJ's boost moves the track straight to next.</p>
-          <div class="cmd" id="queue">
-            <a class="cmd-name" href="#queue">/queue</a>
-            <p class="cmd-desc">everything lined up, page by page</p>
-          </div>
-          <div class="cmd" id="history">
-            <a class="cmd-name" href="#history">/history</a>
-            <p class="cmd-desc">what already played this session</p>
-          </div>
-          <div class="cmd" id="shuffle">
-            <a class="cmd-name" href="#shuffle">/shuffle</a>
-            <p class="cmd-desc">randomise the order of what's queued</p>
-          </div>
-          <div class="cmd" id="move">
-            <a class="cmd-name" href="#move">/move</a>
-            <p class="cmd-desc">move one track to a different position</p>
-          </div>
-          <div class="cmd" id="remove">
-            <a class="cmd-name" href="#remove">/remove</a>
-            <p class="cmd-desc">drop a single track from the queue</p>
-          </div>
-          <div class="cmd" id="clear">
-            <a class="cmd-name" href="#clear">/clear</a>
-            <p class="cmd-desc">empty the queue but keep the current track playing</p>
-          </div>
+          <p class="cmd-group-about">Everyone in the voice channel shares one queue. <code>/queue</code> shows what is coming up page by page, and <code>/move</code>, <code>/remove</code>, <code>/clear</code> and <code>/shuffle</code> change it. Whatever changes it, the queue in <code>/watch</code> updates for everyone straight away. There, anyone can also <strong>boost</strong> a queued track with the arrow on its row: a boost counts as a vote, and a DJ's boost moves the track straight to next.</p>
+          <ul class="cmd-list">
+            <li class="cmd-row" id="queue">
+              <a class="cmd" href="#queue">/queue</a>
+              <p class="cmd-desc">everything lined up, page by page</p>
+            </li>
+            <li class="cmd-row" id="history">
+              <a class="cmd" href="#history">/history</a>
+              <p class="cmd-desc">what already played this session</p>
+            </li>
+            <li class="cmd-row" id="shuffle">
+              <a class="cmd" href="#shuffle">/shuffle</a>
+              <p class="cmd-desc">randomise the order of what's queued</p>
+            </li>
+            <li class="cmd-row" id="move">
+              <a class="cmd" href="#move">/move</a>
+              <p class="cmd-desc">move one track to a different position</p>
+            </li>
+            <li class="cmd-row" id="remove">
+              <a class="cmd" href="#remove">/remove</a>
+              <p class="cmd-desc">drop a single track from the queue</p>
+            </li>
+            <li class="cmd-row" id="clear">
+              <a class="cmd" href="#clear">/clear</a>
+              <p class="cmd-desc">empty the queue but keep the current track playing</p>
+            </li>
+          </ul>
         </section>
 
         <section class="cmd-group" id="favorites">
           <h2>Liked</h2>
           <p class="cmd-group-desc">Save what you like, and see what you've listened to</p>
           <p class="cmd-group-about">Your liked songs and playlists, and your listening stats, belong to you rather than to a server, so they follow you wherever you use Vibe. <code>/like</code> saves what is playing, <code>/liked</code> plays, shuffles or tidies the list, and <code>/rank</code> draws a card with your listening time, daily streak, level and badges.</p>
-          <div class="cmd" id="like">
-            <a class="cmd-name" href="#like">/like</a>
-            <p class="cmd-desc">like the current song, or search for a song or playlist to save</p>
-          </div>
-          <div class="cmd" id="unlike">
-            <a class="cmd-name" href="#unlike">/unlike</a>
-            <p class="cmd-desc">remove the current song from your liked songs</p>
-          </div>
-          <div class="cmd" id="liked">
-            <a class="cmd-name" href="#liked">/liked</a>
-            <p class="cmd-desc">play, shuffle or tidy your liked songs and saved playlists</p>
-          </div>
-          <div class="cmd" id="playlist">
-            <a class="cmd-name" href="#playlist">/playlist</a>
-            <p class="cmd-desc">build your own playlists from any mix of songs, and play them — or, in a server with one, add to its own — and its managers can post one in a channel with <code>/playlist show</code></p>
-          </div>
-          <div class="cmd" id="rank">
-            <a class="cmd-name" href="#rank">/rank</a>
-            <p class="cmd-desc">your listening time, streak, level and badges</p>
-          </div>
-          <div class="cmd" id="leaderboard">
-            <a class="cmd-name" href="#leaderboard">/leaderboard</a>
-            <p class="cmd-desc">this server's top listeners</p>
-          </div>
+          <ul class="cmd-list">
+            <li class="cmd-row" id="like">
+              <a class="cmd" href="#like">/like</a>
+              <p class="cmd-desc">like the current song, or search for a song to like</p>
+            </li>
+            <li class="cmd-row" id="unlike">
+              <a class="cmd" href="#unlike">/unlike</a>
+              <p class="cmd-desc">remove the current song from your liked songs</p>
+            </li>
+            <li class="cmd-row" id="liked">
+              <a class="cmd" href="#liked">/liked</a>
+              <p class="cmd-desc">play, shuffle or tidy your liked songs</p>
+            </li>
+            <li class="cmd-row" id="playlist">
+              <a class="cmd" href="#playlist">/playlist</a>
+              <p class="cmd-desc">build your own playlists from any mix of songs, and play them — or, in a server with one, add to its own — and its managers can post one in a channel with <code>/playlist show</code></p>
+            </li>
+            <li class="cmd-row" id="rank">
+              <a class="cmd" href="#rank">/rank</a>
+              <p class="cmd-desc">your listening time, streak, level and badges</p>
+            </li>
+            <li class="cmd-row" id="leaderboard">
+              <a class="cmd" href="#leaderboard">/leaderboard</a>
+              <p class="cmd-desc">this server's top listeners</p>
+            </li>
+          </ul>
         </section>
 
         <section class="cmd-group" id="server">
           <h2>Server</h2>
           <p class="cmd-group-desc">Set Vibe up for this server, plus everything else</p>
           <p class="cmd-group-about"><code>/config</code> keeps every server setting in one place, in four tabs (Access, Playback, Messages and Streaming): DJ roles, which voice channels Vibe may join, a commands channel, an audit log, whether it announces what is playing, the small tips it shows, autoplay, and a link to a now-playing overlay for streamers. Changing settings and <code>/block</code> need Manage Server. Nothing has to be configured for Vibe to work, and <code>/privacy</code> shows or deletes the data Vibe keeps about you.</p>
-          <div class="cmd" id="config">
-            <a class="cmd-name" href="#config">/config</a>
-            <p class="cmd-desc">every server setting, in four tabs. Needs Manage Server</p>
-          </div>
-          <div class="cmd" id="block">
-            <a class="cmd-name" href="#block">/block</a>
-            <p class="cmd-desc">stop someone using Vibe here, or let them back in. Needs Manage Server</p>
-          </div>
-          <div class="cmd" id="247">
-            <a class="cmd-name" href="#247">/247</a>
-            <p class="cmd-desc">keep this Vibe connected here even when it empties out. Needs Manage Server, and a server subscription</p>
-          </div>
-          <div class="cmd" id="invite">
-            <a class="cmd-name" href="#invite">/invite</a>
-            <p class="cmd-desc">links to add Vibe, and to the support server</p>
-          </div>
-          <div class="cmd" id="vote">
-            <a class="cmd-name" href="#vote">/vote</a>
-            <p class="cmd-desc">vote for Vibe on top.gg, and see your Supporter streak</p>
-          </div>
-          <div class="cmd" id="premium">
-            <a class="cmd-name" href="#premium">/premium</a>
-            <p class="cmd-desc">what Vibe Premium includes, and whether you have it</p>
-          </div>
-          <div class="cmd" id="passport">
-            <a class="cmd-name" href="#passport">/passport</a>
-            <p class="cmd-desc">share a public page of what you listen to, or take it down</p>
-          </div>
-          <div class="cmd" id="privacy">
-            <a class="cmd-name" href="#privacy">/privacy</a>
-            <p class="cmd-desc">see or delete the data Vibe stores about you</p>
-          </div>
-          <div class="cmd" id="help">
-            <a class="cmd-name" href="#help">/help</a>
-            <p class="cmd-desc">this</p>
-          </div>
+          <ul class="cmd-list">
+            <li class="cmd-row" id="config">
+              <a class="cmd" href="#config">/config</a>
+              <p class="cmd-desc">every server setting, in four tabs. Needs Manage Server</p>
+            </li>
+            <li class="cmd-row" id="block">
+              <a class="cmd" href="#block">/block</a>
+              <p class="cmd-desc">stop someone using Vibe here, or let them back in. Needs Manage Server</p>
+            </li>
+            <li class="cmd-row" id="247">
+              <a class="cmd" href="#247">/247</a>
+              <p class="cmd-desc">keep this Vibe connected here even when it empties out. Needs Manage Server, and a server subscription</p>
+            </li>
+            <li class="cmd-row" id="invite">
+              <a class="cmd" href="#invite">/invite</a>
+              <p class="cmd-desc">links to add Vibe, and to the support server</p>
+            </li>
+            <li class="cmd-row" id="vote">
+              <a class="cmd" href="#vote">/vote</a>
+              <p class="cmd-desc">vote for Vibe on top.gg, and see your Supporter streak</p>
+            </li>
+            <li class="cmd-row" id="premium">
+              <a class="cmd" href="#premium">/premium</a>
+              <p class="cmd-desc">what Vibe Premium includes, and whether you have it</p>
+            </li>
+            <li class="cmd-row" id="passport">
+              <a class="cmd" href="#passport">/passport</a>
+              <p class="cmd-desc">share a public page of what you listen to, or take it down</p>
+            </li>
+            <li class="cmd-row" id="privacy">
+              <a class="cmd" href="#privacy">/privacy</a>
+              <p class="cmd-desc">see or delete the data Vibe stores about you</p>
+            </li>
+            <li class="cmd-row" id="help">
+              <a class="cmd" href="#help">/help</a>
+              <p class="cmd-desc">this</p>
+            </li>
+          </ul>
         </section>
 
         <a class="back" href="/">&larr; Back to Vibe</a>
       </main>
 
-      <footer>
-        <span>&copy; <span id="year">2026</span> Vibe</span>
-        <nav>
-          <a href="/terms">Terms</a>
-          <a href="/privacy">Privacy</a>
-          <a href="https://discord.gg/nMJJ8PAcD9" target="_blank" rel="noopener">Support server</a>
-        </nav>
+      <footer class="footer">
+        <div class="footer-row">
+          <span>&copy; <span id="year">2026</span> Vibe</span>
+          <nav class="footer-links" aria-label="Footer">
+            <a href="/terms">Terms</a>
+            <a href="/privacy">Privacy</a>
+            <a href="https://discord.gg/nMJJ8PAcD9" target="_blank" rel="noopener">Support server</a>
+            <a href="https://github.com/playingvibe" target="_blank" rel="noopener">Open source</a>
+          </nav>
+        </div>
       </footer>
     </div>
     <script>

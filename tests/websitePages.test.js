@@ -70,7 +70,7 @@ test("the settings page is rewritten from /servers/:id, and loads everything by 
     "vercel.json rewrites /servers/:id to the page"
   );
 
-  // The page is served under /servers/<id>, so a relative asset would resolve to /servers/styles.css.
+  // The page is served under /servers/<id>, so a relative asset would resolve to /servers/css/core.css.
   const html = read("server.html");
   for (const [, url] of html.matchAll(/(?:href|src)="([^"#][^"]*)"/g)) {
     if (/^(https?:|\/)/.test(url)) continue;
@@ -92,4 +92,23 @@ test("the servers list is a list: each server has one action and no settings of 
   assert.match(html, /class="btn btn-ghost server-action"/);
   assert.doesNotMatch(html, /server-body/);
   assert.doesNotMatch(read("dash/servers.js"), /PATCH|announcements/);
+});
+
+test("every page's nav and footer sit between generated markers, so a drift between pages is the generator's to see", () => {
+  for (const page of ["index", "privacy", "terms", "dashboard", "passport", "servers", "server"]) {
+    const html = read(`${page}.html`);
+    for (const region of ["nav", "footer"]) {
+      assert.ok(html.includes(`<!-- generated:${region} -->`) && html.includes(`<!-- /generated:${region} -->`), `${page} lacks its generated ${region}`);
+    }
+  }
+});
+
+test("the legal pages and the commands page link to each other, and every page of the site links to Open source", () => {
+  // They reach each other from the footer, which leaves out the page you are on.
+  const footer = (page) => read(`${page}.html`).match(/<footer[\s\S]*?<\/footer>/)[0];
+  assert.match(footer("privacy"), /href="\/commands"[\s\S]*href="\/terms"/);
+  assert.doesNotMatch(footer("privacy"), /href="\/privacy"/);
+  assert.match(footer("terms"), /href="\/commands"[\s\S]*href="\/privacy"/);
+  assert.match(footer("commands"), /href="\/terms"[\s\S]*href="\/privacy"/);
+  for (const page of ["index", "privacy", "terms", "commands"]) assert.match(read(`${page}.html`), /Open source/, page);
 });

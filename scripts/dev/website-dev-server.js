@@ -78,7 +78,9 @@ const server = http.createServer(async (req, res) => {
 
   // A dotfile is never served: `website/.env.local` holds the dashboard's secrets, and `.vercel/` the
   // project link. `path.extname("/.env.local")` is ".local", so nothing else would have stopped it.
-  if (url.pathname.split("/").some((segment) => segment.startsWith("."))) {
+  // `.revamp/` is the one exception: the redesign's mockups, which hold nothing private and are in
+  // neither git nor a deploy.
+  if (url.pathname.split("/").some((segment) => segment.startsWith(".") && segment !== ".revamp")) {
     res.writeHead(404, { "Content-Type": "text/plain" }).end("Not found");
     return;
   }

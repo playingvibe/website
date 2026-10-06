@@ -246,7 +246,7 @@ export async function renderCardStyle({
 
     // The desktop window: the main area and the queue rail above, the transport bar below. On a
     // narrow container the rail, the mini track and the volume drop away (see `.player-preview`
-    // in styles.css), leaving the vertical player the phone layout is.
+    // in css/appearance.css), leaving the vertical player the phone layout is.
     const queue = div(
       "pp-queue",
       text("p", "pp-queue-title", "Up next · 3"),

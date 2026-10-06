@@ -60,7 +60,7 @@ function colourValue(value) {
  * Each setting the page can send, and what makes its value acceptable. A validator returns `{value}` to keep it
  * or `{error}` to refuse the request, and the table's order is the order errors are found in.
  */
-const SETTINGS = {
+export const SETTINGS = {
   accent: (value) => {
     const accent = value ?? null;
     // Checked server-side. The page offers eight swatches; a request is not the page, and "the UI

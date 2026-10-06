@@ -14,6 +14,7 @@ import {
 // The API's own palette and validation, so the stub cannot offer or accept what the real endpoint refuses. A Node
 // script in this repository can import from `website/` freely; only the deployed bundle cannot.
 import { PALETTE, validateChanges } from "../../website/api/appearance.js";
+import { playlistCover } from "../../website/lib/generated/playlistCover.js";
 
 const USER = {
   id: "100000000000000001",
@@ -207,6 +208,8 @@ const PASSPORT = {
     ],
   },
 };
+// What `api/passport.js` adds to each playlist.
+PASSPORT.playlists = PASSPORT.playlists.map((playlist) => ({ ...playlist, cover: playlistCover(playlist.name) }));
 
 /** Signed-out is the same refusal on every route that needs a session. */
 const needsSession = (handler) => (ctx) =>

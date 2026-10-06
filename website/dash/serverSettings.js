@@ -269,7 +269,7 @@ export async function renderServerSettings(host, { guildId, nav, status, onName 
 
     const cardFor = (instance) => {
       const id = instance.clientId;
-      const card = el("article", { className: "bot-card", id: "bot-panel", role: "tabpanel" }, el("h3", { className: "bot-name", textContent: instance.name }));
+      const card = el("div", { className: "bot-card", id: "bot-panel", role: "tabpanel" }, el("h3", { className: "bot-name", textContent: instance.name }));
       const shared = (field) => value(serverKey(field));
 
       const listRow = (field, title, kind, choices) => {
