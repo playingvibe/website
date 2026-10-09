@@ -1,5 +1,3 @@
-import { DEFAULT_BACKGROUND_COLOR } from "../lib/generated/cardBackgrounds.js";
-
 /**
  * The staged-edit rules of the appearance page, with no DOM in them so they can be tested.
  *
@@ -26,7 +24,8 @@ export function createDraft(data) {
   const saved = {
     accent: data.accent,
     background: data.background ?? null,
-    backgroundColor: data.backgroundColor ?? DEFAULT_BACKGROUND_COLOR,
+    // `null` follows the card's colour: the bot tints a background with the accent unless a colour was chosen.
+    backgroundColor: data.backgroundColor ?? null,
     fade: data.fade ?? null,
     activityAccent: data.activityAccent ?? null,
     activityBackground: data.activityBackground ?? null,
@@ -43,7 +42,9 @@ function changedKeys({ saved, current }) {
   return KEYS.filter((key) => {
     // Only counts while a style is actually chosen: letting an invisible setting mark the form dirty would
     // mean a bar that cannot be explained.
-    if (NEEDS_BACKGROUND.has(key) && current.background === null) return false;
+    // A clear (`null`) always counts: "use the bot's colour" has to reach the database even with no style on,
+    // or the old tint comes back the next time a style is chosen.
+    if (NEEDS_BACKGROUND.has(key) && current.background === null && current[key] !== null) return false;
     return current[key] !== saved[key];
   });
 }

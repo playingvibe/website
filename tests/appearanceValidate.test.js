@@ -20,9 +20,20 @@ test("keys that are not settings are ignored, including the ones every object ha
   assert.deepEqual(validateChanges({ constructor: 1, __proto__: { accent: PALETTE[0].value }, nope: 1 }), { changes: {} });
 });
 
-test("the palette accent is kept and anything else is refused", () => {
+test("the accent is any colour that can be read on the card: the palette, a free pick, or null", () => {
   assert.deepEqual(validateChanges({ accent: PALETTE[2].value }).changes, { accent: PALETTE[2].value });
-  assert.equal(validateChanges({ accent: "#000000" }).error, "Not an available colour.");
+  assert.deepEqual(validateChanges({ accent: "#7CF" }).changes, { accent: "#77ccff" }, "a free pick is normalised");
+  assert.deepEqual(validateChanges({ accent: null }).changes, { accent: null });
+});
+
+test("an accent too dark to read on the card, or not a colour, is refused", () => {
+  assert.equal(validateChanges({ accent: "#000000" }).error, "That colour is too dark to read on the card.");
+  assert.equal(validateChanges({ accent: "#202030" }).error, "That colour is too dark to read on the card.");
+  assert.equal(validateChanges({ accent: "red" }).error, "Not a colour.");
+});
+
+test("every palette colour passes the readability rule the free picker is held to", () => {
+  for (const { value } of PALETTE) assert.equal(validateChanges({ accent: value }).error, undefined, value);
 });
 
 test("colours are normalised and a non-colour is refused, for both the card and the Activity", () => {
@@ -50,5 +61,5 @@ test("booleans are not coerced", () => {
 });
 
 test("with several bad values, the first in the settings' order is the one named", () => {
-  assert.equal(validateChanges({ fade: "x", accent: "#000000" }).error, "Not an available colour.");
+  assert.equal(validateChanges({ fade: "x", accent: "#000000" }).error, "That colour is too dark to read on the card.");
 });

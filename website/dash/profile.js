@@ -1,5 +1,39 @@
-import { dash, template, formatHours, stat } from "./shared.js";
+import { dash, template, formatHours, stat, premiumChip } from "./shared.js";
 import { renderCardStyle } from "./appearance.js";
+
+/**
+ * The page shows one panel at a time: Overview (the stats), Rank card, Activity. The tab row is part of the
+ * Appearance group, so it stays hidden, and the page stays the plain overview, until `renderCardStyle()` decides
+ * the group is shown. A `#card` or `#activity` link opens that panel once it exists.
+ * @param {DocumentFragment} view
+ * @returns {{opened: () => void}}
+ */
+function setUpTabs(view) {
+  const row = view.querySelector(".profile-tabs");
+  const buttons = [...row.querySelectorAll("[data-tab]")];
+  const panels = [...view.querySelectorAll("[data-panel]")];
+
+  const show = (name) => {
+    for (const panel of panels) panel.classList.toggle("is-off", !panel.dataset.panel.split(" ").includes(name));
+    for (const button of buttons) button.setAttribute("aria-pressed", String(button.dataset.tab === name));
+  };
+
+  for (const button of buttons) {
+    button.addEventListener("click", () => {
+      // `replaceState`: switching panels is not navigation, so Back leaves the page rather than stepping through tabs.
+      window.history.replaceState(null, "", button.dataset.tab === "overview" ? window.location.pathname : `#${button.dataset.tab}`);
+      show(button.dataset.tab);
+    });
+  }
+
+  show("overview");
+  return {
+    opened() {
+      const wanted = window.location.hash.slice(1);
+      if (!row.hidden && buttons.some((button) => button.dataset.tab === wanted)) show(wanted);
+    },
+  };
+}
 
 /**
  * @param {object} user
@@ -20,30 +54,7 @@ export function renderProfile(user, profile) {
   // web page it is a gold icon with no context and no hover affordance on touch. The word is what
   // makes it self-explanatory — and this page is also where somebody comes to *check* whether they
   // are subscribed, so it should answer that without being decoded.
-  if (profile.premium) {
-    const chip = document.createElement("span");
-    chip.className = "premium-chip";
-
-    const icon = document.createElement("img");
-    // The same file the bot draws onto the card, written here by scripts/assets/generate-badges.js so
-    // the two can never be different crowns.
-    icon.src = "/badges/badge_premium.png";
-    // **Sized in the markup as well as in CSS.** Without intrinsic dimensions the browser reserves
-    // nothing for it until the bytes arrive, and the chip — which sits in the page header — grew
-    // and pushed the whole profile down a moment after paint.
-    // 17 to match `.premium-chip img` in the stylesheet — a mismatch here would reserve the wrong
-    // box and shift by the difference, which is the bug in miniature.
-    icon.width = 17;
-    icon.height = 17;
-    // Decorative: the adjacent word already says it, and a duplicate would be read out twice.
-    icon.alt = "";
-
-    const label = document.createElement("span");
-    label.textContent = "Premium";
-
-    chip.append(icon, label);
-    view.querySelector(".profile-name-row").append(chip);
-  }
+  if (profile.premium) view.querySelector(".profile-name-row").append(premiumChip());
 
   const { level, stats, badges, hasData } = profile;
 
@@ -89,6 +100,8 @@ export function renderProfile(user, profile) {
     view.querySelector(".stat-grid").before(note);
   }
 
+  const tabs = setUpTabs(view);
+
   renderCardStyle({
     host: view.querySelector(".swatches"),
     backdropHost: view.querySelector(".backdrops"),
@@ -98,7 +111,7 @@ export function renderProfile(user, profile) {
     activityBgHost: view.querySelector(".activity-backdrops"),
     preview: { host: view.querySelector(".card-preview"), user, level, stats },
     group: view.querySelectorAll('[data-group="appearance"]'),
-  });
+  }).then(() => tabs.opened());
 
   view.querySelector(".signout").addEventListener("click", async (event) => {
     event.currentTarget.disabled = true;

@@ -8,13 +8,12 @@
  */
 import {
   CARD_BACKGROUND_STYLES,
-  DEFAULT_BACKGROUND_COLOR,
   normaliseCardColor,
 } from "../../website/lib/generated/cardBackgrounds.js";
 // The API's own palette and validation, so the stub cannot offer or accept what the real endpoint refuses. A Node
 // script in this repository can import from `website/` freely; only the deployed bundle cannot.
 import { PALETTE, validateChanges } from "../../website/api/appearance.js";
-import { playlistCover } from "../../website/lib/generated/playlistCover.js";
+import { LIKED_COVER, playlistCover } from "../../website/lib/generated/playlistCover.js";
 
 const USER = {
   id: "100000000000000001",
@@ -64,6 +63,7 @@ const GUILDS = [
     id: "1001936665499156582",
     name: "Vibe Support",
     icon: null,
+    premium: true,
     instances: [
       { clientId: "815329807377498153", name: "Vibe" },
       { clientId: "1533281867523031070", name: "Vibe 2" },
@@ -87,7 +87,7 @@ const VOICE = [{ id: "444444444444444441", name: "Lounge" }, { id: "444444444444
 const SETTINGS = new Map();
 const settingsFor = (guildId) => {
   if (!SETTINGS.has(guildId)) {
-    SETTINGS.set(guildId, { djRoles: [], voiceChannels: [], commandsChannels: [], logChannelId: null, announcements: true, tips: true, autoplay: false, autoplayRoomTaste: true, shareVoiceChannels: true, overlayToken: null, activityAccent: null });
+    SETTINGS.set(guildId, { djRoles: [], voiceChannels: [], commandsChannels: [], logChannelId: null, announcements: true, tips: true, autoplay: false, autoplayRoomTaste: true, shareVoiceChannels: true, overlayToken: null, activityAccent: null, activityBackground: null });
   }
   return SETTINGS.get(guildId);
 };
@@ -96,7 +96,7 @@ const ALIAS_BY_CLIENT_ID = { "815329807377498153": "vibe", "1533281867523031070"
 const describeSettings = (guild, { state, port }) => {
   const shared = settingsFor(guild.id);
   return {
-    guild: { id: guild.id, name: guild.name },
+    guild: { id: guild.id, name: guild.name, premium: guild.premium === true },
     shared: {
       djRoles: shared.djRoles,
       voiceChannels: shared.voiceChannels,
@@ -109,6 +109,7 @@ const describeSettings = (guild, { state, port }) => {
       shareVoiceChannels: shared.shareVoiceChannels,
       overlay: { on: Boolean(shared.overlayToken), url: shared.overlayToken ? "http://localhost:" + port + "/np/" + shared.overlayToken : null },
       activityAccent: shared.activityAccent,
+      activityBackground: shared.activityBackground,
     },
     // Same three states as /api/appearance's stub, and the same reason: `free` exercises the
     // greyed-out "premium feature" path, `unsold` exercises the section being hidden entirely.
@@ -181,6 +182,13 @@ const PASSPORT = {
       { title: "Redbone", author: "Childish Gambino", uri: "2", playedAt: new Date(Date.now() - 4 * 3_600_000).toISOString() },
       { title: "A very long track title that has to wrap on a narrow screen without breaking the layout", author: "Someone With A Long Name", uri: "3", playedAt: new Date(Date.now() - 26 * 3_600_000).toISOString() },
       { title: "Instrumental with no artist", author: null, uri: "4", playedAt: new Date(Date.now() - 6 * 86_400_000).toISOString() },
+      // Past the page's six, so "Show more" is reachable.
+      ...Array.from({ length: 6 }, (_, i) => ({
+        title: `Older play ${i + 1}`,
+        author: "Various",
+        uri: String(10 + i),
+        playedAt: new Date(Date.now() - (8 + i) * 86_400_000).toISOString(),
+      })),
     ],
   },
   playlists: [
@@ -210,6 +218,8 @@ const PASSPORT = {
 };
 // What `api/passport.js` adds to each playlist.
 PASSPORT.playlists = PASSPORT.playlists.map((playlist) => ({ ...playlist, cover: playlistCover(playlist.name) }));
+// And Liked Songs' own, which the route always sends (`favorites.cover`).
+PASSPORT.favorites.cover = LIKED_COVER;
 
 /** Signed-out is the same refusal on every route that needs a session. */
 const needsSession = (handler) => (ctx) =>
@@ -265,7 +275,7 @@ async function appearanceRoute({ req, res, state }) {
   }
   return json(res, 200, {
     ...appearance,
-    backgroundColor: appearance.backgroundColor ?? DEFAULT_BACKGROUND_COLOR,
+    backgroundColor: appearance.backgroundColor ?? null,
     palette: PALETTE,
     backgrounds: CARD_BACKGROUND_STYLES,
     entitled,
@@ -319,6 +329,16 @@ function applyServerChange(shared, { field, value }, state) {
     }
     shared.activityAccent = value === null ? null : normaliseCardColor(value);
     return { summary: shared.activityAccent ? "Activity theme colour changed" : "Activity theme colour cleared" };
+  }
+  if (field === "activityBackground") {
+    if (state === "free" || state === "unsold") {
+      return { response: { error: "not_entitled", message: "That's a premium feature for this server." } };
+    }
+    if (value !== null && !CARD_BACKGROUND_STYLES.some((style) => style.key === value)) {
+      return { response: { error: "invalid_value", message: "activityBackground must be one of the offered backgrounds." } };
+    }
+    shared.activityBackground = value;
+    return { summary: value ? "Activity theme background changed" : "Activity theme background cleared" };
   }
   return { refusal: "Unknown setting: " + field + "." };
 }

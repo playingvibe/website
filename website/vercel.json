@@ -46,7 +46,7 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'sha256-klQkACZYqM8Q4bGr1sU6YYaB5vegmLkomG11hktBjHs=' 'sha256-NgwMN5DqzW0MLn6h32uNRHTSBfuspVj82IN3XBptYnw=' 'sha256-DvkcN3tRiuwJlVC438Y8VokrfbNa5CtxrC3OxxRq+P8='; style-src 'self' 'unsafe-inline'; img-src 'self' https://cdn.discordapp.com data:; font-src 'self'; connect-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'; object-src 'none'; upgrade-insecure-requests"
+          "value": "default-src 'self'; script-src 'self' 'sha256-klQkACZYqM8Q4bGr1sU6YYaB5vegmLkomG11hktBjHs=' 'sha256-NgwMN5DqzW0MLn6h32uNRHTSBfuspVj82IN3XBptYnw='; style-src 'self' 'unsafe-inline'; img-src 'self' https://cdn.discordapp.com data:; font-src 'self'; connect-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'; object-src 'none'; upgrade-insecure-requests"
         },
         {
           "key": "Strict-Transport-Security",

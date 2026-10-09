@@ -64,8 +64,44 @@ export function resolveCardFade(style, fade) {
  */
 const EVEN_BY_DEFAULT = new Set(["marks", "bars", "grid"]);
 
-/** The colour used when a style is chosen but no colour is. */
+/**
+ * The colour a style is tinted with when none was chosen: the flagship's brand colour. The rank card itself follows
+ * the card's accent instead (the bot's own colour unless the user picked one), so a card from another bot is tinted
+ * in that bot's colour; this is what a page without that knowledge, such as the website's preview, falls back to.
+ */
 export const DEFAULT_BACKGROUND_COLOR = "#e05570";
+
+/** The rank card's own ground, which the accent is drawn on: the bar, the level, the glow. */
+export const CARD_GROUND = "#0b0b0d";
+
+/** The least contrast an accent may have against the ground: WCAG's ratio for graphics and large text. */
+export const MIN_ACCENT_CONTRAST = 3;
+
+/**
+ * WCAG contrast of a `#rrggbb` colour against the card's ground.
+ * @param {string} hex
+ * @returns {number}
+ */
+export function cardAccentContrast(hex) {
+  const luminance = (value) => {
+    const [r, g, b] = [1, 3, 5].map((i) => {
+      const c = Number.parseInt(value.slice(i, i + 2), 16) / 255;
+      return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  return (luminance(hex) + 0.05) / (luminance(CARD_GROUND) + 0.05);
+}
+
+/**
+ * Whether an accent can be read on the card. The accent is drawn as a progress bar and as the level text, so a dark
+ * pick would leave a card that looks broken; the same rule is applied by the page, the route and the renderer.
+ * @param {?string} hex Normalised `#rrggbb`, or `null` (the bot's own colour, always readable).
+ * @returns {boolean}
+ */
+export function isReadableCardAccent(hex) {
+  return hex === null || hex === undefined || cardAccentContrast(hex) >= MIN_ACCENT_CONTRAST;
+}
 
 /** @type {ReadonlySet<string>} */
 const KEYS = new Set(CARD_BACKGROUND_STYLES.map((entry) => entry.key));

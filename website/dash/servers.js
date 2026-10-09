@@ -1,4 +1,4 @@
-import { template, note, renderSignedOut } from "./shared.js";
+import { template, note, renderSignedOut, premiumChip } from "./shared.js";
 
 /**
  * The user's manageable servers, each with the Vibe bots in it and a link to configure it. The
@@ -49,6 +49,7 @@ function serverCard(guild) {
     );
   }
   view.querySelector(".server-name").textContent = guild.name;
+  if (guild.premium) view.querySelector(".server-count").before(premiumChip());
   view.querySelector(".server-count").textContent = guild.instances.length
     ? guild.instances.map((instance) => instance.name).join(", ")
     : "no Vibe yet";

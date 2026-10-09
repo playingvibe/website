@@ -28,9 +28,9 @@
           Vibe
         </a>
         <div class="nav-links">
-          <a href="/commands">Commands</a>
+          <a class="nav-extra" href="/commands">Commands</a>
           <a class="nav-extra" href="https://discord.gg/nMJJ8PAcD9" target="_blank" rel="noopener">Support</a>
-          <a class="nav-extra" href="/dashboard" aria-current="page">Your profile</a>
+          <a href="/dashboard" aria-current="page">Your profile</a>
         </div>
         <a class="btn btn-ghost btn-small" href="https://discord.com/oauth2/authorize?client_id=815329807377498153" target="_blank" rel="noopener">Add to Discord</a>
       </nav>
@@ -86,9 +86,16 @@
         <a href="/servers">Servers</a>
       </nav>
 
-      <h2 class="group-heading">You</h2>
+      <!-- One panel at a time: the tab row appears with the Appearance group (renderCardStyle), and each `data-panel` names the tabs an element belongs to. -->
+      <div class="bot-tabs profile-tabs" role="group" aria-label="Profile sections" data-group="appearance" hidden>
+        <button type="button" class="bot-tab" data-tab="overview" aria-pressed="true" aria-controls="dash">Overview</button>
+        <button type="button" class="bot-tab" data-tab="card" aria-pressed="false" aria-controls="dash">Rank card</button>
+        <button type="button" class="bot-tab" data-tab="activity" aria-pressed="false" aria-controls="dash">Activity</button>
+      </div>
 
-      <section class="level-card">
+      <h2 class="group-heading" data-panel="overview">You</h2>
+
+      <section class="level-card" data-panel="overview">
         <div class="level-row">
           <span class="level-badge"></span>
           <span class="level-next"></span>
@@ -96,9 +103,9 @@
         <div class="level-track"><span class="level-fill"></span></div>
       </section>
 
-      <section class="stat-grid"></section>
+      <section class="stat-grid" data-panel="overview"></section>
 
-      <section class="badge-section">
+      <section class="badge-section" data-panel="overview">
         <h2>Badges</h2>
         <div class="badge-row"></div>
       </section>
@@ -109,12 +116,12 @@
         by element rather than wrapped, because a wrapper would make this heading its parent's
         first h2 and change which .group-heading rules apply to it.
       -->
-      <h2 class="group-heading" data-group="appearance" hidden>Appearance</h2>
-      <p class="group-note" data-group="appearance" hidden>
+      <h2 class="group-heading" data-group="appearance" data-panel="card activity" hidden>Appearance</h2>
+      <p class="group-note" data-group="appearance" data-panel="card activity" hidden>
         How Vibe looks for you. These follow you into every server, on all four bots.
       </p>
 
-      <section class="card-section" data-group="appearance" hidden>
+      <section class="card-section" data-group="appearance" data-panel="card" hidden>
         <h2>Your rank card</h2>
         <p class="section-note">
           Roughly what <strong>/rank</strong> draws. The bot renders the real one, so treat this as
@@ -123,7 +130,7 @@
         <div class="card-preview"></div>
       </section>
 
-      <section class="card-section" data-group="appearance" hidden>
+      <section class="card-section" data-group="appearance" data-panel="card" hidden>
         <h2>Rank card colour</h2>
         <p class="section-note">
           The accent on the card <strong>/rank</strong> draws. Anyone who looks you up sees your
@@ -132,7 +139,7 @@
         <div class="swatches" role="group" aria-label="Rank card colour"></div>
       </section>
 
-      <section class="card-section" data-group="appearance" hidden>
+      <section class="card-section" data-group="appearance" data-panel="card" hidden>
         <h2>Rank card background</h2>
         <p class="section-note">
           A backdrop behind your stats, in any colour you like. Each one is drawn to sit quietly
@@ -142,7 +149,7 @@
         <div class="backdrop-colour"></div>
       </section>
 
-      <section class="card-section" data-group="appearance" hidden>
+      <section class="card-section" data-group="appearance" data-panel="activity" hidden>
         <h2>The player</h2>
         <p class="section-note">
           One colour retints the whole player <strong>/watch</strong> opens: the buttons, the
@@ -157,13 +164,13 @@
         <div class="activity-backdrops" role="group" aria-label="Player background"></div>
       </section>
 
-      <h2 class="group-heading">Your servers</h2>
-      <p class="group-note">
+      <h2 class="group-heading" data-panel="overview">Your servers</h2>
+      <p class="group-note" data-panel="overview">
         Which servers have Vibe, and each one's settings, have their own page.
       </p>
-      <p><a class="btn btn-ghost" href="/servers">Manage your servers</a></p>
+      <p data-panel="overview"><a class="btn btn-ghost" href="/servers">Manage your servers</a></p>
 
-      <section class="soon">
+      <section class="soon" data-panel="overview">
         <h3>Coming to this page</h3>
         <ul>
           <li>Your saved tracks and playlists, playable from here.</li>

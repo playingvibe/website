@@ -31,6 +31,7 @@ beforeEach(async () => {
   const database = await db();
   await database.collection("users").deleteMany({});
   await database.collection("guildInstances").deleteMany({});
+  await database.collection("guilds").deleteMany({});
 });
 
 const { db, closeDb } = await import("../website/lib/mongo.js");
@@ -134,6 +135,30 @@ test("guilds lists only the servers the user may manage, those with a Vibe first
   const managed = res.payload.guilds[0];
   assert.deepEqual(managed.instances.map((i) => i.name), ["Vibe", "Vibe 2"], "present bots only, named from the client id, sorted");
   assert.deepEqual(res.payload.guilds[1].instances, []);
+});
+
+test("guilds marks a server with an active guild-tier subscription, and no other", async (t) => {
+  const tomorrow = new Date(Date.now() + 86_400_000);
+  const yesterday = new Date(Date.now() - 86_400_000);
+  const database = await db();
+  await database.collection("guildInstances").insertMany(
+    ["g-active", "g-open", "g-expired", "g-none", "g-cleared"].map((guildId) => ({ guildId, clientId: "815329807377498153", name: "", present: true }))
+  );
+  await database.collection("guilds").insertMany([
+    { _id: "g-active", premium: { tier: "guild", expiresAt: tomorrow } },
+    { _id: "g-open", premium: { tier: "guild", expiresAt: null } },
+    { _id: "g-expired", premium: { tier: "guild", expiresAt: yesterday } },
+    { _id: "g-cleared", premium: { tier: null, expiresAt: null } },
+  ]);
+  discordGuildsAre(
+    t,
+    ["g-active", "g-open", "g-expired", "g-none", "g-cleared"].map((id) => ({ id, name: id, icon: null, permissions: MANAGE_GUILD }))
+  );
+
+  const res = await call(guilds);
+
+  const premium = Object.fromEntries(res.payload.guilds.map((g) => [g.id, g.premium]));
+  assert.deepEqual(premium, { "g-active": true, "g-open": true, "g-expired": false, "g-none": false, "g-cleared": false });
 });
 
 test("guilds is a 401 with no session, a 405 to a POST, and never calls Discord for either", async (t) => {

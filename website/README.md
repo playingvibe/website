@@ -5,10 +5,13 @@ directory as the project root**, which is the single fact that explains most of 
 here: nothing under `../src` is in the bundle, so nothing here can import from it.
 
 ```
-index.html  privacy.html  terms.html   static pages
-dashboard.html + dashboard.js          the signed-in page, rendered in the browser
+index.html  commands.html  privacy.html  terms.html   public pages (commands.html is generated)
+dashboard.html  servers.html  server.html  passport.html  np.html   the signed-in pages, the
+                                       per-server settings, a public passport and the now-playing overlay,
+                                       each with its script (dash/ holds the dashboard's modules)
+css/                                   the stylesheets; DESIGN.md explains the system
 api/                                   Vercel serverless functions (Node)
-lib/                                   shared function code — session, Discord, Mongo
+lib/                                   shared function code — session, Discord, Mongo, entitlements
 lib/generated/                         written by ../scripts/sync-web-shared.js — do not edit
 ```
 
@@ -16,9 +19,8 @@ lib/generated/                         written by ../scripts/sync-web-shared.js 
 from here (the public mirror has no deploy script; contributors never deploy). It refuses to run if
 `website/` has uncommitted or untracked changes — `vercel deploy` uploads the directory, not the
 commit — and if `lib/generated/` is out of date (run `npm run sync:web` and commit first). Then it
-deploys to production and re-points the `playvibe.gg` alias: Vercel gives every deployment its own
-URL and rejects `*.vercel.app` as a project domain, so without the alias step the site silently
-keeps serving the previous build.
+deploys to production; the production domain belongs to the project, so Vercel assigns it to the new
+deployment itself.
 
 ## Environment variables
 

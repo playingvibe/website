@@ -510,7 +510,8 @@ code {
   .save-bar,
   .toast,
   .passport-list,
-  .passport-playlist,
+  .passport-playlist-open,
+  .passport-back,
   .cmd-jump a {
     outline: 1px solid CanvasText;
     outline-offset: -1px;

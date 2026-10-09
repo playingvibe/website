@@ -12,6 +12,7 @@
     <link rel="preload" href="/fonts/outfit-latin.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="/css/core.css" />
     <link rel="stylesheet" href="/css/app.css" />
+    <link rel="stylesheet" href="/css/appearance.css" />
   </head>
   <body>
     <a class="skip" href="#dash">Skip to content</a>
@@ -27,9 +28,9 @@
           Vibe
         </a>
         <div class="nav-links">
-          <a href="/commands">Commands</a>
+          <a class="nav-extra" href="/commands">Commands</a>
           <a class="nav-extra" href="https://discord.gg/nMJJ8PAcD9" target="_blank" rel="noopener">Support</a>
-          <a class="nav-extra" href="/dashboard">Your profile</a>
+          <a href="/dashboard">Your profile</a>
         </div>
         <a class="btn btn-ghost btn-small" href="https://discord.com/oauth2/authorize?client_id=815329807377498153" target="_blank" rel="noopener">Add to Discord</a>
       </nav>
@@ -74,7 +75,7 @@
       <header class="profile-head">
         <div>
           <p class="profile-meta"><a class="back-link" href="/servers">&larr; Your servers</a></p>
-          <h1 class="profile-name settings-title"></h1>
+          <div class="profile-name-row"><h1 class="profile-name settings-title"></h1></div>
         </div>
         <button class="btn btn-ghost btn-small signout" type="button">Sign out</button>
       </header>

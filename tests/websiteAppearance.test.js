@@ -159,10 +159,10 @@ test("a non-boolean preferServerTheme is refused and nothing is written", async 
   assert.equal((await stored("someone"))?.preferServerTheme, undefined);
 });
 
-test("a colour outside the palette, and an unknown background, are refused and nothing is written", async () => {
+test("an unreadable or invalid colour, and an unknown background, are refused and nothing is written", async () => {
   const cases = [
-    [{ accent: "#000000" }, "Not an available colour."],
-    [{ accent: "red" }, "Not an available colour."],
+    [{ accent: "#000000" }, "That colour is too dark to read on the card."],
+    [{ accent: "red" }, "Not a colour."],
     [{ background: "../secret" }, "Not an available background."],
     [{ activityBackground: "no-such-style" }, "Not an available background."],
     [{ backgroundColor: "not a colour" }, "Not a colour."],

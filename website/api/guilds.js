@@ -2,6 +2,7 @@ import { resolveInstanceName } from "../lib/generated/instances.js";
 import { getSession } from "../lib/session.js";
 import { canManageGuild, describeGuildFetchFailure, fetchGuilds, guildIconUrl } from "../lib/discord.js";
 import { findInstancesByGuild } from "../lib/mongo.js";
+import { guildsWithPremium } from "../lib/entitlements.js";
 
 /**
  * The servers the signed-in user administers, each with the Vibe bots actually in it.
@@ -53,12 +54,16 @@ export default async function handler(req, res) {
     return;
   }
 
+  // Only for servers that run a Vibe: a server with none has nothing to badge, and the lookup stays small.
+  const premium = await guildsWithPremium(manageable.filter((guild) => byGuild.has(guild.id)).map((guild) => guild.id));
+
   res.status(200).json({
     guilds: manageable
       .map((guild) => ({
         id: guild.id,
         name: guild.name,
         icon: guildIconUrl(guild),
+        premium: premium.has(guild.id),
         instances: (byGuild.get(guild.id) ?? [])
           .map((row) => ({
             clientId: row.clientId,

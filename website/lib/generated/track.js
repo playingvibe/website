@@ -22,6 +22,8 @@ const TITLE_NOISE = [
   // "official" is what makes it safe, where a bare "video" or "audio" after a space could be the title.
   /\s+official\s+(?:music\s*)?(?:video|audio|lyric video|lyrics|visualizer|visualiser|mv|m\/v)\s*$/gi,
   /\s*[-–—|｜]?\s*\b(?:hd|hq|4k|8k)\b\s*$/gi,
+  // YouTube's auto-generated artist channels: "Artist - Topic".
+  /\s*[-–—|｜]\s*topic\s*$/gi,
 ];
 
 /**
@@ -69,13 +71,26 @@ export function cleanTrackTitle(title) {
   return cleaned || title;
 }
 
+/**
+ * The author without YouTube's "- Topic" suffix, which auto-generated artist channels carry ("Artist - Topic").
+ * Only at the very end, and never when it would leave nothing.
+ * @param {?string} [author]
+ * @returns {string}
+ */
+export function cleanTrackAuthor(author) {
+  if (!author) return author ?? "";
+  const cleaned = author.replace(/\s*[-–—|｜]\s*topic\s*$/i, "").trim();
+  return cleaned || author;
+}
+
 /** The cleaned title and the author apart, for a list that sets them differently. `artist` is "" when there is none. */
 export function splitTrackTitle(track) {
-  return { title: cleanTrackTitle(track.title), artist: track.author ?? "" };
+  return { title: cleanTrackTitle(track.title), artist: cleanTrackAuthor(track.author) };
 }
 
 /** "Author - Title" with the title cleaned; the bare title when there is no author. */
 export function formatTrackTitle(track) {
   const title = cleanTrackTitle(track.title);
-  return track.author ? `${track.author} - ${title}` : title;
+  const author = cleanTrackAuthor(track.author);
+  return author ? `${author} - ${title}` : title;
 }

@@ -31,6 +31,19 @@ test("the card colour and fade are ignored while there is no background style, a
   assert.deepEqual(bodyFor(draft), { background: "grid", backgroundColor: "#123456", fade: true });
 });
 
+test("a background colour never chosen is null, which follows the card's colour", () => {
+  assert.equal(createDraft(server()).current.backgroundColor, null);
+  assert.equal(createDraft(server({ backgroundColor: "#123456" })).current.backgroundColor, "#123456");
+});
+
+test("clearing a saved background colour is sent even with no style on, so the old tint cannot come back", () => {
+  const draft = createDraft(server({ backgroundColor: "#123456" }));
+  draft.current.accent = null;
+  draft.current.backgroundColor = null;
+  assert.equal(isDirty(draft), true);
+  assert.deepEqual(bodyFor(draft), { accent: null, backgroundColor: null });
+});
+
 test("the Activity settings count with or without a card background", () => {
   const draft = createDraft(server());
   draft.current.activityAccent = "#ff00aa";

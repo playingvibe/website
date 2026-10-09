@@ -16,7 +16,8 @@ const templates = (html) => [...html.matchAll(/<template id="([^"]+)"/g)].map((m
 
 test("both pages carry the same tabs, and each marks only itself as current", () => {
   for (const [file, current] of [["dashboard.html", "/dashboard"], ["servers.html", "/servers"]]) {
-    const html = read(file);
+    // The tab row only: the site's main nav has a profile link of its own.
+    const html = /<nav class="dash-tabs"[\s\S]*?<\/nav>/.exec(read(file))?.[0] ?? "";
     const tabs = [...html.matchAll(/<a href="(\/[a-z]+)"( aria-current="page")?>/g)].filter((m) =>
       ["/dashboard", "/servers"].includes(m[1])
     );
@@ -32,6 +33,22 @@ test("each page has the templates its script asks for, and the servers one is no
 
   assert.deepEqual(dashboard.sort(), ["tpl-profile", "tpl-signed-out"]);
   assert.deepEqual(servers.sort(), ["tpl-server", "tpl-servers", "tpl-signed-out"]);
+});
+
+test("the passport runs from its own module, with no inline module that would need a CSP hash", () => {
+  const html = read("passport.html");
+
+  assert.match(html, /<script type="module" src="\/passport\.js"><\/script>/);
+  assert.doesNotMatch(html, /<script type="module">/);
+  assert.ok(existsSync(path.join(WEB, "passport.js")));
+});
+
+test("the main nav keeps the profile link on a phone: Commands and Support leave first", () => {
+  for (const file of ["index.html", "dashboard.html", "passport.html", "server.html"]) {
+    const nav = /<nav class="nav"[\s\S]*?<\/nav>/.exec(read(file))?.[0] ?? "";
+    assert.match(nav, /<a href="\/dashboard"( aria-current="page")?>Your profile<\/a>/, `${file}: the profile link is never marked to hide`);
+    assert.match(nav, /class="nav-extra" href="\/commands"/, `${file}: Commands is the one that hides`);
+  }
 });
 
 test("each page loads its own entry script, and that file exists", () => {

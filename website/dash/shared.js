@@ -38,6 +38,32 @@ export function showStatus(message) {
 }
 
 /**
+ * The "Premium" chip: the crown and the word, on the profile header and beside a server with a subscription.
+ * @returns {HTMLElement}
+ */
+export function premiumChip() {
+  const chip = document.createElement("span");
+  chip.className = "premium-chip";
+
+  const icon = document.createElement("img");
+  // The same file the bot draws onto the card, written by scripts/assets/generate-badges.js so the two can
+  // never be different crowns.
+  icon.src = "/badges/badge_premium.png";
+  // Sized in the markup as well as in CSS: without intrinsic dimensions nothing is reserved until the bytes
+  // arrive and the page shifts. 17 matches `.premium-chip img` in the stylesheet.
+  icon.width = 17;
+  icon.height = 17;
+  // Decorative: the word beside it already says it, and a duplicate would be read out twice.
+  icon.alt = "";
+
+  const label = document.createElement("span");
+  label.textContent = "Premium";
+
+  chip.append(icon, label);
+  return chip;
+}
+
+/**
  * @param {string} text
  * @returns {HTMLElement}
  */

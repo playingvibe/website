@@ -2,6 +2,7 @@ import { renderSignedOut } from "./shared.js";
 import { dirty, clean } from "./saveBar.js";
 import { botKey, serverKey, effectiveValue, isChange, payloadFor, pick } from "./settingsDraft.js";
 import { createControls, el, row } from "./controls.js";
+import { CARD_BACKGROUND_STYLES, DEFAULT_BACKGROUND_COLOR } from "../lib/generated/cardBackgrounds.js";
 
 /**
  * One server's settings, every one of them: what `/config` in Discord offers, in the same four topics
@@ -38,7 +39,7 @@ const MARKS = {
 
 /**
  * @param {HTMLElement} host Where the sections go.
- * @param {{guildId: string, nav: HTMLElement, status: HTMLElement, onName?: (name: string) => void}} parts
+ * @param {{guildId: string, nav: HTMLElement, status: HTMLElement, onName?: (name: string, premium: boolean) => void}} parts
  * @returns {Promise<void>}
  */
 export async function renderServerSettings(host, { guildId, nav, status, onName }) {
@@ -79,6 +80,12 @@ export async function renderServerSettings(host, { guildId, nav, status, onName 
   const barId = (key) => `settings:${guildId}:${key}`;
   const value = (key) => effectiveValue(saved, draft, key);
 
+  /** The backdrop tiles follow the theme colour while its picker is dragged, without the redraw that would close it. */
+  function retintBackdrops() {
+    const tint = value(serverKey("activityAccent")) ?? DEFAULT_BACKGROUND_COLOR;
+    for (const tile of host.querySelectorAll(".backdrops .backdrop")) tile.style.setProperty("--bg", tint);
+  }
+
   /**
    * Registers one staged change with the save bar. The bar's Save calls `save`, its Reset calls `revert`.
    * `redraw: false` is for a control that is being dragged: a redraw replaces its element, and a native
@@ -88,6 +95,7 @@ export async function renderServerSettings(host, { guildId, nav, status, onName 
     if (!pick(saved, draft, key, next)) {
       clean(barId(key));
       if (redraw) draw(key);
+      else retintBackdrops();
       return;
     }
 
@@ -115,9 +123,10 @@ export async function renderServerSettings(host, { guildId, nav, status, onName 
       },
     });
     if (redraw) draw(key);
+    else retintBackdrops();
   }
 
-  const { picker, singlePicker, toggle, colorPicker } = createControls(stage);
+  const { picker, singlePicker, toggle, colorPicker, backdropPicker } = createControls(stage);
 
   // --- the sections -----------------------------------------------------------------------
 
@@ -163,6 +172,21 @@ export async function renderServerSettings(host, { guildId, nav, status, onName 
               ? "The player's default colour for anyone here without a personal one of their own."
               : "This is a premium feature for this server.",
             colorPicker({ key: serverKey("activityAccent"), label: "Activity theme colour", current: v("activityAccent"), disabled: !entitled })
+          ),
+          row(
+            "Activity backdrop",
+            entitled
+              ? "The light behind the player, in the theme colour. A listener's own backdrop wins unless they prefer the server's."
+              : "This is a premium feature for this server.",
+            backdropPicker({
+              key: serverKey("activityBackground"),
+              label: "Activity theme backdrop",
+              current: v("activityBackground"),
+              styles: CARD_BACKGROUND_STYLES,
+              tint: v("activityAccent") ?? DEFAULT_BACKGROUND_COLOR,
+              disabled: !entitled,
+            }),
+            true
           )
         );
       }
@@ -359,19 +383,44 @@ export async function renderServerSettings(host, { guildId, nav, status, onName 
   // user tier's appearance settings already use, not just a greyed-out control nobody can buy.
   const visibleSections = () => SECTIONS.filter((s) => s.id !== "premium" || saved.premium?.activityTheme?.forSale);
 
+  /** The section on screen: the URL hash if it names a visible one, else the first. Staged edits in the others are kept. */
+  function activeSection() {
+    const sections = visibleSections();
+    const wanted = window.location.hash.slice(1);
+    return sections.find((s) => s.id === wanted) ?? sections[0];
+  }
+
   function draw(focusKey = null) {
     const activeKey = focusKey ?? document.activeElement?.dataset?.key ?? null;
-    host.replaceChildren(
-      ...visibleSections().map(({ id, title, intro }) => {
-        const section = el("section", { id, className: "settings-section" }, el("h2", { textContent: title }), el("p", { className: "settings-intro", textContent: intro }));
-        section.append(...(id === "bots" ? bots() : server(id)));
-        return section;
+    const current = activeSection();
+    const { id, title, intro } = current;
+    const section = el("section", { id, className: "settings-section" }, el("h2", { textContent: title }), el("p", { className: "settings-intro", textContent: intro }));
+    section.append(...(id === "bots" ? bots() : server(id)));
+    host.replaceChildren(section);
+
+    nav.replaceChildren(
+      ...visibleSections().map((entry) => {
+        // Buttons that swap the panel below: pressed state, not `role="tab"` (no arrow-key movement is promised).
+        const button = el("button", { type: "button", className: "bot-tab", textContent: entry.title });
+        button.dataset.nav = entry.id;
+        button.setAttribute("aria-pressed", String(entry.id === id));
+        button.setAttribute("aria-controls", entry.id);
+        button.addEventListener("click", () => {
+          if (entry.id === activeSection().id) return;
+          // `replaceState`: switching sections is not navigation, and Back should leave the page, not step through tabs.
+          window.history.replaceState(null, "", `#${entry.id}`);
+          draw();
+          document.querySelector(`[data-nav="${entry.id}"]`)?.focus({ preventScroll: true });
+        });
+        return button;
       })
     );
-    nav.replaceChildren(...visibleSections().map(({ id, title }) => el("a", { href: `#${id}`, textContent: title })));
     // A redraw would otherwise drop keyboard focus to the top of the page after every edit.
     if (activeKey) [...host.querySelectorAll("[data-key]")].find((node) => node.dataset.key === activeKey)?.focus({ preventScroll: true });
   }
+
+  // A link with a hash (or a pasted one) opens on that section.
+  window.addEventListener("hashchange", () => saved && draw());
 
   saved = await request();
   if (!saved) {
@@ -379,6 +428,6 @@ export async function renderServerSettings(host, { guildId, nav, status, onName 
     return;
   }
   say("");
-  onName?.(saved.guild.name);
+  onName?.(saved.guild.name, saved.guild.premium === true);
   draw();
 }

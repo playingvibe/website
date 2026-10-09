@@ -27,7 +27,7 @@ export const row = (title, hint, control, wide = false) =>
   );
 
 /**
- * The four controls, bound to the callback they report picks to.
+ * The controls, bound to the callback they report picks to.
  * @param {(key: string, value: any, options?: {redraw?: boolean}) => void} onPick
  */
 export function createControls(onPick) {
@@ -108,7 +108,7 @@ export function createControls(onPick) {
     const reset = el("button", {
       type: "button",
       className: "btn btn-ghost",
-      textContent: "Clear",
+      textContent: "Use the bot's colour",
       disabled: disabled || current === null,
     });
     reset.dataset.key = `${key}:clear`;
@@ -118,5 +118,28 @@ export function createControls(onPick) {
     return wrap;
   }
 
-  return { picker, singlePicker, toggle, colorPicker };
+  /**
+   * The backdrop styles as tiles, plus "None": the same tiles and classes as the personal player backdrop on the
+   * profile page. `tint` is the colour they are drawn in, so the row shows what the room's accent will look like.
+   * `current === null` means none.
+   */
+  function backdropPicker({ key, label, current, styles, tint, disabled = false }) {
+    const wrap = el("div", { className: "backdrops", role: "group", ariaLabel: label });
+    const tile = (className, name, title, value) => {
+      const button = el("button", { type: "button", className, title, disabled, ariaLabel: name });
+      button.dataset.key = `${key}:${value ?? "none"}`;
+      button.style.setProperty("--bg", tint);
+      button.setAttribute("aria-pressed", String(current === value));
+      button.addEventListener("click", () => onPick(key, value));
+      return button;
+    };
+    wrap.append(
+      tile("backdrop backdrop-none", "No background", "No background", null),
+      // Always `backdrop-even`: a live surface that fades out to one side just looks unevenly lit.
+      ...styles.map((style) => tile(`backdrop backdrop-${style.key} backdrop-even`, style.name, style.description ?? style.name, style.key))
+    );
+    return wrap;
+  }
+
+  return { picker, singlePicker, toggle, colorPicker, backdropPicker };
 }

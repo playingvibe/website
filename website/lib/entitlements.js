@@ -37,3 +37,13 @@ export async function isEntitled(_userId) {
 export function isForSale() {
   return true;
 }
+
+/**
+ * Which of these servers hold a guild-tier subscription, for the badge on the servers list. Here
+ * every one does, like every other check in this open version.
+ * @param {string[]} guildIds
+ * @returns {Promise<Set<string>>}
+ */
+export async function guildsWithPremium(guildIds) {
+  return new Set(guildIds);
+}

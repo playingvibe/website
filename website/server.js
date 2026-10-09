@@ -4,7 +4,7 @@
  * the data from `/api/me` and `/api/guild-settings`, nothing user-supplied is ever parsed as markup.
  */
 
-import { dash, template, showStatus, renderSignedOut } from "/dash/shared.js";
+import { dash, template, showStatus, renderSignedOut, premiumChip } from "/dash/shared.js";
 import { renderServerSettings } from "/dash/serverSettings.js";
 
 async function main() {
@@ -45,7 +45,10 @@ async function main() {
     guildId,
     nav: dash.querySelector(".settings-nav"),
     status: dash.querySelector(".settings-status"),
-    onName: (name) => (title.textContent = name),
+    onName: (name, premium) => {
+      title.textContent = name;
+      if (premium) title.parentElement.append(premiumChip());
+    },
   });
 }
 

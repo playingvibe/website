@@ -1,4 +1,4 @@
-import { DEFAULT_BACKGROUND_COLOR, resolveCardFade } from "../lib/generated/cardBackgrounds.js";
+import { DEFAULT_BACKGROUND_COLOR, isReadableCardAccent, resolveCardFade } from "../lib/generated/cardBackgrounds.js";
 import { formatHours, renderSignedOut, note } from "./shared.js";
 import { dirty, clean } from "./saveBar.js";
 import { bodyFor, createDraft, isDirty, markSaved, revert } from "./appearanceDraft.js";
@@ -49,6 +49,13 @@ export async function renderCardStyle({
   const state = draft.current;
 
   /**
+   * The colour a background style is tinted with on screen: the chosen one, else the card's accent, else the site's
+   * own pink (the page does not know which bot will draw the card). The bot applies the same order, so the preview
+   * and the tiles show what `/rank` will draw.
+   */
+  const backgroundTint = () => state.backgroundColor ?? state.accent ?? DEFAULT_BACKGROUND_COLOR;
+
+  /**
    * A live preview of the card.
    *
    * **An approximation, and the page says so.** The real card is drawn by the bot with node-canvas
@@ -67,7 +74,7 @@ export async function renderCardStyle({
     card.className = state.background
       ? `preview-card backdrop-${state.background}`
       : "preview-card";
-    card.style.setProperty("--bg", state.backgroundColor);
+    card.style.setProperty("--bg", backgroundTint());
     // Through the same resolver the bot uses, so an untouched switch previews the style's default
     // rather than this page's guess at it.
     if (state.background) {
@@ -155,14 +162,46 @@ export async function renderCardStyle({
 
     const reset = resetButton();
 
+    // A free pick beside the suggestions. The accent is drawn as the level text and the bar on the card's
+    // near-black ground, so a pick that would not read there is refused here, with the reason, by the same
+    // rule the route and the renderer apply.
+    const label = document.createElement("label");
+    label.className = "backdrop-colour-label";
+    label.textContent = "Custom";
+    const free = document.createElement("input");
+    free.type = "color";
+    free.className = "backdrop-colour-input";
+    free.value = state.accent ?? DEFAULT_BACKGROUND_COLOR;
+    free.disabled = !data.entitled;
+    const warning = note("");
+    warning.className = "section-note section-note--warn";
+    warning.setAttribute("role", "status");
+    warning.hidden = true;
+    free.addEventListener("input", () => {
+      const picked = free.value.toLowerCase();
+      warning.hidden = isReadableCardAccent(picked);
+      if (warning.hidden) {
+        warning.textContent = "";
+        choose(picked);
+      } else {
+        warning.textContent = "That colour is too dark to read on the card. Pick a lighter one.";
+      }
+    });
+    label.append(free);
+
     refreshSwatches = () => {
       for (const [i, swatch] of swatches.entries()) {
         swatch.setAttribute("aria-pressed", String(state.accent === data.palette[i].value));
       }
-      reset.disabled = state.accent === null;
+      reset.disabled = state.accent === null && state.backgroundColor === null;
+      // Kept in step when a swatch or the reset is used; never while the picker itself is the thing being dragged.
+      if (document.activeElement !== free) {
+        free.value = state.accent ?? DEFAULT_BACKGROUND_COLOR;
+        warning.hidden = true;
+      }
     };
 
-    host.replaceChildren(...swatches, reset);
+    host.replaceChildren(...swatches, label, reset, warning);
 
     if (!data.entitled) host.append(note("Rank-card colours are a premium feature."));
     refreshSwatches();
@@ -174,8 +213,16 @@ export async function renderCardStyle({
     reset.type = "button";
     reset.className = "swatch-reset";
     reset.textContent = "Use the bot's colour";
-    reset.disabled = state.accent === null;
-    reset.addEventListener("click", () => choose(null));
+    reset.disabled = state.accent === null && state.backgroundColor === null;
+    // The bot's colour for the whole card: the accent and the background's tint. A tint left over from an earlier
+    // pick would otherwise keep colouring the card in something that is no longer the card's colour.
+    reset.addEventListener("click", () => {
+      state.backgroundColor = null;
+      choose(null);
+      // Safe from here: the click was on this button, never on the background's own colour input.
+      paintColour();
+      refreshBackdrops();
+    });
     return reset;
   };
 
@@ -361,6 +408,9 @@ export async function renderCardStyle({
     state.accent = accent;
     // In place: a full repaint here would delete the swatch that was just clicked.
     refreshSwatches();
+    // A background with no colour of its own follows the accent, so its tiles and its colour well follow too.
+    refreshBackdrops();
+    syncColourInput();
     paintPreview();
     stage();
   };
@@ -421,7 +471,7 @@ export async function renderCardStyle({
         tile.setAttribute("aria-pressed", String(state.background === entry.key));
         tile.classList.toggle("backdrop-fade", faded);
         tile.classList.toggle("backdrop-even", !faded);
-        tile.style.setProperty("--bg", state.backgroundColor);
+        tile.style.setProperty("--bg", backgroundTint());
       }
     };
 
@@ -444,10 +494,18 @@ export async function renderCardStyle({
    * platform already has a good version of, it is keyboard accessible for free, and the veil in
    * the renderer means no value it can produce makes an unreadable card.
    */
+  /** The background's colour well, while it exists; set in `paintColour()`. */
+  let colourInput = null;
+  /** Shows the colour a background would be tinted with now, unless the well is the thing being dragged. */
+  const syncColourInput = () => {
+    if (colourInput && document.activeElement !== colourInput) colourInput.value = backgroundTint();
+  };
+
   const paintColour = () => {
     if (!colourHost) return;
 
     if (!state.background || !data.entitled) {
+      colourInput = null;
       colourHost.replaceChildren();
       return;
     }
@@ -459,18 +517,38 @@ export async function renderCardStyle({
     const input = document.createElement("input");
     input.type = "color";
     input.className = "backdrop-colour-input";
-    input.value = state.backgroundColor;
+    input.value = backgroundTint();
+    colourInput = input;
     // `input`, not `change`: dragging through a colour wheel should update the tiles live rather
     // than only when the native picker is dismissed.
     input.addEventListener("input", () => {
       state.backgroundColor = input.value.toLowerCase();
+      match.disabled = false;
       // `refreshBackdrops()` is the one way tiles are updated (see the note on `paintActivity()`).
       refreshBackdrops();
+      refreshSwatches();
       paintPreview();
       stage();
     });
 
     label.append(input);
+
+    // Back to following the card's colour. A button beside the well rather than a rule: a tint picked on
+    // a whim should be one click from undone, and the reset above only covers the card as a whole.
+    const match = document.createElement("button");
+    match.type = "button";
+    match.className = "swatch-reset";
+    match.textContent = "Match the card's colour";
+    match.disabled = state.backgroundColor === null;
+    match.addEventListener("click", () => {
+      state.backgroundColor = null;
+      refreshBackdrops();
+      refreshSwatches();
+      paintPreview();
+      stage();
+      // Rebuilt, so the well and this button show the new state; the click was on this button, not on the well.
+      paintColour();
+    });
 
     // The switch. A checkbox rather than a third pair of tiles: it is a yes/no about the card, and
     // it reads from the same resolver as the renderer, so an untouched one shows the style's own
@@ -498,7 +576,7 @@ export async function renderCardStyle({
     fadeText.textContent = "Fade out to the right";
 
     fadeLabel.append(fadeInput, fadeText);
-    colourHost.replaceChildren(label, fadeLabel);
+    colourHost.replaceChildren(label, match, fadeLabel);
   };
 
   /** Retints the player's backdrop tiles in place. Never rebuilds — see paintActivity(). */

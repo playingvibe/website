@@ -3,17 +3,18 @@ import { findRankCardStyle, saveRankCardStyle } from "../lib/mongo.js";
 import { isEntitled, isForSale } from "../lib/entitlements.js";
 import {
   CARD_BACKGROUND_STYLES,
+  isReadableCardAccent,
   normaliseCardColor,
 } from "../lib/generated/cardBackgrounds.js";
 import { readJson } from "../lib/http.js";
 
 /**
- * A short palette rather than a free colour picker.
+ * The suggested colours, offered beside a free picker.
  *
  * The card is rendered on a near-black ground with white text over an accent glow, so a dark or
- * low-contrast accent produces a card that looks broken rather than customised. Offering a wheel
- * would mean either shipping that outcome or writing a contrast validator nobody asked for; a
- * curated set is the smaller, better answer.
+ * low-contrast accent produces a card that looks broken rather than customised. The suggestions are
+ * the safe starting points; a free pick is accepted only when it passes `isReadableCardAccent()`,
+ * the rule the renderer applies too.
  */
 export const PALETTE = Object.freeze([
   { name: "Vibe", value: "#e05570" },
@@ -62,10 +63,11 @@ function colourValue(value) {
  */
 export const SETTINGS = {
   accent: (value) => {
-    const accent = value ?? null;
-    // Checked server-side. The page offers eight swatches; a request is not the page, and "the UI
-    // only sends valid values" is not a validation strategy.
-    if (accent !== null && !PALETTE.some((entry) => entry.value === accent)) return { error: "Not an available colour." };
+    // Checked server-side: a request is not the page, and "the UI only sends valid values" is not a
+    // validation strategy. A palette colour, or any colour that can be read on the card's ground.
+    const accent = normaliseCardColor(value ?? null);
+    if (accent === undefined) return NOT_A_COLOUR;
+    if (!isReadableCardAccent(accent)) return { error: "That colour is too dark to read on the card." };
     return { value: accent };
   },
   background: backgroundKey,
