@@ -164,85 +164,102 @@
 }
 
 /* --- the queue ------------------------------------------------------------------------------ */
-/* The player's queue as its own object: the songs and their boost buttons, nothing around them. */
+/* The player's queue rail as its own object, drawn the way the player draws it: a two-line row (title over
+   artist, length over who asked) with a 44px cover, and a boost button that is a ring until it has votes. */
 
 .queue {
-  padding: var(--s-3);
+  padding: var(--s-5) var(--s-3) var(--s-4);
   border-radius: var(--r-3);
-  background: linear-gradient(to bottom, color-mix(in srgb, var(--accent) 7%, var(--surface)), var(--surface) 40%);
+  background: var(--surface);
   box-shadow: var(--ring);
+}
+.queue-heading {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  padding: 0 var(--s-2) var(--s-2);
+  font-weight: var(--medium);
+}
+.queue-heading span {
+  color: var(--ink-3);
+  font-weight: var(--regular);
+}
+.queue-list {
+  display: grid;
+  gap: 0.125rem;
+  padding: 0;
   list-style: none;
 }
 .queue-row {
   display: grid;
-  grid-template-columns: 3rem minmax(0, 1fr) auto auto;
-  gap: var(--s-3);
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  min-height: 4rem;
-  padding-inline: var(--s-3);
-  border-radius: var(--r-2);
+  gap: var(--s-2);
 }
-.queue-row:first-child {
-  background: rgba(255, 255, 255, 0.05);
+.queue-play {
+  display: grid;
+  grid-template-columns: var(--target) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--s-3);
+  min-width: 0;
+  padding: var(--s-2);
 }
 .queue-art {
-  width: 3rem;
-  height: 3rem;
+  width: var(--target);
+  height: var(--target);
   border-radius: var(--r-1);
 }
-.queue-title {
+.queue-words,
+.queue-meta {
+  display: grid;
+  min-width: 0;
+}
+.queue-title,
+.queue-artist {
   overflow: hidden;
-  font-weight: var(--medium);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.queue-title span {
-  display: block;
-  color: var(--ink-3);
-  font-size: var(--step--1);
-  font-weight: var(--regular);
+.queue-title {
+  font-weight: var(--medium);
 }
-.queue-time {
+.queue-artist,
+.queue-meta {
   color: var(--ink-3);
   font-size: var(--step--1);
+}
+.queue-meta {
+  justify-items: end;
+  max-width: 6rem;
   font-variant-numeric: tabular-nums;
-}
-/* On a phone the title needs the room more than the length does. */
-@media (max-width: 40rem) {
-  .queue-row {
-    grid-template-columns: 3rem minmax(0, 1fr) auto;
-  }
-  .queue-time {
-    display: none;
-  }
 }
 .boost {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--s-1);
-  min-width: var(--target);
-  height: 2rem;
-  padding-inline: var(--s-3);
+  min-width: 2rem;
+  height: 1.75rem;
+  margin-right: var(--s-2);
+  padding-inline: var(--s-2);
   border-radius: var(--r-full);
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--line-control);
+  color: var(--ink-2);
   font-size: var(--step--1);
-  font-weight: var(--bold);
   font-variant-numeric: tabular-nums;
 }
 .boost svg {
-  width: 0.9rem;
-  height: 0.9rem;
+  width: 0.875rem;
+  height: 0.875rem;
   fill: none;
   stroke: currentColor;
-  stroke-width: 2.4;
+  stroke-width: 2.6;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-.boost-on {
-  background: var(--accent);
-  color: var(--accent-ink);
+.boost[data-on] {
+  box-shadow: inset 0 0 0 1px var(--accent-line);
+  color: var(--accent-text);
 }
 
 /* --- commands, as sentences ----------------------------------------------------------------- */

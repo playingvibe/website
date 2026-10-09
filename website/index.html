@@ -110,7 +110,7 @@
                 width="1920"
                 height="1080"
                 fetchpriority="high"
-                alt="The Vibe player open in a voice channel: the artwork and title of the song that is playing, the queue of what is next, and the playback controls."
+                alt="The Vibe player open in a voice channel: a large cover with the title and artist of the song beside it, the queue of what plays next down the right, and one strip of controls along the bottom with the seek bar as its top edge."
               />
             </picture>
           </div>
@@ -129,41 +129,61 @@
         <section class="band" id="features" aria-labelledby="features-title">
           <div class="feature">
             <h2 class="band-title" id="features-title">One queue, and <b>everyone can reach it.</b></h2>
-            <!-- The queue as its own object: only the songs and their boost buttons. A picture of
-                 the control, so the buttons are not real ones. -->
-            <div class="feature-media" role="img" aria-label="The queue in the player: five songs, each with a boost button. The first has two boosts of two and is next.">
-              <ol class="queue" aria-hidden="true">
+            <!-- The queue as the player draws it, as its own object. A picture of the rail, so nothing in it
+                 is a real control. The rows follow the picture of the whole player above. -->
+            <div class="feature-media" role="img" aria-label="The queue in the player: six songs up next, each with its title, artist, length and who asked for it. Every song after the first has a boost button, and the third has one boost of the two it needs.">
+              <div class="queue" aria-hidden="true">
+                <p class="queue-heading">Up next <span>6</span></p>
+                <ol class="queue-list">
                 <li class="queue-row">
-                  <img class="queue-art" src="press/art-4.webp" width="360" height="360" alt="" loading="lazy" />
-                  <p class="queue-title">Glass Garden<span>The Lowlands</span></p>
-                  <span class="queue-time">7:28</span>
-                  <span class="boost boost-on"><svg viewBox="0 0 16 16"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5" /></svg>2/2</span>
+                  <span class="queue-play">
+                    <img class="queue-art" src="press/art-2.webp" width="360" height="360" alt="" loading="lazy" />
+                    <span class="queue-words"><span class="queue-title">Paper Lanterns</span><span class="queue-artist">Miro Vale</span></span>
+                    <span class="queue-meta"><span>3:45</span><span>mara</span></span>
+                  </span>
                 </li>
                 <li class="queue-row">
-                  <img class="queue-art" src="press/art-2.webp" width="360" height="360" alt="" loading="lazy" />
-                  <p class="queue-title">Paper Lanterns<span>Miro Vale</span></p>
-                  <span class="queue-time">3:45</span>
-                  <span class="boost"><svg viewBox="0 0 16 16"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5" /></svg>1/2</span>
+                  <span class="queue-play">
+                    <img class="queue-art" src="press/art-3.webp" width="360" height="360" alt="" loading="lazy" />
+                    <span class="queue-words"><span class="queue-title">Night Bus Home</span><span class="queue-artist">Okono</span></span>
+                    <span class="queue-meta"><span>4:55</span><span>juno</span></span>
+                  </span>
+                  <span class="boost"><svg viewBox="0 0 24 24"><path d="M12 19V5M5.5 11.5L12 5l6.5 6.5" /></svg></span>
                 </li>
                 <li class="queue-row">
-                  <img class="queue-art" src="press/art-3.webp" width="360" height="360" alt="" loading="lazy" />
-                  <p class="queue-title">Night Bus Home<span>Okono</span></p>
-                  <span class="queue-time">4:55</span>
-                  <span class="boost"><svg viewBox="0 0 16 16"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5" /></svg></span>
+                  <span class="queue-play">
+                    <img class="queue-art" src="press/art-4.webp" width="360" height="360" alt="" loading="lazy" />
+                    <span class="queue-words"><span class="queue-title">Glass Garden</span><span class="queue-artist">The Lowlands</span></span>
+                    <span class="queue-meta"><span>7:28</span><span>pip</span></span>
+                  </span>
+                  <span class="boost" data-on><svg viewBox="0 0 24 24"><path d="M12 19V5M5.5 11.5L12 5l6.5 6.5" /></svg><span>1/2</span></span>
                 </li>
                 <li class="queue-row">
-                  <img class="queue-art" src="press/art-6.webp" width="360" height="360" alt="" loading="lazy" />
-                  <p class="queue-title">Soft Static<span>Ines Calder</span></p>
-                  <span class="queue-time">4:04</span>
-                  <span class="boost"><svg viewBox="0 0 16 16"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5" /></svg></span>
+                  <span class="queue-play">
+                    <img class="queue-art" src="press/art-5.webp" width="360" height="360" alt="" loading="lazy" />
+                    <span class="queue-words"><span class="queue-title">Yoru no Sanpo</span><span class="queue-artist">Sena</span></span>
+                    <span class="queue-meta"><span>3:19</span></span>
+                  </span>
+                  <span class="boost"><svg viewBox="0 0 24 24"><path d="M12 19V5M5.5 11.5L12 5l6.5 6.5" /></svg></span>
                 </li>
                 <li class="queue-row">
-                  <img class="queue-art" src="press/art-7.webp" width="360" height="360" alt="" loading="lazy" />
-                  <p class="queue-title">Open Windows<span>Juniper Hale</span></p>
-                  <span class="queue-time">3:21</span>
-                  <span class="boost"><svg viewBox="0 0 16 16"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5" /></svg></span>
+                  <span class="queue-play">
+                    <img class="queue-art" src="press/art-6.webp" width="360" height="360" alt="" loading="lazy" />
+                    <span class="queue-words"><span class="queue-title">Soft Static</span><span class="queue-artist">Ines Calder</span></span>
+                    <span class="queue-meta"><span>4:04</span><span>juno</span></span>
+                  </span>
+                  <span class="boost"><svg viewBox="0 0 24 24"><path d="M12 19V5M5.5 11.5L12 5l6.5 6.5" /></svg></span>
                 </li>
-              </ol>
+                <li class="queue-row">
+                  <span class="queue-play">
+                    <img class="queue-art" src="press/art-7.webp" width="360" height="360" alt="" loading="lazy" />
+                    <span class="queue-words"><span class="queue-title">Open Windows</span><span class="queue-artist">Juniper Hale</span></span>
+                    <span class="queue-meta"><span>3:21</span><span>mara</span></span>
+                  </span>
+                  <span class="boost"><svg viewBox="0 0 24 24"><path d="M12 19V5M5.5 11.5L12 5l6.5 6.5" /></svg></span>
+                </li>
+                </ol>
+              </div>
             </div>
             <div class="feature-body">
               <ul class="points">

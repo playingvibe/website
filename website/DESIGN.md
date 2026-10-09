@@ -415,10 +415,66 @@ interactive piece.
 
 ### Pictures
 
-`press/player-wide.webp` (31 KB, with a 1100 px version of 15 KB), `press/player-phone.webp` (30 KB)
-and six cover tiles of about 1.4 KB each. They are captures of the player's own demo mode with the
-song and artist names replaced by invented ones and the covers generated, so no real recording is
-shown. `press/og-home.jpg` is the new share image, rendered from `.revamp/og.html`.
+The home page's pictures of the player are captures of the Activity's own demo mode, with invented
+song and artist names and generated covers, so no real recording is shown. All of them come from one
+script, so redoing them after the Activity changes is a recipe, not a job.
+
+| File | Size on disk | Weight | Used for |
+|---|---|---|---|
+| `press/player-wide.webp` | 1920x1080 | about 30 KB | the hero picture from 40rem up |
+| `press/player-wide-1100.webp` | 1100x619 | about 15 KB | the same, for narrower screens (`srcset`) |
+| `press/player-phone.webp` | 780x1600 | about 29 KB | the hero picture under 40rem |
+| `press/art-1.webp` to `art-7.webp` | 360x360 | under 2 KB each | covers in the queue picture and the two screens |
+| `press/og-home.jpg` | 1200x630 | about 50 KB | the share image |
+
+**Recipe, when the Activity has been redesigned or its demo changed:**
+
+1. Build the Activity: `npm --prefix activity run build`. The script captures `activity/dist`.
+2. Run `node scripts/assets/capture-website-player.js --og`. It serves the built demo with each of
+   the fixture's song titles swapped for an invented one (the list is `INVENTED` in the script),
+   dumps the page and stops if a real title is still on screen, then photographs the wide window
+   (1280x720) and the phone (a 390 px frame inside a 500 px window, because headless Chrome will not
+   open a narrower one) at 2x. Each picture is encoded as WebP at the highest quality that fits its
+   weight budget, so the pictures keep their size and only the quality moves. `--out <dir>` writes
+   elsewhere first, which is how to compare before replacing.
+3. Look at the three pictures and the share image. The playing song is `Slow Tide`, 1:12 of 3:33,
+   with a queue of six and the third song boosted once of two. If the fixture changes, change what the
+   page says about it.
+4. Update what imitates the player in HTML: the queue picture in `index.html` (`.queue`, drawn by
+   `css/marketing.css` to match the Activity's queue rows) and the two screens. Update the hero's
+   `alt` and the queue's `aria-label` to say what the new pictures show, and the `width` and `height`
+   attributes if a size moved (layout shift has to stay at or under 0.02).
+5. Lighthouse on the home page; the budgets are in section 4.
+
+Why the script does what it does, so it is not undone by accident:
+
+- **Titles are swapped in the served JavaScript, not on the page.** A screenshot cannot run script,
+  and a swap after load would miss text that is drawn once. The DOM dump afterwards is the proof.
+- **Thumbnails are loaded eagerly and decoded synchronously** (also swapped in the served bundle):
+  a screenshot never scrolls, and a lazy or async cover is otherwise left empty some of the time.
+- **The covers are drawn in the script** (a palette per number, never an album's artwork). The same
+  function draws the tiles, so the page's tiles and the player's covers are one set.
+- **Page time is fixed** by the virtual-time budget (`--budget`, 5000 ms by default), so the song's
+  position is the same on every run.
+
+**The previews in the signed-in pages** are not pictures: they are HTML and CSS built to imitate the
+Activity, so they have to be kept in step by hand when the Activity changes.
+
+- *The player preview on the profile* (`paintPlayerPreview` in `dash/appearance.js`, styles in
+  `css/appearance.css`) follows the new layout: the cover leads and its light spreads behind it, the
+  words stand beside it, one strip holds the controls with the seek bar as its top edge. Narrow it is
+  the phone's shape (the cover across, a strip of two rows); from 35rem of its own width the queue
+  becomes a rail. It is retinted by the chosen colour, or the bot's own, through `--accent` and
+  `--bg` set inline.
+- *The Activity's backdrop tiles* (`css/app.css`, classes `backdrop-live` and `live-<key>`, used by
+  the profile and by a server's Premium section) draw what the Activity draws behind its content
+  (`.vibe-backdrop--*` in `activity/src/styles/views.css`) at its opacities, with the colour as the
+  glow along the top and a progress line and play button in it. The artwork is copied into
+  `website/backdrops/` from `activity/src/backdrops/`; copy it again if it changes. `--live-boost`
+  multiplies every opacity: 1 in the preview (the Activity's own strength), 2 on a 96 px tile so the
+  quietest can be told apart.
+- *The rank card's tiles* keep their own artwork (`backdrop-<key>` in `css/appearance.css`) and are
+  not the Activity's.
 
 ### Measured, on the local dev server, mobile preset
 

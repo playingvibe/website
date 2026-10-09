@@ -250,11 +250,12 @@ export async function renderCardStyle({
       return el;
     };
 
+    // The new player at a glance: the cover leads and its light spreads behind it, the words stand
+    // beside it, and one strip along the bottom holds everything, with the seek bar as its top edge.
+    // From a container width of 35rem the queue becomes a rail; below it the strip has two rows.
     const mock = document.createElement("div");
-    mock.className = state.activityBackground
-      ? `player-preview backdrop-${state.activityBackground} backdrop-even`
-      : "player-preview";
-    // Both, as the tiles do: `--accent` tints the controls, `--bg` the backdrop.
+    mock.className = state.activityBackground ? `player-preview live-${state.activityBackground}` : "player-preview";
+    // `--accent` tints the controls, `--bg` the backdrop's glow: both the chosen colour, or the bot's own.
     const accent = state.activityAccent ?? DEFAULT_BACKGROUND_COLOR;
     mock.style.setProperty("--accent", accent);
     mock.style.setProperty("--bg", accent);
@@ -272,66 +273,60 @@ export async function renderCardStyle({
       el.append(svg("path", { d }));
       return el;
     };
-    const art = (className) => {
+    const cover = (className) => {
       const el = div(className);
       const mark = svg("svg", { viewBox: "0 0 1254 1254", "aria-hidden": "true" });
       mark.append(svg("path", { d: "M 877 349 L 858 344 L 835 344 L 817 348 L 792 361 L 773 379 L 765 390 L 754 410 L 666 623 L 653 646 L 646 653 L 641 655 L 632 653 L 624 643 L 620 634 L 550 415 L 538 390 L 527 377 L 518 370 L 506 364 L 490 360 L 464 360 L 449 363 L 424 373 L 406 385 L 392 399 L 380 419 L 376 434 L 376 452 L 379 465 L 409 537 L 436 608 L 536 884 L 548 909 L 563 930 L 575 940 L 589 947 L 608 950 L 626 948 L 650 938 L 669 925 L 690 904 L 705 885 L 731 843 L 753 799 L 910 457 L 917 439 L 920 424 L 920 404 L 916 388 L 905 369 L 892 357 Z" }));
       el.append(mark);
       return el;
     };
-    const seek = document.createElement("div");
-    seek.className = "seek";
-    seek.append(document.createElement("span"));
+    const fill = document.createElement("span");
+    const seek = div("pp-seek", fill);
 
+    // The strip's glyphs, drawn as the Activity draws them: shuffle and repeat as lines, the rest filled.
+    const lineIcon = (stroke, filled) => {
+      const el = svg("svg", { class: "ctl ctl-line", viewBox: "0 0 24 24", "aria-hidden": "true" });
+      el.append(svg("path", { d: stroke }));
+      if (filled) el.append(svg("path", { d: filled, class: "ctl-fill" }));
+      return el;
+    };
     const play = div("play", icon("M8 5v14l11-7z", ""));
     const controls = div(
       "controls",
+      lineIcon("M3 6h3.5L16 18h4.5M17 15l3.5 3-3.5 3M3 18h3.5l2.5-3M13 9l3-3h4.5M17 3l3.5 3-3.5 3"),
       icon("M6 6h2v12H6zm3.5 6 8.5 6V6z"),
       play,
-      icon("M16 6h2v12h-2zM6 18l8.5-6L6 6z")
+      icon("M16 6h2v12h-2zM6 18l8.5-6L6 6z"),
+      lineIcon("M4 11a8 8 0 0 1 8-8h5M20 13a8 8 0 0 1-8 8H7", "M17 .5 21 3 17 5.5ZM10 18.5 6 21 10 23.5Z")
     );
 
-    // The desktop window: the main area and the queue rail above, the transport bar below. On a
-    // narrow container the rail, the mini track and the volume drop away (see `.player-preview`
-    // in css/appearance.css), leaving the vertical player the phone layout is.
-    const queue = div(
+    const rail = div(
       "pp-queue",
-      text("p", "pp-queue-title", "Up next · 3"),
-      ...["Next in your queue", "Another song", "One more"].map((title, i) =>
-        div(
-          "pp-row",
-          div("pp-thumb"),
-          text("span", "pp-row-title", title),
-          text("span", "pp-row-time", ["3:45", "4:12", "2:58"][i])
-        )
+      text("p", "pp-queue-title", "Up next"),
+      ...["Next in your queue", "Another song", "One more"].map((title) =>
+        div("pp-row", div("pp-thumb"), div("pp-row-words", text("span", "pp-row-title", title), text("span", "pp-row-artist", "Someone")))
       )
     );
 
     const stage = div(
       "pp-stage",
       div(
-        "pp-main",
-        art("art"),
-        text("p", "player-eyebrow", "Now playing"),
-        text("p", "track", "Whatever you queued"),
-        text("p", "artist", "Playing in your voice channel")
+        "pp-sleeve",
+        cover("pp-cover"),
+        div("pp-words", text("p", "track", "Whatever you queued"), text("p", "artist", "Playing in your voice channel"))
       ),
-      queue
+      rail
     );
 
-    const transport = div(
-      "pp-transport",
+    const strip = div(
+      "pp-strip",
+      seek,
+      div("pp-timeline", text("span", "pp-time pp-elapsed", "1:47"), div("pp-seek-flow"), text("span", "pp-time pp-length", "4:18")),
       controls,
-      div("pp-timeline", text("span", "pp-time", "1:47"), seek, text("span", "pp-time", "4:18"))
-    );
-    const bar = div(
-      "pp-bar",
-      div("pp-mini", art("pp-mini-art"), div("pp-mini-text", text("p", "track", "Whatever you queued"), text("p", "artist", "Your voice channel"))),
-      transport,
       div("pp-volume", icon("M4 9v6h4l5 4V5L8 9H4z"), div("pp-volume-track", document.createElement("span")))
     );
 
-    mock.append(stage, bar);
+    mock.append(div("pp-light"), stage, strip);
     playerHost.replaceChildren(mock);
   };
 
@@ -707,9 +702,8 @@ export async function renderCardStyle({
     for (const entry of data.backgrounds) {
       const tile = document.createElement("button");
       tile.type = "button";
-      // Always `backdrop-even`: the card's fade is a property of a still picture, and a live
-      // surface that fades out to one side just looks unevenly lit.
-      tile.className = `backdrop backdrop-${entry.key} backdrop-even`;
+      tile.className = `backdrop backdrop-live live-${entry.key}`;
+      // The Activity draws its backdrops its own way, much quieter than the card's: `live-` classes, not the card's.
       tile.style.setProperty("--bg", state.activityAccent ?? DEFAULT_BACKGROUND_COLOR);
       tile.title = entry.description ?? entry.name;
       tile.setAttribute("aria-label", entry.name);

@@ -988,3 +988,149 @@ html {
   color: #fff;
   font-weight: var(--bold);
 }
+
+/* --- background tiles ----------------------------------------------------------------------- */
+/* Reserved height: these are filled after a response, and a floor stops the page jumping. */
+
+.backdrops,
+.activity-backdrops {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: var(--target);
+}
+.activity-backdrops {
+  margin-top: var(--s-4);
+}
+.backdrop {
+  --bg: var(--accent);
+  width: 6rem;
+  height: var(--target);
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-1);
+  background-color: var(--ground);
+  box-shadow: var(--ring);
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: box-shadow var(--t-fast);
+}
+.backdrop[aria-pressed="true"] {
+  box-shadow:
+    0 0 0 2px var(--ground),
+    0 0 0 4px var(--ink);
+}
+/* The tile for no background says so; the others are pictures of what they draw. */
+.backdrop-none::before {
+  content: "None";
+  font-size: var(--step--2);
+}
+.backdrop:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.backdrop:focus-visible {
+  outline-offset: 5px;
+}
+
+/* --- the Activity's backdrops --------------------------------------------------------------- */
+/* What the Activity really draws behind its content (`.vibe-backdrop--*` in its views.css), at the
+   opacities it uses: much quieter than the rank card's, because this is a surface people read.
+   The artwork in `backdrops/` is copied from the Activity's own. A tile also shows the glow along the
+   top that tints a view with the chosen colour (or the bot's own: `--bg`), and the strip's progress
+   line and play button in that colour.
+
+   `--live-boost` multiplies every opacity. A preview is 1, the Activity's own strength; a tile is a
+   few dozen pixels wide and uses 2 so the quietest ones can be told apart. One number, here. */
+
+.live-waves,
+.live-marks,
+.live-bars,
+.live-grid,
+.live-aurora {
+  --live-boost: 1;
+  --live-mark: 2.25rem;
+  --live-grid: 1.4rem;
+  position: relative;
+  overflow: hidden;
+}
+.backdrop-live {
+  --live-boost: 2;
+  --live-mark: 0.5625rem;
+  --live-grid: 0.5rem;
+  position: relative;
+  overflow: hidden;
+  background-color: var(--ground);
+  background-image:
+    radial-gradient(circle at 50% 74%, var(--bg) 0.1875rem, transparent 0.21875rem),
+    linear-gradient(var(--bg), var(--bg));
+  background-size:
+    100% 100%,
+    36% 2px;
+  background-position:
+    center,
+    left bottom;
+  background-repeat: no-repeat;
+}
+/* The glow: the colour along the top edge, as the shell lays it. */
+.backdrop-live::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--bg) 16%, transparent), transparent 40%);
+  opacity: 0.5;
+  pointer-events: none;
+}
+.live-waves::after,
+.live-marks::after,
+.live-bars::after,
+.live-grid::after,
+.live-aurora::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+.live-waves::after {
+  inset: 0;
+  background: url("../backdrops/waves.svg") center 58% / 100% 34% no-repeat;
+  opacity: calc(0.13 * var(--live-boost));
+}
+/* The mark, tilted and tiled; felt more than seen. */
+.live-marks::after {
+  inset: 0;
+  background: url("../backdrops/marks.svg") 0 0 / var(--live-mark) var(--live-mark) space;
+  opacity: calc(0.035 * var(--live-boost));
+  transform: rotate(-16deg) scale(1.5);
+}
+/* An equaliser has a floor: the bars stand on the bottom edge. */
+.live-bars::after {
+  inset: auto 0 0 0;
+  height: 60%;
+  background: url("../backdrops/bars.svg") center bottom / 100% 100% no-repeat;
+  opacity: calc(0.16 * var(--live-boost));
+}
+.live-grid::after {
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.5) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.5) 1px, transparent 1px);
+  background-size: var(--live-grid) var(--live-grid);
+  opacity: calc(0.06 * var(--live-boost));
+}
+.live-aurora::after {
+  inset: 0;
+  background-image:
+    linear-gradient(115deg, transparent 18%, rgba(255, 255, 255, 0.16) 36%, transparent 54%),
+    linear-gradient(115deg, transparent 56%, rgba(255, 255, 255, 0.09) 72%, transparent 88%);
+  opacity: calc(0.3 * var(--live-boost));
+}
+@media (forced-colors: active) {
+  .live-waves::after,
+  .live-marks::after,
+  .live-bars::after,
+  .live-grid::after,
+  .live-aurora::after {
+    display: none;
+  }
+}

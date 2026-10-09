@@ -50,6 +50,8 @@
   --accent-ink: #14090c;
   --accent-soft: color-mix(in srgb, var(--accent) 16%, var(--surface));
   --accent-line: color-mix(in srgb, var(--accent) 45%, transparent);
+  /* The accent as text or a glyph: a fifth of the way to ink, so it also reads on the raised surfaces, as in the player. */
+  --accent-text: color-mix(in srgb, var(--accent) 80%, var(--ink));
   --danger: #ff8a8a;
   --gold: #f5c542;
 

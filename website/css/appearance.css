@@ -53,51 +53,6 @@
   background: rgba(255, 255, 255, 0.13);
 }
 
-/* --- background tiles ----------------------------------------------------------------------- */
-/* Reserved height: these are filled after a response, and a floor stops the page jumping. */
-
-.backdrops,
-.activity-backdrops {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--s-3);
-  min-height: var(--target);
-}
-.activity-backdrops {
-  margin-top: var(--s-4);
-}
-.backdrop {
-  --bg: var(--accent);
-  width: 6rem;
-  height: var(--target);
-  padding: 0;
-  border: 0;
-  border-radius: var(--r-1);
-  background-color: var(--ground);
-  box-shadow: var(--ring);
-  color: var(--ink-2);
-  cursor: pointer;
-  transition: box-shadow var(--t-fast);
-}
-.backdrop[aria-pressed="true"] {
-  box-shadow:
-    0 0 0 2px var(--ground),
-    0 0 0 4px var(--ink);
-}
-/* The tile for no background says so; the others are pictures of what they draw. */
-.backdrop-none::before {
-  content: "None";
-  font-size: var(--step--2);
-}
-.backdrop:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-.backdrop:focus-visible {
-  outline-offset: 5px;
-}
-
 /* Approximations of what the bot draws, not the real thing — see paintBackdrops().
 
    **Split into a tint layer and a pattern layer**, mirroring the renderer, because the fade is
@@ -313,10 +268,12 @@
 }
 
 /* --- player preview ------------------------------------------------------------------------- */
-/* A mock of the player /watch opens, in two shapes chosen by the container's width, not the
-   viewport's: narrow is the phone's vertical player; wide is the desktop window with the queue
-   beside the artwork and the transport underneath. `--accent` and `--bg` are set inline from the
-   chosen colour, which retints everything inside, including the .play button and the seek fill. */
+/* A mock of the player /watch opens, in the shape the new player has: the cover leads and its light
+   spreads behind it, the words stand beside it, one strip along the bottom holds the controls with the
+   seek bar as its top edge. Two shapes, chosen by the container's width and not the viewport's: narrow
+   is the phone's (the cover across, the words under, a strip of two rows); from 35rem the words stand
+   beside the cover, a queue rail opens on the right and the strip is one row. `--accent` and `--bg` are
+   set inline from the chosen colour, which retints everything inside. */
 
 .player-preview-host {
   container-type: inline-size;
@@ -324,79 +281,121 @@
   margin-bottom: var(--s-3);
 }
 .player-preview {
-  --bg: var(--accent);
+  --accent-soft: color-mix(in srgb, var(--accent) 16%, var(--surface));
+  --accent-text: color-mix(in srgb, var(--accent) 80%, var(--ink));
   position: relative;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
   border-radius: var(--r-3);
   background-color: var(--ground);
   box-shadow: var(--ring);
   overflow: hidden;
 }
+/* The cover's light: the cover blurred far past recognition, kept to the stage and under a scrim. */
+.pp-light {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 80%;
+  background: radial-gradient(ellipse 70% 80% at 30% 55%, color-mix(in srgb, var(--accent) 42%, transparent), transparent 70%);
+  opacity: 0.5;
+  pointer-events: none;
+}
 .pp-stage {
   position: relative;
   z-index: 1;
-  padding: var(--s-5) var(--s-5) var(--s-2);
+  display: grid;
+  min-height: 0;
+  padding: var(--s-5) var(--s-5) var(--s-4);
 }
-.pp-main {
-  display: flex;
-  flex-direction: column;
-  text-align: center;
+.pp-sleeve {
+  display: grid;
+  gap: var(--s-4);
+  align-content: end;
 }
-.player-preview .art {
+.pp-cover {
   display: grid;
   place-items: center;
   width: 100%;
-  max-width: 12.5rem;
-  margin: 0 auto var(--s-4);
+  max-width: 13rem;
+  margin-inline: auto;
   aspect-ratio: 1;
   border-radius: var(--r-2);
   background:
     radial-gradient(circle at 32% 26%, var(--line-strong), transparent 58%),
-    linear-gradient(148deg, color-mix(in srgb, var(--accent) 34%, #1a1a20), #101015);
-  box-shadow: var(--ring);
+    linear-gradient(148deg, color-mix(in srgb, var(--accent) 38%, #1a1a20), #101015);
+  box-shadow: var(--ring), 0 0.75rem 1.75rem rgba(0, 0, 0, 0.45);
 }
-.player-preview .art svg {
+.pp-cover svg {
   width: 34%;
   fill: #fff;
-  opacity: 0.28;
+  opacity: 0.26;
 }
-.player-eyebrow {
-  color: var(--accent);
-  font-size: var(--step--2);
-  font-weight: var(--bold);
+.pp-words {
+  min-width: 0;
 }
 .player-preview .track {
+  font-size: var(--step-1);
   font-weight: var(--bold);
+  line-height: var(--leading-snug);
 }
 .player-preview .artist {
   color: var(--ink-2);
-  font-size: var(--step--1);
 }
-.pp-queue,
-.pp-mini,
-.pp-volume {
+.pp-queue {
   display: none;
 }
-.pp-bar {
+
+/* The strip: every control, with the seek bar as its top edge (one row), or between its two times (two rows). */
+.pp-strip {
   position: relative;
   z-index: 1;
-  padding: var(--s-3) var(--s-5) var(--s-5);
+  display: grid;
+  gap: var(--s-1);
+  padding: var(--s-2) var(--s-5) var(--s-4);
   border-top: 1px solid var(--line);
-  background: rgba(0, 0, 0, 0.28);
+  background: var(--ground);
+}
+.pp-seek {
+  display: none;
+}
+.pp-timeline {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--s-3);
+}
+.pp-seek-flow {
+  height: 0.25rem;
+  border-radius: var(--r-full);
+  background: linear-gradient(to right, var(--accent) 34%, var(--line-control) 34%);
+}
+.pp-time {
+  color: var(--ink-3);
+  font-size: var(--step--2);
+  font-variant-numeric: tabular-nums;
 }
 .controls {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: var(--s-5);
-  margin-bottom: var(--s-3);
 }
 .ctl {
   width: 1.25rem;
   height: 1.25rem;
   fill: var(--ink);
-  opacity: 0.6;
+  opacity: 0.7;
+}
+.ctl-line {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.ctl-line .ctl-fill {
+  fill: var(--ink);
+  stroke: none;
 }
 .play {
   display: grid;
@@ -412,143 +411,126 @@
   margin-left: 2px;
   fill: var(--accent-ink);
 }
-.pp-timeline {
-  display: flex;
-  align-items: center;
-  gap: var(--s-3);
-}
-.seek {
-  flex: 1;
-  height: 0.25rem;
-  border-radius: var(--r-full);
-  background: rgba(255, 255, 255, 0.12);
-  overflow: hidden;
-}
-.seek span {
-  display: block;
-  width: 41%;
-  height: 100%;
-  border-radius: var(--r-full);
-  background: var(--accent);
-}
-.pp-time {
-  color: var(--ink-3);
-  font-size: var(--step--2);
-  font-variant-numeric: tabular-nums;
-}
-.pp-queue-title {
-  margin-bottom: var(--s-2);
-  color: var(--ink-3);
-  font-size: var(--step--2);
-  font-weight: var(--bold);
-}
-.pp-row {
-  display: flex;
-  align-items: center;
-  gap: var(--s-3);
-  padding-block: var(--s-2);
-  font-size: var(--step--1);
-}
-.pp-thumb {
-  flex: none;
-  width: 1.75rem;
-  height: 1.75rem;
-  border-radius: var(--s-2);
-  background: color-mix(in srgb, var(--accent) 18%, #1a1a20);
-}
-.pp-row-title {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.pp-row-time {
-  color: var(--ink-3);
-  font-variant-numeric: tabular-nums;
+.pp-volume {
+  display: none;
 }
 
 @container (min-width: 35rem) {
   .pp-stage {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 40%;
+    grid-template-columns: minmax(0, 1fr) 34%;
     gap: var(--s-5);
-    min-height: 15.5rem;
-    padding: var(--s-5);
+    min-height: 19rem;
   }
-  .pp-main {
-    align-items: center;
-    justify-content: center;
+  .pp-sleeve {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--s-5);
   }
-  .player-preview .pp-main .art {
-    width: 9.5rem;
-    margin-bottom: var(--s-3);
+  .pp-cover {
+    flex: none;
+    width: min(100%, 15rem);
+    margin: 0;
+  }
+  .pp-words {
+    flex: 1;
+    padding-bottom: var(--s-1);
+  }
+  .player-preview .track {
+    font-size: var(--step-2);
   }
   .pp-queue {
     display: block;
-    padding-top: var(--s-2);
+    padding-top: var(--s-1);
   }
-  .pp-bar {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 1fr);
-    align-items: center;
-    gap: var(--s-4);
-    padding: var(--s-3) var(--s-5);
+  .pp-queue-title {
+    margin-bottom: var(--s-2);
+    font-size: var(--step--1);
+    font-weight: var(--medium);
   }
-  .pp-mini,
-  .pp-volume {
+  .pp-row {
     display: flex;
     align-items: center;
     gap: var(--s-3);
+    padding-block: var(--s-1);
   }
-  .pp-mini-art {
-    display: grid;
+  .pp-thumb {
     flex: none;
-    place-items: center;
-    width: 2.375rem;
-    aspect-ratio: 1;
+    width: 2rem;
+    height: 2rem;
     border-radius: var(--r-1);
-    background: linear-gradient(148deg, color-mix(in srgb, var(--accent) 34%, #1a1a20), #101015);
+    background: color-mix(in srgb, var(--accent) 20%, #1a1a20);
   }
-  .pp-mini-art svg {
-    width: 50%;
-    fill: #fff;
-    opacity: 0.28;
-  }
-  .pp-mini-text {
+  .pp-row-words {
+    display: grid;
     min-width: 0;
   }
-  .pp-mini-text .track {
+  .pp-row-title {
     overflow: hidden;
     font-size: var(--step--1);
+    font-weight: var(--medium);
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .pp-mini-text .artist {
+  .pp-row-artist {
+    color: var(--ink-3);
     font-size: var(--step--2);
   }
+  .pp-strip {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    padding-block: var(--s-4);
+  }
+  .pp-seek {
+    position: absolute;
+    inset: 0 0 auto 0;
+    display: block;
+    height: 0.25rem;
+    background: var(--line-control);
+  }
+  .pp-seek span {
+    display: block;
+    width: 34%;
+    height: 100%;
+    background: var(--accent);
+  }
+  /* One row: the two times become one at the left. */
+  .pp-timeline {
+    display: block;
+    grid-column: 1;
+  }
+  .pp-seek-flow,
+  .pp-length {
+    display: none;
+  }
+  .pp-elapsed::after {
+    content: " / 4:18";
+  }
   .controls {
-    margin-bottom: var(--s-2);
+    grid-column: 2;
   }
   .pp-volume {
+    grid-column: 3;
+    display: flex;
+    align-items: center;
     justify-content: flex-end;
+    gap: var(--s-3);
   }
   .pp-volume svg {
     width: 1rem;
     fill: var(--ink);
-    opacity: 0.6;
+    opacity: 0.7;
   }
   .pp-volume-track {
     width: 5.625rem;
     height: 0.25rem;
     border-radius: var(--r-full);
-    background: rgba(255, 255, 255, 0.12);
+    background: var(--line-control);
     overflow: hidden;
   }
   .pp-volume-track span {
     display: block;
     width: 70%;
     height: 100%;
-    background: var(--accent);
+    background: var(--ink);
   }
 }

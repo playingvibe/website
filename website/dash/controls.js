@@ -135,8 +135,8 @@ export function createControls(onPick) {
     };
     wrap.append(
       tile("backdrop backdrop-none", "No background", "No background", null),
-      // Always `backdrop-even`: a live surface that fades out to one side just looks unevenly lit.
-      ...styles.map((style) => tile(`backdrop backdrop-${style.key} backdrop-even`, style.name, style.description ?? style.name, style.key))
+      // The Activity's own backdrops, drawn the way the Activity draws them (`live-` classes, not the rank card's).
+      ...styles.map((style) => tile(`backdrop backdrop-live live-${style.key}`, style.name, style.description ?? style.name, style.key))
     );
     return wrap;
   }
