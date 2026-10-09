@@ -31,7 +31,7 @@ test("the card colour and fade are ignored while there is no background style, a
   assert.deepEqual(bodyFor(draft), { background: "grid", backgroundColor: "#123456", fade: true });
 });
 
-test("a background colour never chosen is null, which follows the card's colour", () => {
+test("a background colour never chosen is null, which is the bot's own colour", () => {
   assert.equal(createDraft(server()).current.backgroundColor, null);
   assert.equal(createDraft(server({ backgroundColor: "#123456" })).current.backgroundColor, "#123456");
 });

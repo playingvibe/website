@@ -24,7 +24,7 @@ export function createDraft(data) {
   const saved = {
     accent: data.accent,
     background: data.background ?? null,
-    // `null` follows the card's colour: the bot tints a background with the accent unless a colour was chosen.
+    // `null` is the bot's own colour: the bot tints a background with its own colour unless one was chosen.
     backgroundColor: data.backgroundColor ?? null,
     fade: data.fade ?? null,
     activityAccent: data.activityAccent ?? null,

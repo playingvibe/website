@@ -65,9 +65,9 @@ export function resolveCardFade(style, fade) {
 const EVEN_BY_DEFAULT = new Set(["marks", "bars", "grid"]);
 
 /**
- * The colour a style is tinted with when none was chosen: the flagship's brand colour. The rank card itself follows
- * the card's accent instead (the bot's own colour unless the user picked one), so a card from another bot is tinted
- * in that bot's colour; this is what a page without that knowledge, such as the website's preview, falls back to.
+ * The colour a style is tinted with when none was chosen: the flagship's brand colour. The rank card itself uses the
+ * colour of the bot that draws it, so a card from another bot is tinted in that bot's colour; this is what a page
+ * without that knowledge, such as the website's preview, falls back to.
  */
 export const DEFAULT_BACKGROUND_COLOR = "#e05570";
 

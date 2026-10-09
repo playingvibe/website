@@ -49,11 +49,11 @@ export async function renderCardStyle({
   const state = draft.current;
 
   /**
-   * The colour a background style is tinted with on screen: the chosen one, else the card's accent, else the site's
-   * own pink (the page does not know which bot will draw the card). The bot applies the same order, so the preview
-   * and the tiles show what `/rank` will draw.
+   * The colour a background style is tinted with on screen: the chosen one, else the bot's own colour, which the page
+   * cannot know (it depends on which bot draws the card), so it shows the flagship's. The tint never follows the
+   * accent: "use the bot's colour" means the bot's, for the tint as for the accent.
    */
-  const backgroundTint = () => state.backgroundColor ?? state.accent ?? DEFAULT_BACKGROUND_COLOR;
+  const backgroundTint = () => state.backgroundColor ?? DEFAULT_BACKGROUND_COLOR;
 
   /**
    * A live preview of the card.
@@ -215,7 +215,7 @@ export async function renderCardStyle({
     reset.textContent = "Use the bot's colour";
     reset.disabled = state.accent === null && state.backgroundColor === null;
     // The bot's colour for the whole card: the accent and the background's tint. A tint left over from an earlier
-    // pick would otherwise keep colouring the card in something that is no longer the card's colour.
+    // pick would otherwise keep colouring the card in something that is no longer the bot's colour.
     reset.addEventListener("click", () => {
       state.backgroundColor = null;
       choose(null);
@@ -408,9 +408,6 @@ export async function renderCardStyle({
     state.accent = accent;
     // In place: a full repaint here would delete the swatch that was just clicked.
     refreshSwatches();
-    // A background with no colour of its own follows the accent, so its tiles and its colour well follow too.
-    refreshBackdrops();
-    syncColourInput();
     paintPreview();
     stage();
   };
@@ -494,18 +491,10 @@ export async function renderCardStyle({
    * platform already has a good version of, it is keyboard accessible for free, and the veil in
    * the renderer means no value it can produce makes an unreadable card.
    */
-  /** The background's colour well, while it exists; set in `paintColour()`. */
-  let colourInput = null;
-  /** Shows the colour a background would be tinted with now, unless the well is the thing being dragged. */
-  const syncColourInput = () => {
-    if (colourInput && document.activeElement !== colourInput) colourInput.value = backgroundTint();
-  };
-
   const paintColour = () => {
     if (!colourHost) return;
 
     if (!state.background || !data.entitled) {
-      colourInput = null;
       colourHost.replaceChildren();
       return;
     }
@@ -518,7 +507,6 @@ export async function renderCardStyle({
     input.type = "color";
     input.className = "backdrop-colour-input";
     input.value = backgroundTint();
-    colourInput = input;
     // `input`, not `change`: dragging through a colour wheel should update the tiles live rather
     // than only when the native picker is dismissed.
     input.addEventListener("input", () => {
@@ -533,12 +521,12 @@ export async function renderCardStyle({
 
     label.append(input);
 
-    // Back to following the card's colour. A button beside the well rather than a rule: a tint picked on
-    // a whim should be one click from undone, and the reset above only covers the card as a whole.
+    // The same words and the same meaning as the button above, for the tint alone: a tint picked on a whim should
+    // be one click from undone without touching the accent.
     const match = document.createElement("button");
     match.type = "button";
     match.className = "swatch-reset";
-    match.textContent = "Match the card's colour";
+    match.textContent = "Use the bot's colour";
     match.disabled = state.backgroundColor === null;
     match.addEventListener("click", () => {
       state.backgroundColor = null;
