@@ -4,7 +4,7 @@ import { bodyFor, createDraft, isDirty, markSaved, revert } from "../website/das
 
 /** The appearance page's staged-edit rules: what is unsaved, what a save sends, what a save records. No DOM. */
 
-const server = (extra = {}) => ({ accent: "#e05570", ...extra });
+const server = (extra = {}) => ({ accent: "#ff295e", ...extra });
 
 test("a fresh draft is clean and sends nothing", () => {
   const draft = createDraft(server());

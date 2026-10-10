@@ -95,6 +95,8 @@ html {
   background: none;
   cursor: pointer;
   overflow: hidden;
+  /* The colour square is cut to the circle by the clip itself, so no engine can leave a square corner or a smaller disc. */
+  clip-path: circle(50%);
   /* Without this the browser draws its own bevel around the swatch and the colour stops short of the edge. */
   -webkit-appearance: none;
   appearance: none;

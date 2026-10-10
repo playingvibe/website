@@ -308,7 +308,7 @@ nothing needs `!important` to win. The two exceptions are deliberate and comment
 | ink | `#f5f2f3` | text |
 | ink-2 | `#aba5a9` | supporting text |
 | ink-3 | `#8d868b` | captions |
-| accent | `#e05570` | the one action on a screen, a command being typed, what is playing or selected |
+| accent | `#ff295e` | the one action on a screen, a command being typed, what is playing or selected |
 | danger | `#ff8a8a` | errors |
 | gold | `#f5c542` | premium only |
 

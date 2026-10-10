@@ -16,7 +16,7 @@ export const API_HOSTS = [
 export const isToken = (value) => typeof value === "string" && /^[0-9a-f]{32}$/.test(value);
 
 /** An accent is set as a CSS variable, so only a plain hex colour is ever accepted from the network. */
-export const safeAccent = (value, fallback = "#e05570") =>
+export const safeAccent = (value, fallback = "#ff295e") =>
   typeof value === "string" && /^#[0-9a-f]{6}$/i.test(value) ? value : fallback;
 
 /**

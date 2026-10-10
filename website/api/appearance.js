@@ -17,7 +17,7 @@ import { readJson } from "../lib/http.js";
  * the rule the renderer applies too.
  */
 export const PALETTE = Object.freeze([
-  { name: "Vibe", value: "#e05570" },
+  { name: "Vibe", value: "#ff295e" },
   { name: "Ember", value: "#f0803c" },
   { name: "Gold", value: "#f5c542" },
   { name: "Mint", value: "#4fd39c" },

@@ -2,6 +2,7 @@ import { renderSignedOut } from "./shared.js";
 import { dirty, clean } from "./saveBar.js";
 import { botKey, serverKey, effectiveValue, isChange, payloadFor, pick } from "./settingsDraft.js";
 import { createControls, el, row } from "./controls.js";
+import { buildPlayerPreview } from "./playerPreview.js";
 import { CARD_BACKGROUND_STYLES, DEFAULT_BACKGROUND_COLOR } from "../lib/generated/cardBackgrounds.js";
 
 /**
@@ -84,6 +85,10 @@ export async function renderServerSettings(host, { guildId, nav, status, onName 
   function retintBackdrops() {
     const tint = value(serverKey("activityAccent")) ?? DEFAULT_BACKGROUND_COLOR;
     for (const tile of host.querySelectorAll(".backdrops .backdrop")) tile.style.setProperty("--bg", tint);
+    for (const mock of host.querySelectorAll(".player-preview")) {
+      mock.style.setProperty("--accent", tint);
+      mock.style.setProperty("--bg", tint);
+    }
   }
 
   /**
@@ -165,7 +170,16 @@ export async function renderServerSettings(host, { guildId, nav, status, onName 
       const theme = saved.premium?.activityTheme;
       if (theme?.forSale) {
         const entitled = theme.entitled;
+        const previewHost = el("div", { className: "player-preview-host" });
+        previewHost.append(
+          buildPlayerPreview({
+            accent: v("activityAccent") ?? DEFAULT_BACKGROUND_COLOR,
+            background: v("activityBackground"),
+            label: "Preview of this server's player colours",
+          })
+        );
         rows.push(
+          row("Preview", "Roughly how the player looks here for a listener without a colour of their own.", previewHost, true),
           row(
             "Activity theme",
             entitled

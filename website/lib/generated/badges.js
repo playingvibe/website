@@ -9,7 +9,7 @@ export const FOUNDER_CUTOFF = new Date("2027-01-01T00:00:00.000Z");
 
 export const FOUNDER_BADGE = {
   "name": "Founder",
-  "color": "#E05570"
+  "color": "#FF295E"
 };
 
 export const LISTENING_TIME_BADGES = [

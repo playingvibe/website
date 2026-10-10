@@ -280,6 +280,12 @@
   max-width: 47.5rem;
   margin-bottom: var(--s-3);
 }
+/* In a settings row the control is a flex item, and a size container has no width of its own there: it has to be asked for. */
+.setting-control > .player-preview-host {
+  flex: 1 1 auto;
+  width: 100%;
+  margin-bottom: 0;
+}
 .player-preview {
   --accent-soft: color-mix(in srgb, var(--accent) 16%, var(--surface));
   --accent-text: color-mix(in srgb, var(--accent) 80%, var(--ink));

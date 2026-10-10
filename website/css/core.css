@@ -45,8 +45,8 @@
   --ink: #f5f2f3;
   --ink-2: #aba5a9;
   --ink-3: #8d868b;
-  --accent: #e05570;
-  --accent-hover: #ec6a83;
+  --accent: #ff295e;
+  --accent-hover: #ff4371;
   --accent-ink: #14090c;
   --accent-soft: color-mix(in srgb, var(--accent) 16%, var(--surface));
   --accent-line: color-mix(in srgb, var(--accent) 45%, transparent);

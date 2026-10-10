@@ -1,6 +1,7 @@
 import { DEFAULT_BACKGROUND_COLOR, isReadableCardAccent, resolveCardFade } from "../lib/generated/cardBackgrounds.js";
 import { formatHours, renderSignedOut, note } from "./shared.js";
 import { dirty, clean } from "./saveBar.js";
+import { buildPlayerPreview } from "./playerPreview.js";
 import { bodyFor, createDraft, isDirty, markSaved, revert } from "./appearanceDraft.js";
 
 /**
@@ -237,97 +238,13 @@ export async function renderCardStyle({
    */
   const paintPlayerPreview = () => {
     if (!playerHost) return;
-
-    const svg = (tag, attrs = {}) => {
-      const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
-      for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
-      return el;
-    };
-    const text = (tag, className, content) => {
-      const el = document.createElement(tag);
-      el.className = className;
-      el.textContent = content;
-      return el;
-    };
-
-    // The new player at a glance: the cover leads and its light spreads behind it, the words stand
-    // beside it, and one strip along the bottom holds everything, with the seek bar as its top edge.
-    // From a container width of 35rem the queue becomes a rail; below it the strip has two rows.
-    const mock = document.createElement("div");
-    mock.className = state.activityBackground ? `player-preview live-${state.activityBackground}` : "player-preview";
-    // `--accent` tints the controls, `--bg` the backdrop's glow: both the chosen colour, or the bot's own.
-    const accent = state.activityAccent ?? DEFAULT_BACKGROUND_COLOR;
-    mock.style.setProperty("--accent", accent);
-    mock.style.setProperty("--bg", accent);
-    mock.setAttribute("role", "img");
-    mock.setAttribute("aria-label", "Preview of your player colours");
-
-    const div = (className, ...children) => {
-      const el = document.createElement("div");
-      el.className = className;
-      el.append(...children);
-      return el;
-    };
-    const icon = (d, className = "ctl") => {
-      const el = svg("svg", { class: className, viewBox: "0 0 24 24", "aria-hidden": "true" });
-      el.append(svg("path", { d }));
-      return el;
-    };
-    const cover = (className) => {
-      const el = div(className);
-      const mark = svg("svg", { viewBox: "0 0 1254 1254", "aria-hidden": "true" });
-      mark.append(svg("path", { d: "M 877 349 L 858 344 L 835 344 L 817 348 L 792 361 L 773 379 L 765 390 L 754 410 L 666 623 L 653 646 L 646 653 L 641 655 L 632 653 L 624 643 L 620 634 L 550 415 L 538 390 L 527 377 L 518 370 L 506 364 L 490 360 L 464 360 L 449 363 L 424 373 L 406 385 L 392 399 L 380 419 L 376 434 L 376 452 L 379 465 L 409 537 L 436 608 L 536 884 L 548 909 L 563 930 L 575 940 L 589 947 L 608 950 L 626 948 L 650 938 L 669 925 L 690 904 L 705 885 L 731 843 L 753 799 L 910 457 L 917 439 L 920 424 L 920 404 L 916 388 L 905 369 L 892 357 Z" }));
-      el.append(mark);
-      return el;
-    };
-    const fill = document.createElement("span");
-    const seek = div("pp-seek", fill);
-
-    // The strip's glyphs, drawn as the Activity draws them: shuffle and repeat as lines, the rest filled.
-    const lineIcon = (stroke, filled) => {
-      const el = svg("svg", { class: "ctl ctl-line", viewBox: "0 0 24 24", "aria-hidden": "true" });
-      el.append(svg("path", { d: stroke }));
-      if (filled) el.append(svg("path", { d: filled, class: "ctl-fill" }));
-      return el;
-    };
-    const play = div("play", icon("M8 5v14l11-7z", ""));
-    const controls = div(
-      "controls",
-      lineIcon("M3 6h3.5L16 18h4.5M17 15l3.5 3-3.5 3M3 18h3.5l2.5-3M13 9l3-3h4.5M17 3l3.5 3-3.5 3"),
-      icon("M6 6h2v12H6zm3.5 6 8.5 6V6z"),
-      play,
-      icon("M16 6h2v12h-2zM6 18l8.5-6L6 6z"),
-      lineIcon("M4 11a8 8 0 0 1 8-8h5M20 13a8 8 0 0 1-8 8H7", "M17 .5 21 3 17 5.5ZM10 18.5 6 21 10 23.5Z")
+    playerHost.replaceChildren(
+      buildPlayerPreview({
+        accent: state.activityAccent ?? DEFAULT_BACKGROUND_COLOR,
+        background: state.activityBackground,
+        label: "Preview of your player colours",
+      })
     );
-
-    const rail = div(
-      "pp-queue",
-      text("p", "pp-queue-title", "Up next"),
-      ...["Next in your queue", "Another song", "One more"].map((title) =>
-        div("pp-row", div("pp-thumb"), div("pp-row-words", text("span", "pp-row-title", title), text("span", "pp-row-artist", "Someone")))
-      )
-    );
-
-    const stage = div(
-      "pp-stage",
-      div(
-        "pp-sleeve",
-        cover("pp-cover"),
-        div("pp-words", text("p", "track", "Whatever you queued"), text("p", "artist", "Playing in your voice channel"))
-      ),
-      rail
-    );
-
-    const strip = div(
-      "pp-strip",
-      seek,
-      div("pp-timeline", text("span", "pp-time pp-elapsed", "1:47"), div("pp-seek-flow"), text("span", "pp-time pp-length", "4:18")),
-      controls,
-      div("pp-volume", icon("M4 9v6h4l5 4V5L8 9H4z"), div("pp-volume-track", document.createElement("span")))
-    );
-
-    mock.append(div("pp-light"), stage, strip);
-    playerHost.replaceChildren(mock);
   };
 
   /**

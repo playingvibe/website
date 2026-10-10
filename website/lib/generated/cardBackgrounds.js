@@ -69,7 +69,7 @@ const EVEN_BY_DEFAULT = new Set(["marks", "bars", "grid"]);
  * colour of the bot that draws it, so a card from another bot is tinted in that bot's colour; this is what a page
  * without that knowledge, such as the website's preview, falls back to.
  */
-export const DEFAULT_BACKGROUND_COLOR = "#e05570";
+export const DEFAULT_BACKGROUND_COLOR = "#ff295e";
 
 /** The rank card's own ground, which the accent is drawn on: the bar, the level, the glow. */
 export const CARD_GROUND = "#0b0b0d";
