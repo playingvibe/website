@@ -2,6 +2,8 @@ import { getSession } from "../lib/session.js";
 import { findRankCardStyle, saveRankCardStyle } from "../lib/mongo.js";
 import { isEntitled, isForSale } from "../lib/entitlements.js";
 import {
+  ACTIVITY_NO_BACKGROUND,
+  ACTIVITY_OWN_ACCENT,
   CARD_BACKGROUND_STYLES,
   isReadableCardAccent,
   normaliseCardColor,
@@ -17,7 +19,7 @@ import { readJson } from "../lib/http.js";
  * the rule the renderer applies too.
  */
 export const PALETTE = Object.freeze([
-  { name: "Vibe", value: "#ff295e" },
+  { name: "Vibe", value: "#f03362" },
   { name: "Ember", value: "#f0803c" },
   { name: "Gold", value: "#f5c542" },
   { name: "Mint", value: "#4fd39c" },
@@ -76,10 +78,13 @@ export const SETTINGS = {
   // Free-form hex, like the background colour and unlike `accent`. `player.css` mixes this into surfaces at 9%
   // and into the ambient glow at 2-9%, so no value it can hold makes anything unreadable — where the rank-card
   // accent is drawn as text and a bar and must carry contrast by itself.
-  activityAccent: colourValue,
+  // Or `ACTIVITY_OWN_ACCENT`, "the bot's own colour" chosen on purpose, which a server's theme does not replace;
+  // `null` is "never picked", which it does.
+  activityAccent: (value) => (value === ACTIVITY_OWN_ACCENT ? { value } : colourValue(value)),
   // Same allow-list as the card's, because it is the same two styles — the Activity turns this into a CSS
-  // class, so an unknown value would silently render nothing while the page claimed otherwise.
-  activityBackground: backgroundKey,
+  // class, so an unknown value would silently render nothing while the page claimed otherwise. Or
+  // `ACTIVITY_NO_BACKGROUND`, "None" chosen on purpose, the backdrop's counterpart of the bot's own colour.
+  activityBackground: (value) => (value === ACTIVITY_NO_BACKGROUND ? { value } : backgroundKey(value)),
   // Whether a server's own guild-tier Activity theme wins over this listener's personal accent, in every
   // server that has one. Off by default, and it needs no premium: it costs nothing to offer, and a lapsed
   // subscriber's accent outlives the subscription, so this is how they put a server's theme back in front of it.
@@ -117,16 +122,18 @@ export function validateChanges(body) {
 }
 
 /**
- * Whether a body only takes settings off (`null`) or sets `preferServerTheme`: the two things anyone may
- * do whether or not they are subscribed. Anything that sets a colour, a background or a pinned fade is
- * the paid feature.
+ * Whether a body only takes settings off (`null`, the bot's own colour, no backdrop) or sets `preferServerTheme`:
+ * what anyone may do whether or not they are subscribed. Anything that sets a colour, a background or a pinned fade
+ * is the paid feature.
  * @param {unknown} body
  * @returns {boolean}
  */
 function isUndoOnly(body) {
   if (!body || typeof body !== "object") return false;
   const entries = Object.entries(body);
-  return entries.length > 0 && entries.every(([key, value]) => key === "preferServerTheme" || value === null);
+  const plain = (key, value) =>
+    value === null || (key === "activityAccent" && value === ACTIVITY_OWN_ACCENT) || (key === "activityBackground" && value === ACTIVITY_NO_BACKGROUND);
+  return entries.length > 0 && entries.every(([key, value]) => key === "preferServerTheme" || plain(key, value));
 }
 
 export default async function handler(req, res) {

@@ -1,4 +1,10 @@
-import { DEFAULT_BACKGROUND_COLOR, isReadableCardAccent, resolveCardFade } from "../lib/generated/cardBackgrounds.js";
+import {
+  ACTIVITY_NO_BACKGROUND,
+  ACTIVITY_OWN_ACCENT,
+  DEFAULT_BACKGROUND_COLOR,
+  isReadableCardAccent,
+  resolveCardFade,
+} from "../lib/generated/cardBackgrounds.js";
 import { formatHours, renderSignedOut, note } from "./shared.js";
 import { dirty, clean } from "./saveBar.js";
 import { buildPlayerPreview } from "./playerPreview.js";
@@ -55,6 +61,11 @@ export async function renderCardStyle({
    * accent: "use the bot's colour" means the bot's, for the tint as for the accent.
    */
   const backgroundTint = () => state.backgroundColor ?? DEFAULT_BACKGROUND_COLOR;
+  /** The player's colour as a colour: the bot's own, chosen or never picked, previews as the default. */
+  const activityColour = () =>
+    state.activityAccent === null || state.activityAccent === ACTIVITY_OWN_ACCENT ? DEFAULT_BACKGROUND_COLOR : state.activityAccent;
+  /** The player's backdrop as a style key, or null for none, chosen or never picked. */
+  const activityBackdrop = () => (state.activityBackground === ACTIVITY_NO_BACKGROUND ? null : state.activityBackground);
 
   /**
    * A live preview of the card.
@@ -240,8 +251,8 @@ export async function renderCardStyle({
     if (!playerHost) return;
     playerHost.replaceChildren(
       buildPlayerPreview({
-        accent: state.activityAccent ?? DEFAULT_BACKGROUND_COLOR,
-        background: state.activityBackground,
+        accent: activityColour(),
+        background: activityBackdrop(),
         label: "Preview of your player colours",
       })
     );
@@ -483,7 +494,7 @@ export async function renderCardStyle({
   const tintActivityTiles = () => {
     if (!activityBgHost) return;
     for (const tile of activityBgHost.querySelectorAll(".backdrop:not(.backdrop-none)")) {
-      tile.style.setProperty("--bg", state.activityAccent ?? DEFAULT_BACKGROUND_COLOR);
+      tile.style.setProperty("--bg", activityColour());
     }
   };
 
@@ -503,8 +514,8 @@ export async function renderCardStyle({
   // One control rather than several, because one variable drives the whole player: `player.css`
   // derives its surfaces, its ambient glow and its scrollbar from `--vibe-accent` through
   // `color-mix()`. Separate controls would offer choices that are not independent. "Use the bot's
-  // colour" clears it rather than picking a default, since each bot has its own palette and there
-  // is no single value that means "unset".
+  // colour" stores `ACTIVITY_OWN_ACCENT` rather than a colour, since each bot has its own palette; and
+  // rather than clearing it, since a cleared colour is "never picked" and follows a server's own theme.
   const paintActivity = () => {
     if (!activityHost) return;
 
@@ -533,7 +544,7 @@ export async function renderCardStyle({
     const free = document.createElement("input");
     free.type = "color";
     free.className = "backdrop-colour-input";
-    free.value = state.activityAccent ?? DEFAULT_BACKGROUND_COLOR;
+    free.value = activityColour();
     free.disabled = !data.entitled;
     // No repaint from in here — see the note above. Only the states that are not this element.
     free.addEventListener("input", () => {
@@ -548,9 +559,9 @@ export async function renderCardStyle({
     reset.type = "button";
     reset.className = "swatch-reset";
     reset.textContent = "Use the bot's colour";
-    reset.disabled = state.activityAccent === null;
     reset.addEventListener("click", () => {
-      state.activityAccent = null;
+      state.activityAccent = ACTIVITY_OWN_ACCENT;
+      free.value = activityColour();
       refresh();
       tintActivityTiles();
       stage();
@@ -561,7 +572,8 @@ export async function renderCardStyle({
       for (const [i, swatch] of swatches.entries()) {
         swatch.setAttribute("aria-pressed", String(state.activityAccent === data.palette[i].value));
       }
-      reset.disabled = state.activityAccent === null;
+      // A choice like the swatches, shown as chosen when it is. Never off: it is free, like taking a colour away.
+      reset.setAttribute("aria-pressed", String(state.activityAccent === ACTIVITY_OWN_ACCENT));
     };
 
     const row = document.createElement("div");
@@ -609,8 +621,9 @@ export async function renderCardStyle({
     none.className = "backdrop backdrop-none";
     none.title = "No background";
     none.setAttribute("aria-label", "No background");
+    // A choice, not a clearing: "None" stays none in a server with a backdrop of its own (`ACTIVITY_NO_BACKGROUND`).
     none.addEventListener("click", () => {
-      state.activityBackground = null;
+      state.activityBackground = ACTIVITY_NO_BACKGROUND;
       refresh();
       stage();
     });
@@ -621,7 +634,7 @@ export async function renderCardStyle({
       tile.type = "button";
       tile.className = `backdrop backdrop-live live-${entry.key}`;
       // The Activity draws its backdrops its own way, much quieter than the card's: `live-` classes, not the card's.
-      tile.style.setProperty("--bg", state.activityAccent ?? DEFAULT_BACKGROUND_COLOR);
+      tile.style.setProperty("--bg", activityColour());
       tile.title = entry.description ?? entry.name;
       tile.setAttribute("aria-label", entry.name);
       tile.disabled = !data.entitled;
@@ -634,7 +647,7 @@ export async function renderCardStyle({
     }
 
     const refresh = () => {
-      none.setAttribute("aria-pressed", String(state.activityBackground === null));
+      none.setAttribute("aria-pressed", String(state.activityBackground === ACTIVITY_NO_BACKGROUND));
       for (const [i, entry] of data.backgrounds.entries()) {
         tiles[i + 1].setAttribute("aria-pressed", String(state.activityBackground === entry.key));
       }

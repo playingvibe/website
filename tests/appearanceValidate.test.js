@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { validateChanges, PALETTE } from "../website/api/appearance.js";
+import { ACTIVITY_NO_BACKGROUND, ACTIVITY_OWN_ACCENT, CARD_BACKGROUND_STYLES, isCardBackground, normaliseCardColor } from "../website/lib/generated/cardBackgrounds.js";
 
 /** The appearance settings a request body may set, checked without a request. The route's own behaviour is in `websiteAppearance.test.js`. */
 
@@ -62,4 +63,20 @@ test("booleans are not coerced", () => {
 
 test("with several bad values, the first in the settings' order is the one named", () => {
   assert.equal(validateChanges({ fade: "x", accent: "#000000" }).error, "That colour is too dark to read on the card.");
+});
+
+test("the Activity takes the bot's own colour and no backdrop as choices, and the rank card does not", () => {
+  assert.deepEqual(validateChanges({ activityAccent: ACTIVITY_OWN_ACCENT, activityBackground: ACTIVITY_NO_BACKGROUND }).changes, {
+    activityAccent: "bot",
+    activityBackground: "none",
+  });
+  assert.equal(validateChanges({ accent: ACTIVITY_OWN_ACCENT }).error, "Not a colour.");
+  assert.equal(validateChanges({ backgroundColor: ACTIVITY_OWN_ACCENT }).error, "Not a colour.");
+  assert.ok(validateChanges({ background: ACTIVITY_NO_BACKGROUND }).error, "the card has no such style");
+});
+
+test("neither chosen value can be mistaken for a colour or a style", () => {
+  assert.equal(normaliseCardColor(ACTIVITY_OWN_ACCENT), undefined);
+  assert.equal(isCardBackground(ACTIVITY_NO_BACKGROUND), false);
+  assert.ok(!CARD_BACKGROUND_STYLES.some((style) => style.key === ACTIVITY_NO_BACKGROUND));
 });

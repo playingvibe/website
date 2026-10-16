@@ -3,6 +3,7 @@ import { dirty, clean } from "./saveBar.js";
 import { botKey, serverKey, effectiveValue, isChange, payloadFor, pick } from "./settingsDraft.js";
 import { createControls, el, row } from "./controls.js";
 import { buildPlayerPreview } from "./playerPreview.js";
+import { createEqualizerEditor } from "./equalizerEditor.js";
 import { CARD_BACKGROUND_STYLES, DEFAULT_BACKGROUND_COLOR } from "../lib/generated/cardBackgrounds.js";
 
 /**
@@ -26,6 +27,7 @@ const SECTIONS = [
   { id: "playback", title: "Playback", intro: "What Vibe does when the queue runs out." },
   { id: "messages", title: "Messages", intro: "What Vibe says in chat." },
   { id: "streaming", title: "Streaming", intro: "For streamers who want what is playing on screen." },
+  { id: "sound", title: "Sound", intro: "Your own equaliser curves, which anyone who may use /filter can switch on." },
   { id: "premium", title: "Premium", intro: "Guild-tier customisation for a server with its own subscription." },
   { id: "bots", title: "Each bot", intro: "Give one Vibe its own settings. Anything left alone follows the server." },
 ];
@@ -133,6 +135,20 @@ export async function renderServerSettings(host, { guildId, nav, status, onName 
 
   const { picker, singlePicker, toggle, colorPicker, backdropPicker } = createControls(stage);
 
+  /**
+   * One saved-curve change, sent at once (a curve is saved or deleted as a whole, not staged on the save bar).
+   * Answers with the server's curves after it, or `null` when the bot refused and has said why.
+   */
+  const equalizer = createEqualizerEditor({
+    apply: async (change) => {
+      const result = await request({ method: "POST", body: JSON.stringify({ change: { field: "equalizerPresets", value: change } }) });
+      if (!result) return null;
+      saved = result;
+      say(result.summary ? `${result.summary}.` : "Saved.");
+      return { presets: result.shared.equalizerPresets };
+    },
+  });
+
   // --- the sections -----------------------------------------------------------------------
 
   function server(section) {
@@ -165,6 +181,23 @@ export async function renderServerSettings(host, { guildId, nav, status, onName 
     }
 
     if (section === "streaming") rows.push(overlayRow());
+
+    if (section === "sound") {
+      const eq = saved.premium?.customEq;
+      rows.push(
+        row(
+          "Saved curves",
+          eq?.entitled
+            ? "Up to five, each saved with its own button. Moving the sliders does not change what is playing: switch a curve on with /filter."
+            : // Shown to a server that still holds curves when nothing is for sale: say what it can do, not what it cannot buy.
+              eq?.forSale
+              ? "This is a premium feature for this server. Curves it already has can still be deleted."
+              : "Curves this server already has can still be deleted.",
+          equalizer.render(saved.shared.equalizerPresets ?? [], { entitled: eq?.entitled === true }),
+          true
+        )
+      );
+    }
 
     if (section === "premium") {
       const theme = saved.premium?.activityTheme;
@@ -344,6 +377,44 @@ export async function renderServerSettings(host, { guildId, nav, status, onName 
         return row(title, "", menu);
       };
 
+      /** The one voice channel this bot stays in when everyone has left (a premium feature; letting go is free). */
+      const pinRow = () => {
+        const pinned = saved.premium?.pinned247;
+        if (!pinned) return null;
+        const key = botKey(id, "pinnedVoiceChannelId");
+        const current = value(key);
+        // Nothing is for sale and nothing is held: no trace of it, like the other premium settings. A channel that
+        // is still held (in what is saved, or in what is staged) keeps the row, so it can be let go.
+        const held = current !== null || (saved.instances.find((entry) => entry.clientId === id)?.pinnedVoiceChannelId ?? null) !== null;
+        if (!pinned.entitled && !pinned.forSale && !held) return null;
+
+        const nameOf = (channelId) => options.voiceChannels.find((channel) => channel.id === channelId)?.name ?? "a channel that is gone";
+        // Without the subscription a pin can only be let go, so the menu offers no new channel.
+        const choices = pinned.entitled ? options.voiceChannels : current ? [{ id: current, name: nameOf(current) }] : [];
+
+        const menu = el("select", { ariaLabel: `${instance.name}: stay in a voice channel`, className: "picker-add", disabled: !pinned.entitled && current === null });
+        menu.dataset.key = key;
+        // Without the subscription the bot ignores a saved pin, so it is not pinned; the saved channel is only there to let go.
+        const idle = !pinned.entitled && current !== null;
+        menu.append(el("option", { value: "", textContent: idle ? "Not pinned: let go of the saved channel" : "Not pinned" }));
+        for (const channel of choices) {
+          const node = el("option", { value: channel.id, textContent: idle ? `Saved, not active: ${channel.name}` : channel.name });
+          node.selected = channel.id === current;
+          menu.append(node);
+        }
+        menu.addEventListener("change", () => stage(key, menu.value || null));
+
+        return row(
+          "Stay in a voice channel",
+          pinned.entitled
+            ? "When everyone leaves it pauses and stays, and plays on when someone returns. It has to be playing there first; not pinned, it leaves after a few minutes alone."
+            : pinned.forSale
+              ? `This is a premium feature for this server.${current ? " The saved channel is not active; you can still let it go." : ""}`
+              : current ? "The saved channel is not active; you can still let it go." : "You can still let it go.",
+          menu
+        );
+      };
+
       card.append(
         listRow("voiceChannels", "Voice channels it may join", "", options.voiceChannels),
         listRow("commandsChannels", "Channels its commands work in", "#", options.textChannels),
@@ -351,6 +422,8 @@ export async function renderServerSettings(host, { guildId, nav, status, onName 
         flagRow("autoplay", "Autoplay"),
         flagRow("autoplayRoomTaste", "Follow listeners' taste")
       );
+      const pin = pinRow();
+      if (pin) card.append(pin);
 
       // Staged like everything else: it clears every override this bot has, and Save sends each as "follow the server".
       const fields = ["voiceChannels", "commandsChannels", "announcements", "autoplay", "autoplayRoomTaste"];
@@ -395,7 +468,10 @@ export async function renderServerSettings(host, { guildId, nav, status, onName 
 
   // Hidden entirely while nothing is for sale — same "not for sale = no trace of it" rule the
   // user tier's appearance settings already use, not just a greyed-out control nobody can buy.
-  const visibleSections = () => SECTIONS.filter((s) => s.id !== "premium" || saved.premium?.activityTheme?.forSale);
+  // The Sound section also shows for a server that still holds curves, so a lapsed one can delete them.
+  const soundShown = () => saved.premium?.customEq?.forSale === true || (saved.shared.equalizerPresets?.length ?? 0) > 0;
+  const visibleSections = () =>
+    SECTIONS.filter((s) => (s.id === "premium" ? saved.premium?.activityTheme?.forSale : s.id === "sound" ? soundShown() : true));
 
   /** The section on screen: the URL hash if it names a visible one, else the first. Staged edits in the others are kept. */
   function activeSection() {

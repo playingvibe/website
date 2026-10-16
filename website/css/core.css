@@ -45,13 +45,16 @@
   --ink: #f5f2f3;
   --ink-2: #aba5a9;
   --ink-3: #8d868b;
-  --accent: #ff295e;
-  --accent-hover: #ff4371;
+  --accent: #f03362;
+  --accent-hover: #f24b75;
   --accent-ink: #14090c;
   --accent-soft: color-mix(in srgb, var(--accent) 16%, var(--surface));
   --accent-line: color-mix(in srgb, var(--accent) 45%, transparent);
   /* The accent as text or a glyph: a fifth of the way to ink, so it also reads on the raised surfaces, as in the player. */
   --accent-text: color-mix(in srgb, var(--accent) 80%, var(--ink));
+  /* What a quiet control lays under itself: at rest, and under the pointer. */
+  --fill: rgba(255, 255, 255, 0.07);
+  --fill-hover: rgba(255, 255, 255, 0.13);
   --danger: #ff8a8a;
   --gold: #f5c542;
 
@@ -343,12 +346,29 @@ label {
   background: var(--accent-hover);
 }
 .btn-ghost {
-  background: rgba(255, 255, 255, 0.07);
+  background: var(--fill);
   color: var(--ink);
   font-weight: var(--medium);
 }
 .btn-ghost:hover {
-  background: rgba(255, 255, 255, 0.13);
+  background: var(--fill-hover);
+}
+/* Something that cannot be taken back. The quiet one asks ("Delete…"); the filled one is the answer, and
+   carries the dark ink: the danger colour is a light one, and white on it would be 2.3:1. */
+.btn-danger-quiet {
+  background: var(--fill);
+  color: var(--danger);
+  font-weight: var(--medium);
+}
+.btn-danger-quiet:hover {
+  background: var(--fill-hover);
+}
+.btn-danger {
+  background: var(--danger);
+  color: var(--accent-ink);
+}
+.btn-danger:hover {
+  background: color-mix(in srgb, var(--danger) 85%, #fff);
 }
 .btn-small {
   min-height: var(--target);
@@ -514,6 +534,7 @@ code {
   .passport-list,
   .passport-playlist-open,
   .passport-back,
+  .pl,
   .cmd-jump a {
     outline: 1px solid CanvasText;
     outline-offset: -1px;

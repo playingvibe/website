@@ -69,7 +69,7 @@ const EVEN_BY_DEFAULT = new Set(["marks", "bars", "grid"]);
  * colour of the bot that draws it, so a card from another bot is tinted in that bot's colour; this is what a page
  * without that knowledge, such as the website's preview, falls back to.
  */
-export const DEFAULT_BACKGROUND_COLOR = "#ff295e";
+export const DEFAULT_BACKGROUND_COLOR = "#f03362";
 
 /** The rank card's own ground, which the accent is drawn on: the bar, the level, the glow. */
 export const CARD_GROUND = "#0b0b0d";
@@ -105,6 +105,15 @@ export function isReadableCardAccent(hex) {
 
 /** @type {ReadonlySet<string>} */
 const KEYS = new Set(CARD_BACKGROUND_STYLES.map((entry) => entry.key));
+
+/**
+ * The Activity's two "I chose the plain one" values, stored on the user document in place of a colour or a backdrop.
+ * **`null` means never picked**, and only that falls through to a server's own Activity theme: a listener who chose
+ * the bot's own colour, or no backdrop, keeps it in a server that has a theme. Neither is a colour or a style key, so
+ * neither can be drawn; the bot resolves them to `null` before anything is sent to the Activity.
+ */
+export const ACTIVITY_OWN_ACCENT = "bot";
+export const ACTIVITY_NO_BACKGROUND = "none";
 
 /**
  * Validation, not a lookup: `null` is valid and means the plain card.

@@ -92,6 +92,7 @@ async function givePassport({ token = TOKEN, premium = { tier: "user", expiresAt
         name: p.name,
         shared: p.shared ?? false,
         tracks: p.tracks ?? [],
+        ...(p.cover ? { cover: p.cover } : {}),
         editPolicy: "owner",
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -292,6 +293,23 @@ test("only playlists the owner shared appear, and none of them carry a link", as
     { title: "Gone", author: "B", unavailable: true },
   ]);
   assert.ok(!JSON.stringify(payload).includes("example.test"), "readable, not playable: no links");
+});
+
+test("a shared playlist is sent with the art its name makes, or the one its owner chose", async () => {
+  await givePassport({
+    playlists: [
+      { id: "a1b2c3d4e5f60718", name: "Plain", shared: true, tracks: [] },
+      { id: "b1b2c3d4e5f60718", name: "Plain", shared: true, tracks: [], cover: { pattern: "vinyl", hue: 218 } },
+    ],
+  });
+
+  const { payload } = await call(TOKEN);
+  const [own, chosen] = payload.playlists.map((playlist) => playlist.cover);
+
+  assert.match(own.art, /^<svg /);
+  assert.notEqual(chosen.art, own.art, "the owner's choice is drawn");
+  assert.notEqual(chosen.from, own.from, "and the letter cover's colours follow it too");
+  assert.doesNotMatch(JSON.stringify(payload), /"pattern"|"hue"/, "the stored choice itself is not sent");
 });
 
 test("no shared playlists means an empty list, and the page shows no section", async () => {

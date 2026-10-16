@@ -51,11 +51,17 @@ const when = (iso) => {
 
 const songs = (count) => `${count} song${count === 1 ? "" : "s"}`;
 
-/** A playlist's default picture: its letter on the gradient the API gave it (the same one Discord draws). */
-const coverTile = (cover) =>
-  cover
-    ? `<span class="passport-cover" aria-hidden="true" style="background: linear-gradient(135deg, ${escapeHtml(cover.from)}, ${escapeHtml(cover.to)})">${escapeHtml(cover.initial)}</span>`
-    : "";
+/**
+ * A playlist's picture. The API gives generated art as an SVG made of shapes and colours only (nothing typed by
+ * anybody is in it), shown as an image; Liked Songs and an older answer have a letter on a gradient instead.
+ */
+const coverTile = (cover) => {
+  if (!cover) return "";
+  if (typeof cover.art === "string" && cover.art.startsWith("<svg")) {
+    return `<img class="passport-cover" alt="" width="64" height="64" src="data:image/svg+xml,${encodeURIComponent(cover.art)}">`;
+  }
+  return `<span class="passport-cover" aria-hidden="true" style="background: linear-gradient(135deg, ${escapeHtml(cover.from)}, ${escapeHtml(cover.to)})">${escapeHtml(cover.initial)}</span>`;
+};
 
 const trackRow = (track, trailing, extra = "") => `
   <li${extra}>

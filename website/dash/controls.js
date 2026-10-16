@@ -94,7 +94,7 @@ export function createControls(onPick) {
     const input = el("input", {
       type: "color",
       className: "backdrop-colour-input",
-      value: current ?? "#ff295e",
+      value: current ?? "#f03362",
       disabled,
       ariaLabel: label,
     });

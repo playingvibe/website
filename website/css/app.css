@@ -376,6 +376,28 @@ html {
 .toast.is-error {
   color: var(--danger);
 }
+/* A toast that is also the page's live region: always in the page, so a screen reader hears what is written
+   into it; seen only while it has something to say. */
+.toast-live {
+  transition: opacity var(--t) var(--ease);
+  pointer-events: none;
+}
+.toast-live:empty,
+.toast-live.is-spent {
+  opacity: 0;
+  animation: none;
+}
+/* On a phone a sentence does not fit a pill: the toast takes the width, as the save bar does. */
+@media (max-width: 32rem) {
+  .toast {
+    left: var(--s-4);
+    right: var(--s-4);
+    padding-block: var(--s-3);
+    border-radius: var(--r-2);
+    transform: none;
+    animation: none;
+  }
+}
 
 /* --- page shell ----------------------------------------------------------------------------- */
 
@@ -687,6 +709,195 @@ html {
   font-size: var(--step--1);
 }
 
+/* --- your playlists (the editor) ------------------------------------------------------------ */
+
+.playlists {
+  display: grid;
+  gap: var(--s-4);
+  margin-top: var(--s-4);
+  min-height: 7.5rem;
+}
+.pl-create,
+.pl-rename {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+}
+.pl-field {
+  flex: 1 1 14rem;
+  min-width: 0;
+}
+.pl-note {
+  flex-basis: 100%;
+  color: var(--ink-3);
+  font-size: var(--step--1);
+}
+.pl-list {
+  display: grid;
+  gap: var(--s-3);
+}
+.pl {
+  border-radius: var(--r-2);
+  background: var(--surface);
+  box-shadow: var(--ring);
+}
+.pl-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: var(--target);
+  padding: var(--s-3) var(--s-4);
+  cursor: pointer;
+  list-style: none;
+}
+.pl-head::-webkit-details-marker {
+  display: none;
+}
+.pl-cover {
+  flex: none;
+  width: 3rem;
+  height: 3rem;
+  border-radius: var(--r-1);
+}
+.pl-name {
+  flex: 1 1 8rem;
+  min-width: 0;
+  font-weight: var(--medium);
+  overflow-wrap: anywhere;
+}
+.pl-count {
+  color: var(--ink-3);
+  font-size: var(--step--1);
+}
+.pl-body {
+  display: grid;
+  gap: var(--s-3);
+  padding: 0 var(--s-4) var(--s-4);
+}
+.pl-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+.pl-delete,
+.pl-confirm {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: var(--step--1);
+}
+.pl-songs {
+  display: grid;
+  gap: 0.125rem;
+  padding: 0;
+  list-style: none;
+}
+.pl-song {
+  display: grid;
+  grid-template-columns: var(--s-4) var(--s-6) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-1) 0;
+  border-top: 1px solid var(--line);
+}
+/* The grip: the whole row is what drags, this only says so. */
+.pl-grip {
+  color: var(--ink-3);
+  cursor: grab;
+  text-align: center;
+  user-select: none;
+}
+.pl-song[draggable="true"] {
+  cursor: grab;
+}
+.pl-song.is-dragging {
+  opacity: 0.4;
+}
+/* Where the song would land: a line in the accent on the side of the row it would go to. */
+.pl-song.drop-before {
+  box-shadow: inset 0 2px 0 var(--accent);
+}
+.pl-song.drop-after {
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+.pl-num {
+  color: var(--ink-3);
+  font-size: var(--step--1);
+  text-align: right;
+}
+.pl-song-text {
+  display: grid;
+  min-width: 0;
+}
+.pl-title {
+  overflow-wrap: anywhere;
+}
+.pl-author {
+  color: var(--ink-3);
+  font-size: var(--step--1);
+}
+.pl-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--s-1);
+}
+/* Quiet targets: a full 44px to press, nothing drawn until the pointer or the keyboard is on them, so a
+   list of songs is a list of songs and not a wall of buttons. Remove only turns red when it is about to be used. */
+.pl-move,
+.pl-remove {
+  min-width: var(--target);
+  min-height: var(--target);
+  padding-inline: var(--s-2);
+  border: 0;
+  border-radius: var(--r-1);
+  background: none;
+  color: var(--ink-2);
+  font-size: var(--step--1);
+  cursor: pointer;
+  transition:
+    background var(--t-fast),
+    color var(--t-fast);
+}
+.pl-move:hover:not(:disabled),
+.pl-move:focus-visible {
+  background: var(--fill);
+  color: var(--ink);
+}
+.pl-remove:hover,
+.pl-remove:focus-visible {
+  background: var(--fill);
+  color: var(--danger);
+}
+.pl-move:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+/* A state of the song, not part of who made it. */
+.pl-flag {
+  color: var(--danger);
+}
+.pl-author-name + .pl-flag {
+  margin-left: var(--s-2);
+}
+@media (max-width: 40rem) {
+  .pl-song {
+    grid-template-columns: var(--s-5) minmax(0, 1fr);
+  }
+  /* A finger has the buttons; the grip is for a pointer. */
+  .pl-grip {
+    display: none;
+  }
+  .pl-actions {
+    grid-column: 2;
+    justify-content: flex-start;
+  }
+}
+
 /* --- one server's settings ------------------------------------------------------------------ */
 
 .back-link {
@@ -741,6 +952,145 @@ html {
 .setting-control {
   display: flex;
   min-width: 0;
+  max-width: 100%;
+}
+.setting-wide .setting-control > * {
+  min-width: 0;
+  max-width: 100%;
+}
+/* The server's sound curves: saved ones as pills, then 15 vertical sliders, the curve drawn under them, and the actions. */
+.eq {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  min-width: 0;
+  width: 100%;
+}
+.eq-top,
+.eq-head,
+.eq-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+}
+.eq-top .bot-tabs {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.eq-curves {
+  margin-bottom: 0;
+}
+.eq-curve:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+/* A curve with sliders moved and not saved: said in its label, and marked. */
+.eq-curve.is-unsaved::after {
+  content: "";
+  width: var(--s-2);
+  height: var(--s-2);
+  border-radius: 50%;
+  background: var(--accent);
+}
+.eq-editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  min-width: 0;
+}
+.eq-confirm {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: var(--step--1);
+}
+.eq-name {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+.eq-start {
+  flex: 0 1 11rem;
+}
+.eq-bands {
+  display: grid;
+  grid-template-columns: repeat(15, minmax(0, 1fr));
+  gap: var(--s-1);
+}
+.eq-band {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-1);
+  min-width: 0;
+}
+.eq-slider {
+  /* Vertical, top is the loudest. `writing-mode` is the standard way; the width is the slider's thickness. */
+  writing-mode: vertical-lr;
+  direction: rtl;
+  width: var(--target);
+  height: 9rem;
+  margin: 0;
+  accent-color: var(--accent);
+}
+.eq-gain,
+.eq-hz {
+  color: var(--ink-3);
+  font-size: var(--step--2);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.eq-graph-host {
+  color: var(--ink-2);
+}
+.eq-graph {
+  display: block;
+  width: 100%;
+  height: 3.5rem;
+  overflow: visible;
+}
+.eq-graph-zero {
+  stroke: var(--line);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.eq-graph-line {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+.eq-note {
+  color: var(--ink-3);
+  font-size: var(--step--1);
+}
+/* 15 sliders do not fit a phone side by side: the row scrolls instead of squeezing them under a thumb's width. */
+@media (max-width: 40rem) {
+  /* The sliders and the curve drawn from them scroll together, as one picture. */
+  .eq-scroll {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    padding-bottom: var(--s-2);
+    /* The right edge fades, so the row reads as "there is more". */
+    mask-image: linear-gradient(to right, #000 calc(100% - var(--s-7)), transparent);
+  }
+  .eq-scroll.is-end {
+    mask-image: none;
+  }
+  .eq-bands,
+  .eq-graph-host {
+    width: calc(15 * var(--target) + 14 * var(--s-1));
+  }
+  .eq-bands {
+    grid-template-columns: repeat(15, var(--target));
+  }
+  /* A menu in a stacked row is as wide as the row, whatever its longest option. */
+  .setting .picker-add,
+  .setting .select {
+    width: 100%;
+  }
 }
 .picker,
 .overlay,
@@ -989,6 +1339,13 @@ html {
   border-radius: var(--r-1);
   color: #fff;
   font-weight: var(--bold);
+}
+/* The generated art is an image: it fills the tile and keeps its shape on a narrow row. */
+img.passport-cover {
+  display: block;
+  /* The page's `max-width: 100%` on images reads as zero inside a row that is as wide as its content. */
+  max-width: none;
+  object-fit: cover;
 }
 
 /* --- background tiles ----------------------------------------------------------------------- */

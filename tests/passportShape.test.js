@@ -71,10 +71,14 @@ test("`unavailable` is only present when the listening read failed", () => {
   assert.ok(!("unavailable" in shapePassport(user, reads).listening));
 });
 
-test("each shared playlist carries its default cover: a letter and two colours, and nothing about its owner", () => {
+test("each shared playlist carries its cover: a letter, two colours and the picture drawn from them, and nothing about its owner", () => {
   const shaped = shapePassport(user, reads);
 
-  assert.deepEqual(Object.keys(shaped.playlists[0].cover).sort(), ["from", "initial", "to"]);
+  assert.deepEqual(Object.keys(shaped.playlists[0].cover).sort(), ["art", "from", "initial", "to"]);
+  // The picture is the generated one (a pattern from the name, or the owner's choice): markup the page draws, with
+  // no script in it and nothing that names a person.
+  assert.match(shaped.playlists[0].cover.art, /^<svg[\s>]/);
+  assert.doesNotMatch(shaped.playlists[0].cover.art, /<script|onload=|href=|u1|userId/i);
   assert.equal(shaped.playlists[0].cover.initial, "M");
   assert.match(shaped.playlists[0].cover.from, /^#[0-9a-f]{6}$/);
 });

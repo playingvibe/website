@@ -308,7 +308,7 @@ nothing needs `!important` to win. The two exceptions are deliberate and comment
 | ink | `#f5f2f3` | text |
 | ink-2 | `#aba5a9` | supporting text |
 | ink-3 | `#8d868b` | captions |
-| accent | `#ff295e` | the one action on a screen, a command being typed, what is playing or selected |
+| accent | `#f03362` | the one action on a screen, a command being typed, what is playing or selected |
 | danger | `#ff8a8a` | errors |
 | gold | `#f5c542` | premium only |
 
@@ -316,14 +316,17 @@ Contrast, computed for every pair (4.5:1 is the floor):
 
 | Text | on ground | on surface | on surface-2 | on accent-soft |
 |---|---|---|---|---|
-| ink | 17.68 | 16.66 | 15.42 | 13.90 |
-| ink-2 | 8.13 | 7.67 | 7.10 | 6.39 |
-| ink-3 | 5.54 | 5.22 | 4.83 | not used (4.35) |
-| accent | 5.34 | 5.03 | 4.66 | not used (4.20) |
-| danger | 8.67 | 8.17 | 7.56 | 6.81 |
-| gold | 12.12 | 11.43 | 10.58 | 9.53 |
+| ink | 17.68 | 16.66 | 15.42 | 14.39 |
+| ink-2 | 8.13 | 7.67 | 7.10 | 6.62 |
+| ink-3 | 5.54 | 5.22 | 4.83 | 4.51 |
+| accent | 5.01 | 4.73 | not used (4.37) | not used (4.08) |
+| accent-text | 6.06 | 5.71 | 5.29 | 4.94 |
+| danger | 8.67 | 8.17 | 7.56 | 7.05 |
+| gold | 12.12 | 11.43 | 10.58 | 9.87 |
 
-The dark text on the accent is 5.31:1 (6.48 on hover). The edge of an input, a select and an off
+Recomputed on 11 October 2026 for the accent as it is now (`#f03362`). The accent itself is a fill and a line;
+where the accent has to be read as text on a raised surface, `--accent-text` is the token (the accent a fifth of
+the way to ink). The dark text on the accent is 4.99:1 (5.62 on hover); on the danger fill it is 8.62:1. The edge of an input, a select and an off
 switch is 3.4:1 against the ground, above the 3:1 asked of a control's boundary. Both supporting
 inks were lightened a little from the old sheet so that captions also pass on surface-2.
 
@@ -571,3 +574,79 @@ profile page (its rules moved to `app.css`); forced-colour rules added.
 
 Not done: a pass with a real screen reader (NVDA, VoiceOver); a real browser at 320 px wide with a
 desktop scrollbar (it overflows by 8 px there; phones have overlay scrollbars); a real sign-in.
+
+## 11. Playlists, the sound editor and three ways of saving
+
+Added after the redesign, then brought onto the system on 11 October 2026.
+
+### The pages
+
+- **Playlists** (`/playlists`, a third tab beside Profile and Servers; `playlists.html`, `playlists.js`,
+  `dash/playlists.js`, `api/playlists.js`). Each playlist is a native `<details>` card: its cover, its name, the
+  count; inside, rename and delete, then the songs. A song row is a number, the title over the artist, and quiet
+  44 px targets: to the top, up, down, and Remove. A pointer can also drag a row; the buttons are the keyboard's and
+  the finger's way. Nothing is added here: that needs a search, so the page points to `/playlist add`.
+- **Sound** (a section of a server's settings; `dash/equalizerEditor.js`). The saved curves are a row of tabs (the
+  same `.bot-tabs` as "Each bot"), with "New curve" as an action beside them. A curve is a name, a "Start from"
+  menu, 15 vertical sliders and the curve drawn under them, each point under its slider. Under 40rem the sliders
+  and the drawing scroll sideways together inside their own box, whose right edge fades until the end is reached;
+  the page itself never scrolls sideways.
+- **Each bot** gained "Stay in a voice channel" (a menu, staged on the save bar like its neighbours).
+
+### Three ways of saving, and why
+
+| Where | How | Why |
+|---|---|---|
+| A server's settings, the profile's appearance | staged; one save bar | Independent switches: change several as one act, or change your mind. |
+| Playlists | every change at once | Each action is one whole operation on a list Discord may be changing at the same moment, so there is nothing to stage against; the bot answers with the whole list. |
+| A sound curve | its own Save and Delete | A curve is a document (a name and 15 numbers that only mean something together), made or removed as a whole; the save bar's "Save" creating a named thing would be odd. |
+
+What each model owes the person, and where it is paid:
+
+- *At once* (playlists): the list is `inert` while a change is saved, so a second press is not dropped in silence;
+  what happened, or the bot's reason for refusing, is a toast at the bottom of the screen (`.toast.toast-live`,
+  which is also the page's live region); a move says where the song landed ("Moved Nights to 2 of 6."); deleting a
+  playlist asks first, in place.
+- *Its own button* (curves): what is moved on one curve is kept while another is looked at, for the life of the
+  page; a curve with unsaved changes carries a dot and "not saved" in its label; the hint says each curve is saved
+  with its own button.
+
+### Focus
+
+Both editors rebuild what they show after a change, which would leave a keyboard on nothing. Each action names
+what holds focus afterwards: the same button on the moved song; the next song's Remove after one is taken out;
+the tab of the curve that was picked or saved; Cancel when a delete asks, and "Delete…" again when it is
+cancelled. A change that is refused puts focus back where it was.
+
+### The subscription's three states, on these controls
+
+| | With it | Without, for sale | Without, nothing for sale |
+|---|---|---|---|
+| Playlists | everything | create, rename and reorder greyed, the reason said; remove and delete work | no create box, no rename, no move buttons, no mention; remove and delete work |
+| Sound | everything | the section shows, sliders and Save greyed, the reason said | the section shows only while the server still holds curves, to delete them; nothing says "premium" |
+| Stay in a voice channel | the menu | greyed, the reason said | shown only while a channel is still held, to let it go |
+
+`api/playlists.js` adds `forSale` to the bot's answer (the same test `/api/appearance` uses), which is how the
+page tells the last two columns apart.
+
+### Parts added to the system
+
+- `--fill` and `--fill-hover` (what a quiet control lays under itself), now used by `.btn-ghost` too.
+- `.btn-danger-quiet` (asks: "Delete…") and `.btn-danger` (answers: "Yes, delete it"). The danger colour is a
+  light one, so the filled button carries the dark ink: 8.62:1. White on it would be 2.27:1.
+- `.toast-live`: a toast that is always in the page and is the page's live region; it fades when spent. On a
+  phone a toast takes the width of the screen, as the save bar does.
+- The quiet icon target used by the song rows (`.pl-move`, `.pl-remove`): 44 px, nothing drawn until the pointer
+  or the keyboard is on it.
+
+### Known and left
+
+- The vertical sliders use `writing-mode: vertical-lr` (with the older `orient="vertical"` beside it). Checked
+  with a keyboard in Chrome only; by published support this needs Firefox 120 and Safari 17.4 or later, and has
+  not been run in either.
+- The Playlists tab is in the static tab row of all three account pages, so it shows even to someone who cannot
+  have playlists; the page then says only what can be done.
+- A gain is shown as the audio engine's own figure (-0.25 to 0.5), with "cut" or "boost" spoken beside it; decibels
+  would mean more to a person.
+- On a phone the four actions wrap under each song. One menu per row, or a touch reorder, is the next step.
+- Sharing and following have no presence on the site yet.

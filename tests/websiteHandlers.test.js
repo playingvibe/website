@@ -40,6 +40,7 @@ const { default: me } = await import("../website/api/me.js");
 const { default: guilds } = await import("../website/api/guilds.js");
 const { default: profile } = await import("../website/api/profile.js");
 const { default: login } = await import("../website/api/auth/login.js");
+const { guildsWithPremium } = await import("../website/lib/entitlements.js");
 
 const USER_ID = "308000000000000001";
 const MANAGE_GUILD = String(1n << 5n);
@@ -138,6 +139,12 @@ test("guilds lists only the servers the user may manage, those with a Vibe first
 });
 
 test("guilds marks a server with an active guild-tier subscription, and no other", async (t) => {
+  // The public copy ships the open entitlements module, where every server counts as subscribed; the rule under
+  // test only exists in the real one. A server with no row at all tells the two apart.
+  if ((await guildsWithPremium(["g-no-row-probe"])).size) {
+    t.skip("the open entitlements module marks every server");
+    return;
+  }
   const tomorrow = new Date(Date.now() + 86_400_000);
   const yesterday = new Date(Date.now() - 86_400_000);
   const database = await db();

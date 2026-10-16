@@ -190,3 +190,15 @@ test("colours are stored normalised, so the same colour cannot be saved two ways
 
   assert.equal(short, long);
 });
+
+test("the bot's own colour and no backdrop are stored as choices, apart from never picked, and read back", async () => {
+  const res = await call("PUT", "someone", { activityAccent: "bot", activityBackground: "none" });
+
+  assert.equal(res.statusCode, 200);
+  const doc = await stored("someone");
+  assert.equal(doc.activityAccent, "bot");
+  assert.equal(doc.activityBackground, "none");
+  const read = await call("GET", "someone");
+  assert.equal(read.payload.activityAccent, "bot");
+  assert.equal(read.payload.activityBackground, "none");
+});

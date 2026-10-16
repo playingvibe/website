@@ -337,6 +337,8 @@ export async function findPassportPlaylists(userId, { tracksPerPlaylist = 50 } =
         $project: {
           _id: 0,
           name: 1,
+          // What the owner chose for the picture, if anything; the page draws it for a subscriber's passport.
+          cover: 1,
           trackCount: { $size: { $ifNull: ["$tracks", []] } },
           tracks: {
             $map: {

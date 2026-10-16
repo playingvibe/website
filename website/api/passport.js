@@ -10,6 +10,7 @@ import { currentListeningStreak } from "../lib/generated/listeningStreak.js";
 import { getEarnedBadgeTiers } from "../lib/generated/badges.js";
 import { cleanTrackTitle } from "../lib/generated/track.js";
 import { LIKED_COVER, playlistCover } from "../lib/generated/playlistCover.js";
+import { playlistArt } from "../lib/generated/playlistArt.js";
 
 const MS_PER_HOUR = 60 * 60 * 1000;
 
@@ -124,8 +125,13 @@ export function shapePassport(user, { listening, favorites, playlists }) {
     // page then shows no section at all rather than an empty one.
     playlists: playlists.map((playlist) => ({
       name: playlist.name,
-      // The default picture, until a playlist has artwork: the same letter and gradient Discord draws.
-      cover: playlistCover(playlist.name),
+      // The picture the name generates: the same art Discord draws. The letter and gradient stay beside it for a
+      // page that cannot show an image. The SVG holds no text from the name, only shapes and colours.
+      // A passport exists only for a subscriber, so what they chose for the picture is shown.
+      cover: {
+        ...playlistCover(playlist.name, { hue: playlist.cover?.hue }),
+        art: playlistArt(playlist.name, { pattern: playlist.cover?.pattern, hue: playlist.cover?.hue }),
+      },
       trackCount: playlist.trackCount,
       tracks: playlist.tracks.map((track) => ({
         title: cleanTrackTitle(track.title),

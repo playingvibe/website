@@ -14,6 +14,9 @@ import {
 // script in this repository can import from `website/` freely; only the deployed bundle cannot.
 import { PALETTE, validateChanges } from "../../website/api/appearance.js";
 import { LIKED_COVER, playlistCover } from "../../website/lib/generated/playlistCover.js";
+import { playlistArt } from "../../website/lib/generated/playlistArt.js";
+import { createHash } from "node:crypto";
+import { EQ_MAX_PRESETS, normaliseGains, normalisePresetName } from "../../website/lib/generated/equalizer.js";
 
 const USER = {
   id: "100000000000000001",
@@ -87,7 +90,7 @@ const VOICE = [{ id: "444444444444444441", name: "Lounge" }, { id: "444444444444
 const SETTINGS = new Map();
 const settingsFor = (guildId) => {
   if (!SETTINGS.has(guildId)) {
-    SETTINGS.set(guildId, { djRoles: [], voiceChannels: [], commandsChannels: [], logChannelId: null, announcements: true, tips: true, autoplay: false, autoplayRoomTaste: true, shareVoiceChannels: true, overlayToken: null, activityAccent: null, activityBackground: null });
+    SETTINGS.set(guildId, { djRoles: [], voiceChannels: [], commandsChannels: [], logChannelId: null, announcements: true, tips: true, autoplay: false, autoplayRoomTaste: true, shareVoiceChannels: true, overlayToken: null, activityAccent: null, activityBackground: null, equalizerPresets: [{ id: "a1b2c3d4", name: "Late night", gains: [-0.1, -0.1, -0.05, 0, 0, 0, 0, 0, 0, -0.05, -0.05, -0.1, -0.15, -0.2, -0.2] }] });
   }
   return SETTINGS.get(guildId);
 };
@@ -96,7 +99,8 @@ const ALIAS_BY_CLIENT_ID = { "815329807377498153": "vibe", "1533281867523031070"
 const describeSettings = (guild, { state, port }) => {
   const shared = settingsFor(guild.id);
   return {
-    guild: { id: guild.id, name: guild.name, premium: guild.premium === true },
+    // The badge beside the name follows the page state, like every other premium answer here.
+    guild: { id: guild.id, name: guild.name, premium: guild.premium === true && state !== "free" && state !== "unsold" },
     shared: {
       djRoles: shared.djRoles,
       voiceChannels: shared.voiceChannels,
@@ -110,17 +114,22 @@ const describeSettings = (guild, { state, port }) => {
       overlay: { on: Boolean(shared.overlayToken), url: shared.overlayToken ? "http://localhost:" + port + "/np/" + shared.overlayToken : null },
       activityAccent: shared.activityAccent,
       activityBackground: shared.activityBackground,
+      // Nothing for sale means no curve can exist, as in production until a SKU does.
+      equalizerPresets: state === "unsold" ? [] : shared.equalizerPresets,
     },
     // Same three states as /api/appearance's stub, and the same reason: `free` exercises the
     // greyed-out "premium feature" path, `unsold` exercises the section being hidden entirely.
     premium: {
       activityTheme: { entitled: state !== "free" && state !== "unsold", forSale: state !== "unsold" },
+      pinned247: { entitled: state !== "free" && state !== "unsold", forSale: state !== "unsold" },
+      customEq: { entitled: state !== "free" && state !== "unsold", forSale: state !== "unsold" },
     },
     options: { roles: ROLES, textChannels: TEXT, voiceChannels: VOICE },
     instances: guild.instances.map((i) => ({
       clientId: i.clientId,
       name: i.name,
       overrides: OVERRIDES.get(i.clientId + ":" + guild.id) ?? {},
+      pinnedVoiceChannelId: PINS.get(i.clientId + ":" + guild.id) ?? null,
       alias: ALIAS_BY_CLIENT_ID[i.clientId] ?? null,
     })),
   };
@@ -130,6 +139,8 @@ const allIn = (ids, options) => Array.isArray(ids) && ids.every((id) => options.
 
 /** Mutated by PATCH so the toggle can be exercised for real, not just rendered. */
 const OVERRIDES = new Map();
+/** The channel each bot is pinned to, by `clientId:guildId`. */
+const PINS = new Map();
 const appearance = {
   accent: null,
   background: null,
@@ -217,7 +228,7 @@ const PASSPORT = {
   },
 };
 // What `api/passport.js` adds to each playlist.
-PASSPORT.playlists = PASSPORT.playlists.map((playlist) => ({ ...playlist, cover: playlistCover(playlist.name) }));
+PASSPORT.playlists = PASSPORT.playlists.map((playlist) => ({ ...playlist, cover: { ...playlistCover(playlist.name), art: playlistArt(playlist.name) } }));
 // And Liked Songs' own, which the route always sends (`favorites.cover`).
 PASSPORT.favorites.cover = LIKED_COVER;
 
@@ -340,13 +351,53 @@ function applyServerChange(shared, { field, value }, state) {
     shared.activityBackground = value;
     return { summary: value ? "Activity theme background changed" : "Activity theme background cleared" };
   }
+  if (field === "equalizerPresets") return applyEqualizerChange(shared, value, state);
   return { refusal: "Unknown setting: " + field + "." };
 }
 
+/** A saved curve saved or deleted, with the bot's own rules: saving needs the subscription, deleting never does. */
+function applyEqualizerChange(shared, value, state) {
+  const invalid = (message) => ({ response: { error: "invalid_value", message } });
+  if (!value || typeof value !== "object") return invalid("Say what to do with the curve.");
+  if (value.op === "delete") {
+    const before = shared.equalizerPresets.length;
+    shared.equalizerPresets = shared.equalizerPresets.filter((preset) => preset.id !== value.id);
+    return shared.equalizerPresets.length < before ? { summary: "Sound curve deleted" } : { response: { error: "unknown_id", message: "That curve is already gone." } };
+  }
+  if (value.op !== "save") return invalid("A curve is saved or deleted.");
+  if (state === "free" || state === "unsold") return { response: { error: "not_entitled", message: "Saving sound curves is a premium feature for this server." } };
+  const name = normalisePresetName(value.name);
+  if (!name) return invalid("A curve needs a name.");
+  const gains = normaliseGains(value.gains);
+  if (!gains) return invalid("A curve is 15 bands, each between -0.25 and 0.5.");
+  const taken = shared.equalizerPresets.some((preset) => preset.id !== value.id && preset.name.toLowerCase() === name.toLowerCase());
+  if (taken) return invalid("There is already a curve with that name.");
+  if (value.id) {
+    const at = shared.equalizerPresets.findIndex((preset) => preset.id === value.id);
+    if (at < 0) return { response: { error: "unknown_id", message: "That curve no longer exists." } };
+    shared.equalizerPresets[at] = { id: value.id, name, gains };
+    return { summary: "Sound curve " + name + " changed" };
+  }
+  if (shared.equalizerPresets.length >= EQ_MAX_PRESETS) return { response: { error: "limit_reached", message: "A server can keep " + EQ_MAX_PRESETS + " sound curves. Delete one first." } };
+  shared.equalizerPresets.push({ id: Math.random().toString(16).slice(2, 10), name, gains });
+  return { summary: "Sound curve " + name + " saved" };
+}
+
 /** One bot's override, or its reset. */
-function applyInstanceChange(guild, instance) {
+function applyInstanceChange(guild, instance, state) {
   const key = instance.clientId + ":" + guild.id;
   if (!guild.instances.some((i) => i.clientId === instance.clientId)) return { refusal: "That bot isn't in this server." };
+  // A bot's own channel, not an override: setting it needs the subscription, letting it go is free.
+  if (instance.field === "pinnedVoiceChannelId") {
+    if (instance.value === null) {
+      PINS.delete(key);
+      return { summary: "no longer stays in a voice channel" };
+    }
+    if (!VOICE.some((channel) => channel.id === instance.value)) return { refusal: "That isn't a voice channel of this server." };
+    if (state === "free" || state === "unsold") return { refusal: "Staying connected through an empty channel needs this server's subscription." };
+    PINS.set(key, instance.value);
+    return { summary: "stays in a voice channel" };
+  }
   const next = { ...(OVERRIDES.get(key) ?? {}) };
   if (instance.reset) {
     OVERRIDES.delete(key);
@@ -371,11 +422,151 @@ async function guildSettings({ req, res, url, state, port }) {
   const { change, instance } = await body(req);
   let outcome = { summary: null };
   if (change) outcome = applyServerChange(settingsFor(guild.id), change, state);
-  else if (instance) outcome = applyInstanceChange(guild, instance);
+  else if (instance) outcome = applyInstanceChange(guild, instance, state);
 
   if (outcome.refusal) return refuse(res, outcome.refusal);
   if (outcome.response) return json(res, 400, outcome.response);
   return json(res, 200, { summary: outcome.summary ?? null, ...describeSettings(guild, { state, port }) });
+}
+
+/**
+ * The bot's side of /api/playlists: the real `PlaylistEditing` (so the names, the cap, the subscription and the refs
+ * are the real rules) over an in-memory stand-in for the repository. Mutated by POST, so every control on
+ * /playlists can be exercised. The page state decides the rest: `full` has a subscription and every other does
+ * not; `unsold` has nothing for sale either; `new` has no playlists at all, so the empty state can be seen.
+ */
+const SONGS = (prefix, titles) =>
+  titles.map(([title, author], index) => ({ title, author, uri: `stub:${prefix}:${index}`, source: "stub", unavailableSince: index === 4 ? new Date() : null }));
+const PLAYLISTS = [
+  { id: "a1b2c3d4e5f60001", name: "Late night drive", shared: true, cover: { pattern: "vinyl", hue: 242 }, tracks: SONGS("a", [["Nights", "Frank Ocean"], ["Tadow", "Masego"], ["Midnight City", "M83"], ["Blue Monday", "New Order"], ["A song that went missing", null], ["Africa", "TOTO"]]) },
+  { id: "a1b2c3d4e5f60002", name: "Gym", shared: false, cover: null, tracks: SONGS("b", [["Stronger", "Kanye West"], ["Till I Collapse", "Eminem"], ["Lose Yourself", "Eminem"]]) },
+  { id: "a1b2c3d4e5f60003", name: "Empty for now", shared: false, cover: null, tracks: [] },
+];
+const normalisedName = (name) => String(name ?? "").trim().replace(/\s+/g, " ").slice(0, 100);
+const sameName = (a, b) => a.localeCompare(b, "en", { sensitivity: "accent" }) === 0;
+const memoryRepository = {
+  list: async () => PLAYLISTS.map((p) => ({ id: p.id, name: p.name })),
+  listFull: async () => PLAYLISTS.map((p) => ({ ...p, tracks: p.tracks.map((t) => ({ ...t })) })),
+  get: async (_owner, id) => PLAYLISTS.find((p) => p.id === id) ?? null,
+  create: async (_owner, rawName, { cap }) => {
+    const name = normalisedName(rawName);
+    if (!name) return { ok: false, error: "NAME_INVALID" };
+    if (PLAYLISTS.some((p) => sameName(p.name, name))) return { ok: false, error: "NAME_TAKEN" };
+    if (PLAYLISTS.length >= cap) return { ok: false, error: "LIMIT_REACHED" };
+    PLAYLISTS.push({ id: [...Array(16)].map(() => Math.floor(Math.random() * 16).toString(16)).join(""), name, shared: false, cover: null, tracks: [] });
+    return { ok: true };
+  },
+  rename: async (_owner, id, rawName) => {
+    const name = normalisedName(rawName);
+    const target = PLAYLISTS.find((p) => p.id === id);
+    if (!name) return { ok: false, error: "NAME_INVALID" };
+    if (!target) return { ok: false, error: "NOT_FOUND" };
+    if (PLAYLISTS.some((p) => p !== target && sameName(p.name, name))) return { ok: false, error: "NAME_TAKEN" };
+    target.name = name;
+    return { ok: true };
+  },
+  delete: async (_owner, id) => {
+    const index = PLAYLISTS.findIndex((p) => p.id === id);
+    if (index < 0) return false;
+    PLAYLISTS.splice(index, 1);
+    return true;
+  },
+  removeTrackByUri: async (_owner, id, uri) => {
+    const target = PLAYLISTS.find((p) => p.id === id);
+    const index = target?.tracks.findIndex((t) => t.uri === uri) ?? -1;
+    if (index < 0) return { ok: false, error: "NOT_IN_PLAYLIST" };
+    target.tracks.splice(index, 1);
+    return { ok: true };
+  },
+  moveTrack: async (_owner, id, uri, direction, { target } = {}) => {
+    const tracks = PLAYLISTS.find((p) => p.id === id)?.tracks;
+    const at = tracks?.findIndex((t) => t.uri === uri) ?? -1;
+    if (at < 0) return { ok: false, error: "NOT_IN_PLAYLIST" };
+    if (direction === "before" || direction === "after") {
+      if (!target || target === uri) return { ok: false, error: "BAD_DIRECTION" };
+      if (!tracks.some((t) => t.uri === target)) return { ok: false, error: "NOT_IN_PLAYLIST" };
+      const [moved] = tracks.splice(at, 1);
+      const next = tracks.findIndex((t) => t.uri === target);
+      tracks.splice(direction === "before" ? next : next + 1, 0, moved);
+      return { ok: true };
+    }
+    const to = direction === "top" ? 0 : direction === "up" ? Math.max(0, at - 1) : Math.min(tracks.length - 1, at + 1);
+    tracks.splice(to, 0, ...tracks.splice(at, 1));
+    return { ok: true };
+  },
+};
+
+/**
+ * The editor's rules for the fake list above, in the shape the bot answers with. **Written here rather than imported
+ * from the bot**: this file is published with the website, where the bot's code does not exist. It is a stand-in to
+ * click through, not the rules: those are `PlaylistEditing` in the bot and its tests, and the caps below are quoted
+ * from it.
+ */
+const EDITOR_LIMITS = { maxPlaylists: 25, maxTracks: 200, maxNameLength: 50 };
+const EDITOR_MESSAGES = {
+  locked: "Creating, renaming and reordering playlists need a subscription. Removing songs and deleting playlists stay free.",
+  name_invalid: "A playlist needs a name.",
+  name_reserved: "That name is kept for Liked Songs.",
+  name_taken: "There's already a playlist with that name.",
+  limit: "You can have up to " + EDITOR_LIMITS.maxPlaylists + " playlists. Delete one first.",
+  gone: "That playlist or song is already gone.",
+  bad_request: "That isn't something the editor can do.",
+};
+/** A song's name on the page: a short hash of its link, as the bot sends it. */
+const refOf = (uri) => createHash("sha256").update(String(uri)).digest("hex").slice(0, 16);
+const uriOf = (id, ref) => PLAYLISTS.find((p) => p.id === id)?.tracks.find((t) => refOf(t.uri) === ref)?.uri ?? null;
+
+function describeEditor(subscribed) {
+  return {
+    entitled: subscribed,
+    limits: EDITOR_LIMITS,
+    playlists: PLAYLISTS.map((p) => ({
+      id: p.id,
+      name: p.name,
+      shared: p.shared === true,
+      cover: subscribed && p.cover ? p.cover : null,
+      trackCount: p.tracks.length,
+      tracks: p.tracks.map((t) => ({ ref: refOf(t.uri), title: t.title, author: t.author ?? null, unavailable: Boolean(t.unavailableSince) })),
+    })),
+  };
+}
+
+/** One change. Taking things away is free; creating, renaming and reordering need the subscription. */
+async function applyEditorOp(subscribed, op) {
+  const refuse = (error) => ({ ok: false, error, message: EDITOR_MESSAGES[error] });
+  const named = (result) => (result.ok ? { ok: true } : refuse({ NAME_TAKEN: "name_taken", LIMIT_REACHED: "limit", NOT_FOUND: "gone" }[result.error] ?? "name_invalid"));
+  if (!op || typeof op !== "object") return refuse("bad_request");
+
+  if (op.kind === "delete") return (await memoryRepository.delete(null, op.id)) ? { ok: true } : refuse("gone");
+  if (op.kind === "remove") {
+    const uri = uriOf(op.id, op.ref);
+    return uri && (await memoryRepository.removeTrackByUri(null, op.id, uri)).ok ? { ok: true } : refuse("gone");
+  }
+  if (!["create", "rename", "move"].includes(op.kind)) return refuse("bad_request");
+  if (!subscribed) return refuse("locked");
+
+  if (op.kind === "move") {
+    const uri = uriOf(op.id, op.ref);
+    const beside = op.direction === "before" || op.direction === "after";
+    const target = beside ? uriOf(op.id, op.target) : undefined;
+    if (!uri || (beside && !target)) return refuse("gone");
+    return (await memoryRepository.moveTrack(null, op.id, uri, op.direction, { target })).ok ? { ok: true } : refuse("gone");
+  }
+  if (typeof op.name !== "string") return refuse("bad_request");
+  if (/^\s*liked(\s+songs)?\s*$/i.test(op.name)) return refuse("name_reserved");
+  return named(op.kind === "create" ? await memoryRepository.create(null, op.name, { cap: EDITOR_LIMITS.maxPlaylists }) : await memoryRepository.rename(null, op.id, op.name));
+}
+
+async function playlistsRoute({ req, res, state }) {
+  const subscribed = state === "full";
+  // What the real `api/playlists.js` adds to the bot's answer, and the brand-new account's empty list.
+  const answer = () => ({ ...describeEditor(subscribed), ...(state === "new" ? { playlists: [] } : {}), forSale: state !== "unsold" });
+  if (req.method !== "POST") return json(res, 200, answer());
+
+  const { op } = await body(req);
+  const result = await applyEditorOp(subscribed, op);
+  if (!result.ok) return json(res, 400, { error: result.message, code: result.error });
+  return json(res, 200, answer());
 }
 
 function logout({ res, setState }) {
@@ -399,6 +590,7 @@ export const STUBS = {
   "/api/appearance": needsSession(appearanceRoute),
   "/api/guilds": needsSession(guilds),
   "/api/guild-settings": needsSession(guildSettings),
+  "/api/playlists": needsSession(playlistsRoute),
   "/api/auth/logout": logout,
   "/api/auth/login": login,
 };

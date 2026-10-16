@@ -8,7 +8,7 @@
  * entry that claims to be a change.
  *
  * Keys: `s:<field>` for a server-wide setting, `b:<clientId>:<field>` for one bot's override, where
- * `null` means "follows the server". `s:overlay` holds the action to take: `"on"`, `"off"` or `"new"`.
+ * `null` means "follows the server" (for `pinnedVoiceChannelId`, "not pinned"). `s:overlay` holds the action to take: `"on"`, `"off"` or `"new"`.
  */
 
 export const serverKey = (field) => `s:${field}`;
@@ -35,6 +35,8 @@ export function savedValue(saved, key) {
     return saved.shared[parsed.field];
   }
   const instance = saved.instances.find((entry) => entry.clientId === parsed.clientId);
+  // The channel a bot stays in is a setting about the bot, not an override: `null` is "not pinned", never "follows the server".
+  if (parsed.field === "pinnedVoiceChannelId") return instance?.pinnedVoiceChannelId ?? null;
   const overrides = instance?.overrides ?? {};
   return parsed.field in overrides ? overrides[parsed.field] : null;
 }

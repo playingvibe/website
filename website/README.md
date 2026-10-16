@@ -6,8 +6,8 @@ here: nothing under `../src` is in the bundle, so nothing here can import from i
 
 ```
 index.html  commands.html  privacy.html  terms.html   public pages (commands.html is generated)
-dashboard.html  servers.html  server.html  passport.html  np.html   the signed-in pages, the
-                                       per-server settings, a public passport and the now-playing overlay,
+dashboard.html  servers.html  server.html  playlists.html  passport.html  np.html   the signed-in pages,
+                                       the per-server settings, the playlist editor, a public passport and the now-playing overlay,
                                        each with its script (dash/ holds the dashboard's modules)
 css/                                   the stylesheets; DESIGN.md explains the system
 api/                                   Vercel serverless functions (Node)
@@ -33,7 +33,7 @@ gitignored here and Vercel does not read one from the repo anyway.
 | `DISCORD_CLIENT_SECRET` | Same application, OAuth2 → Client Secret. Server-side only. |
 | `SESSION_SECRET` | Any random string of 32+ characters. Rotating it signs everyone out. |
 | `MONGO_URI` | The same cluster the bots use. Needs **read plus write** on the appearance fields of `users` — see "Database access" below. |
-| `GUILD_API_SECRET` | Optional; without it the per-server settings page (`/servers/<id>`) answers "not available yet". The same random value as the flagship's `GUILD_API_SECRET` (`openssl rand -hex 32`): the website calls the bot's `/internal/guild-settings` with it, so the site needs **no bot token**. |
+| `GUILD_API_SECRET` | Optional; without it the per-server settings page (`/servers/<id>`) and the playlist editor (`/playlists`) answer "not available yet". The same random value as the flagship's `GUILD_API_SECRET` (`openssl rand -hex 32`): the website calls the bot's `/internal/guild-settings` and `/internal/playlists` with it, so the site needs **no bot token**. |
 | `BOT_API_ORIGIN` | Optional. Where that call goes; defaults to `https://api.playvibe.gg`. |
 | `SITE_ORIGIN` | Optional. Pins the OAuth redirect origin; without it the origin is derived from the request, which is what makes preview deployments work. |
 
@@ -62,7 +62,9 @@ about themselves, or about a server they administer:
 - **Seven appearance fields on their own user document** — `rankCardAccent`, `rankCardBackground`,
   `rankCardBackgroundColor`, `rankCardFade`, `activityAccent`, `activityBackground` and
   `preferServerTheme`. The first four are the card `/rank` draws; the last three are the player `/watch`
-  opens (and whether a server's theme wins over the member's own accent). **This is the only
+  opens (and whether a server's theme wins over the member's own accent). In the player's two, `null` is "never
+  picked" and follows a server's own theme; "the bot's own colour" and "no backdrop" are choices of their own
+  (`"bot"`, `"none"`) and do not. **This is the only
   write path for any of them** — no slash command writes an appearance setting — so the check
   behind it, in `lib/entitlements.js`, is the only place that decides who may write. That module
   is the one thing in this repository that differs from production: the copy here is open
@@ -89,6 +91,13 @@ So the per-server page (`/servers/<id>`) asks **the bot**: `api/guild-settings.j
 server's settings and the roles and channels to offer, and applies a change with its own
 validation. The site checks who is asking (a session, and administrator rights re-read from
 Discord) before it forwards anything.
+
+The playlist editor (`/playlists`) works the same way: `api/playlists.js` sends the signed-in person's id,
+from the session and never from the request, to the bot's `/internal/playlists`, which applies the change with
+the rules `/playlist` uses (names, the cap, the subscription: create, rename and reorder need one; taking a song
+out and deleting a playlist never do). It never adds a song, since that needs a search. A song is named by an
+opaque ref, not its link, and a reorder is computed by the database on the list as it is, so a song added in
+Discord meanwhile is not lost.
 
 ## Known gaps
 

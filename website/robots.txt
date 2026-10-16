@@ -3,6 +3,7 @@ User-agent: *
 Allow: /
 Disallow: /dashboard
 Disallow: /servers
+Disallow: /playlists
 Disallow: /np/
 Disallow: /api/
 

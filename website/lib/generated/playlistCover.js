@@ -57,10 +57,11 @@ function hsl(hue, lightness) {
 
 /**
  * @param {string} name - The playlist's name.
+ * @param {{hue?: ?number}} [options] - A hue (0-359) the owner chose, instead of the one the name picks.
  * @returns {{initial: string, from: string, to: string}} The letter to draw and the gradient's two stops,
  *          light corner first.
  */
-export function playlistCover(name) {
+export function playlistCover(name, { hue: chosen } = {}) {
   const text = String(name ?? "").trim();
   // The first letter or digit, so a name that opens with an emoji or a bracket still gets a letter.
   const first = Array.from(text).find((char) => /[\p{L}\p{N}]/u.test(char)) ?? "♪";
@@ -68,7 +69,7 @@ export function playlistCover(name) {
   const initial = Array.from(first.toUpperCase())[0];
 
   const h = hash(text.toLowerCase());
-  const hue = h % 360;
+  const hue = Number.isInteger(chosen) && chosen >= 0 && chosen < 360 ? chosen : h % 360;
   const other = (hue + 40 + ((h >>> 9) % 50)) % 360;
   return { initial, from: hsl(hue, LIGHTNESS_FROM), to: hsl(other, LIGHTNESS_TO) };
 }
